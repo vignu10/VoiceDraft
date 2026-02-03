@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/transcribe.ts": {
+      "maxDuration": 60
+    },
+    "api/generate.ts": {
+      "maxDuration": 120
+    },
+    "api/regenerate-section.ts": {
+      "maxDuration": 60
+    }
+  }
+}
