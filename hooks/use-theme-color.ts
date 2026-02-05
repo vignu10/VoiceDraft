@@ -2,10 +2,10 @@
  * Theme color hook for accessing theme-aware colors
  */
 
-import { Colors } from '@/constants/theme';
+import { ThemeColors } from '@/constants/design-system';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-type ColorKey = keyof typeof Colors.light;
+type ColorKey = keyof typeof ThemeColors.light;
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -17,12 +17,15 @@ export function useThemeColor(
   if (colorFromProps) {
     return colorFromProps;
   } else {
-    return Colors[theme][colorName];
+    return ThemeColors[theme][colorName];
   }
 }
 
-// Hook to get multiple theme colors at once
+// Hook to get multiple theme colors at once - returns all theme colors
 export function useThemeColors() {
   const theme = useColorScheme() ?? 'light';
-  return Colors[theme];
+  return ThemeColors[theme];
 }
+
+// Alias for backward compatibility
+export { ThemeColors as Colors } from '@/constants/design-system';

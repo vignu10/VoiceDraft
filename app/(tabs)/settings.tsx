@@ -1,4 +1,4 @@
-import { StyleSheet, View, Pressable, Alert, ScrollView } from 'react-native';
+import { StyleSheet, View, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -7,11 +7,19 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 import type { Tone, Length } from '@/types/draft';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  FadeIn,
+  SlideIn,
+  PressableScale,
+  AnimatedCard,
+} from '@/components/ui/animated';
+import { Spacing, Typography, BorderRadius } from '@/constants/design-system';
+import { Duration, Stagger } from '@/constants/animations';
 
-const TONES: { value: Tone; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: 'professional', icon: 'briefcase' , label: 'Professional' },
-  { value: 'casual', icon: 'cafe', label: 'Casual' },
-  { value: 'conversational', icon: 'chatbubbles', label: 'Conversational' },
+const TONES: { value: Tone; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
+  { value: 'professional', icon: 'briefcase-outline', label: 'Professional', desc: 'Formal and authoritative' },
+  { value: 'casual', icon: 'cafe-outline', label: 'Casual', desc: 'Friendly and relaxed' },
+  { value: 'conversational', icon: 'chatbubbles-outline', label: 'Conversational', desc: 'Like talking to a friend' },
 ];
 
 const LENGTHS: { value: Length; label: string; words: string }[] = [
@@ -50,133 +58,152 @@ export default function SettingsTab() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Header */}
-          <View style={styles.header}>
-            <ThemedText style={[styles.title, { color: colors.text }]}>Settings</ThemedText>
-          </View>
+          <FadeIn delay={0}>
+            <View style={styles.header}>
+              <ThemedText style={[styles.title, { color: colors.text }]}>Settings</ThemedText>
+              <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Customize your experience
+              </ThemedText>
+            </View>
+          </FadeIn>
 
           {/* Default Tone */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              DEFAULT TONE
-            </ThemedText>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              {TONES.map((tone, index) => (
-                <Pressable
-                  key={tone.value}
-                  style={[
-                    styles.optionRow,
-                    index < TONES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                  ]}
-                  onPress={() => setDefaultTone(tone.value)}
-                >
-                  <View style={[styles.optionIcon, { backgroundColor: colors.backgroundSecondary }]}>
-                    <Ionicons name={tone.icon} size={20} color={colors.tint} />
-                  </View>
-                  <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
-                    {tone.label}
-                  </ThemedText>
-                  {defaultTone === tone.value && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.tint} />
-                  )}
-                </Pressable>
-              ))}
+          <SlideIn direction="up" delay={Duration.fast}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                DEFAULT TONE
+              </ThemedText>
+              <AnimatedCard variant="outlined" animateEntry={false} style={styles.card}>
+                {TONES.map((tone, index) => (
+                  <PressableScale
+                    key={tone.value}
+                    onPress={() => setDefaultTone(tone.value)}
+                    hapticStyle="light"
+                    style={[
+                      styles.optionRow,
+                      index < TONES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
+                    ]}
+                  >
+                    <View style={[styles.optionIcon, { backgroundColor: colors.primaryLight }]}>
+                      <Ionicons name={tone.icon} size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.optionText}>
+                      <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
+                        {tone.label}
+                      </ThemedText>
+                      <ThemedText style={[styles.optionDesc, { color: colors.textMuted }]}>
+                        {tone.desc}
+                      </ThemedText>
+                    </View>
+                    {defaultTone === tone.value && (
+                      <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                        <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                      </View>
+                    )}
+                  </PressableScale>
+                ))}
+              </AnimatedCard>
             </View>
-          </View>
+          </SlideIn>
 
           {/* Default Length */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              DEFAULT LENGTH
-            </ThemedText>
-            <View style={styles.lengthGrid}>
-              {LENGTHS.map((length) => (
-                <Pressable
-                  key={length.value}
-                  style={[
-                    styles.lengthCard,
-                    {
-                      backgroundColor: defaultLength === length.value ? colors.tint : colors.card,
-                      borderColor: defaultLength === length.value ? colors.tint : colors.cardBorder,
-                    },
-                  ]}
-                  onPress={() => setDefaultLength(length.value)}
-                >
-                  <ThemedText
+          <SlideIn direction="up" delay={Duration.normal}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                DEFAULT LENGTH
+              </ThemedText>
+              <View style={styles.lengthGrid}>
+                {LENGTHS.map((length, index) => (
+                  <PressableScale
+                    key={length.value}
+                    onPress={() => setDefaultLength(length.value)}
+                    hapticStyle="light"
                     style={[
-                      styles.lengthLabel,
-                      { color: defaultLength === length.value ? '#fff' : colors.text },
+                      styles.lengthCard,
+                      {
+                        backgroundColor: defaultLength === length.value ? colors.primary : colors.surface,
+                        borderColor: defaultLength === length.value ? colors.primary : colors.border,
+                      },
                     ]}
                   >
-                    {length.label}
-                  </ThemedText>
-                  <ThemedText
-                    style={[
-                      styles.lengthWords,
-                      { color: defaultLength === length.value ? 'rgba(255,255,255,0.7)' : colors.textMuted },
-                    ]}
-                  >
-                    {length.words} words
-                  </ThemedText>
-                </Pressable>
-              ))}
+                    <ThemedText
+                      style={[
+                        styles.lengthLabel,
+                        { color: defaultLength === length.value ? colors.textInverse : colors.text },
+                      ]}
+                    >
+                      {length.label}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.lengthWords,
+                        { color: defaultLength === length.value ? colors.textInverse + 'CC' : colors.textMuted },
+                      ]}
+                    >
+                      {length.words} words
+                    </ThemedText>
+                  </PressableScale>
+                ))}
+              </View>
             </View>
-          </View>
+          </SlideIn>
 
           {/* Data Management */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              DATA
-            </ThemedText>
-            <Pressable
-              style={({ pressed }) => [
-                styles.dangerCard,
-                {
-                  backgroundColor: colors.errorLight,
-                  opacity: pressed ? 0.8 : 1,
-                },
-              ]}
-              onPress={handleClearData}
-            >
-              <View style={styles.dangerContent}>
-                <Ionicons name="trash-outline" size={22} color={colors.error} />
-                <View style={styles.dangerText}>
-                  <ThemedText style={[styles.dangerTitle, { color: colors.error }]}>
-                    Clear All Data
-                  </ThemedText>
-                  <ThemedText style={[styles.dangerDesc, { color: colors.error }]}>
-                    Delete all drafts and reset settings
-                  </ThemedText>
+          <SlideIn direction="up" delay={Duration.moderate}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                DATA
+              </ThemedText>
+              <PressableScale
+                onPress={handleClearData}
+                hapticStyle="medium"
+                style={[styles.dangerCard, { backgroundColor: colors.errorLight }]}
+              >
+                <View style={styles.dangerContent}>
+                  <View style={[styles.dangerIcon, { backgroundColor: colors.error + '20' }]}>
+                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                  </View>
+                  <View style={styles.dangerText}>
+                    <ThemedText style={[styles.dangerTitle, { color: colors.error }]}>
+                      Clear All Data
+                    </ThemedText>
+                    <ThemedText style={[styles.dangerDesc, { color: colors.error + 'CC' }]}>
+                      Delete all drafts and reset settings
+                    </ThemedText>
+                  </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.error} />
-            </Pressable>
-          </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.error} />
+              </PressableScale>
+            </View>
+          </SlideIn>
 
           {/* About */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              ABOUT
-            </ThemedText>
-            <View style={[styles.aboutCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={[styles.appIconLarge, { backgroundColor: colors.tint }]}>
-                <Ionicons name="mic" size={32} color="#fff" />
-              </View>
-              <ThemedText style={[styles.appName, { color: colors.text }]}>
-                VoiceDraft
+          <SlideIn direction="up" delay={Duration.slow}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                ABOUT
               </ThemedText>
-              <ThemedText style={[styles.appTagline, { color: colors.textSecondary }]}>
-                Voice to Blog in One Tap
-              </ThemedText>
-              <View style={[styles.versionBadge, { backgroundColor: colors.backgroundSecondary }]}>
-                <ThemedText style={[styles.versionText, { color: colors.textMuted }]}>
-                  Version 1.0.0
+              <AnimatedCard variant="outlined" animateEntry={false} style={styles.aboutCard}>
+                <View style={[styles.appIconLarge, { backgroundColor: colors.primary }]}>
+                  <Ionicons name="mic" size={32} color={colors.textInverse} />
+                </View>
+                <ThemedText style={[styles.appName, { color: colors.text }]}>
+                  VoiceDraft
                 </ThemedText>
-              </View>
+                <ThemedText style={[styles.appTagline, { color: colors.textSecondary }]}>
+                  Voice to Blog in One Tap
+                </ThemedText>
+                <View style={[styles.versionBadge, { backgroundColor: colors.backgroundSecondary }]}>
+                  <ThemedText style={[styles.versionText, { color: colors.textMuted }]}>
+                    Version 1.0.0
+                  </ThemedText>
+                </View>
+              </AnimatedCard>
             </View>
-          </View>
+          </SlideIn>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -191,124 +218,158 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: Spacing[10],
   },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing[6],
+    paddingTop: Spacing[8],
+    paddingBottom: Spacing[4],
+    minHeight: 70,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     letterSpacing: -0.5,
+    lineHeight: 38,
+    includeFontPadding: false,
+  },
+  subtitle: {
+    fontSize: Typography.fontSize.base,
+    marginTop: Spacing[2],
+    lineHeight: 20,
   },
   section: {
-    paddingHorizontal: 24,
-    marginTop: 28,
+    paddingHorizontal: Spacing[6],
+    marginTop: Spacing[5],
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    marginBottom: 12,
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.semibold,
+    letterSpacing: Typography.letterSpacing.widest,
+    marginBottom: Spacing[3],
+    lineHeight: 16,
   },
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
+    padding: 0,
     overflow: 'hidden',
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: Spacing[4],
   },
   optionIcon: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing[3],
+  },
+  optionText: {
+    flex: 1,
+  },
+  optionLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 20,
+  },
+  optionDesc: {
+    fontSize: Typography.fontSize.sm,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
-  },
-  optionLabel: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
   },
   lengthGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing[3],
   },
   lengthCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingVertical: Spacing[5],
+    paddingHorizontal: Spacing[3],
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1.5,
   },
   lengthLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
   },
   lengthWords: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: Typography.fontSize.sm,
+    lineHeight: 18,
+    marginTop: Spacing[1],
   },
   dangerCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 16,
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
   },
   dangerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: Spacing[3],
+  },
+  dangerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dangerText: {
     gap: 2,
   },
   dangerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 20,
   },
   dangerDesc: {
-    fontSize: 13,
-    opacity: 0.8,
+    fontSize: Typography.fontSize.sm,
+    lineHeight: 18,
   },
   aboutCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 24,
+    padding: Spacing[6],
     alignItems: 'center',
   },
   appIconLarge: {
     width: 72,
     height: 72,
-    borderRadius: 20,
+    borderRadius: BorderRadius['2xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing[4],
   },
   appName: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 24,
   },
   appTagline: {
-    fontSize: 15,
-    marginTop: 4,
+    fontSize: Typography.fontSize.sm,
+    lineHeight: 18,
+    marginTop: Spacing[1],
   },
   versionBadge: {
-    marginTop: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
+    marginTop: Spacing[3],
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
+    borderRadius: BorderRadius.full,
   },
   versionText: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 16,
   },
 });

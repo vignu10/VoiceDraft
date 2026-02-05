@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { recordingService } from '@/services/audio/recording-service';
 
 interface RecordingState {
   isRecording: boolean;
@@ -14,7 +15,7 @@ interface RecordingState {
   setDuration: (duration: number) => void;
   setAudioUri: (uri: string | null) => void;
   addMeteringLevel: (level: number) => void;
-  reset: () => void;
+  reset: () => Promise<void>;
 }
 
 const initialState = {
@@ -26,7 +27,7 @@ const initialState = {
   maxDuration: 600, // 10 minutes in seconds
 };
 
-export const useRecordingStore = create<RecordingState>((set) => ({
+export const useRecordingStore = create<RecordingState>((set, get) => ({
   ...initialState,
 
   setRecording: (isRecording) => set({ isRecording }),
@@ -42,5 +43,18 @@ export const useRecordingStore = create<RecordingState>((set) => ({
       meteringLevels: [...state.meteringLevels.slice(-50), level],
     })),
 
-  reset: () => set(initialState),
+  reset: async () => {
+    // Cancel any ongoing recording
+    try {
+      if (recordingService.isRecording()) {
+        await recordingService.cancelRecording();
+      }
+    } catch (e) {
+      // Ignore cleanup errors
+      console.error('Error during reset:', e);
+    }
+
+    // Reset all state to initial values
+    set(initialState);
+  },
 }));

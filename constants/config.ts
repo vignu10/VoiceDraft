@@ -5,6 +5,11 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.2
 // Recording Configuration
 export const MAX_RECORDING_DURATION = 600; // 10 minutes in seconds
 export const RECORDING_WARNING_THRESHOLD = 540; // 9 minutes - show warning
+export const MIN_RECORDING_DURATION = 3; // Minimum 3 seconds required
+
+// Transcription Validation
+export const MIN_TRANSCRIPT_LENGTH = 20; // Minimum characters for valid transcript
+export const MIN_TRANSCRIPT_WORDS = 5; // Minimum words for valid transcript
 
 // Audio Configuration
 export const AUDIO_CONFIG = {

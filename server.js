@@ -102,6 +102,22 @@ app.post('/api/generate', async (req, res) => {
     return res.status(400).json({ error: 'Transcript is required' });
   }
 
+  // Validate transcript has meaningful content
+  const trimmedTranscript = transcript.trim();
+  const wordCount = trimmedTranscript.split(/\s+/).filter(w => w.length > 0).length;
+
+  if (trimmedTranscript.length < 20) {
+    console.log('❌ Transcript too short:', trimmedTranscript.length, 'chars');
+    return res.status(400).json({ error: 'Transcript is too short. Please provide more content.' });
+  }
+
+  if (wordCount < 5) {
+    console.log('❌ Not enough words:', wordCount);
+    return res.status(400).json({ error: 'Not enough words detected. Please speak more content.' });
+  }
+
+  console.log(`📊 Transcript stats: ${wordCount} words, ${trimmedTranscript.length} characters`);
+
   const systemPrompt = `You are an expert SEO blog writer and content strategist. Your task is to transform a voice transcript into a polished, engaging, SEO-optimized blog post.
 
 IMPORTANT INSTRUCTIONS:

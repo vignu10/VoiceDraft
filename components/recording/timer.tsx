@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -8,20 +8,21 @@ import Animated, {
   withTiming,
   withSpring,
   Easing,
-  interpolate,
   cancelAnimation,
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { formatDuration } from '@/utils/formatters';
 import { RECORDING_WARNING_THRESHOLD, MAX_RECORDING_DURATION } from '@/constants/config';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Spacing, Typography } from '@/constants/design-system';
+import { Springs } from '@/constants/animations';
 
 interface TimerProps {
   seconds: number;
   maxSeconds?: number;
   showWarning?: boolean;
   isRecording?: boolean;
+  isPaused?: boolean;
 }
 
 export function Timer({
@@ -29,257 +30,176 @@ export function Timer({
   maxSeconds = MAX_RECORDING_DURATION,
   showWarning = true,
   isRecording = false,
+  isPaused = false,
 }: TimerProps) {
   const colors = useThemeColors();
   const isWarning = showWarning && seconds >= RECORDING_WARNING_THRESHOLD;
+  const isActivelyRecording = isRecording && !isPaused;
   const progress = seconds / maxSeconds;
 
   // Animation values
-  const glowOpacity = useSharedValue(0.3);
-  const pulseScale = useSharedValue(1);
-  const scanLineY = useSharedValue(0);
-  const ringRotation = useSharedValue(0);
-  const digitGlow = useSharedValue(0.5);
+  const dotOpacity = useSharedValue(isActivelyRecording ? 0.4 : 1);
+  const dotScale = useSharedValue(isActivelyRecording ? 1.15 : 1);
+  const timerScale = useSharedValue(1);
+  const colonBlink = useSharedValue(1);
 
-  // Split time into individual digits for animation
-  const formatted = formatDuration(seconds);
-  const [minutes, secs] = formatted.split(':');
+  // Parse time for display
+  const timeParts = useMemo(() => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return {
+      mins: mins.toString().padStart(2, '0'),
+      secs: secs.toString().padStart(2, '0'),
+    };
+  }, [seconds]);
 
+  // Dot pulse animation
   useEffect(() => {
-    if (isRecording) {
-      // Glow pulsing
-      glowOpacity.value = withRepeat(
+    if (isActivelyRecording) {
+      dotOpacity.value = withRepeat(
         withSequence(
-          withTiming(0.8, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.4, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
-
-      // Subtle scale pulse
-      pulseScale.value = withRepeat(
+      dotScale.value = withRepeat(
         withSequence(
-          withTiming(1.02, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
-
-      // Scan line animation
-      scanLineY.value = withRepeat(
-        withTiming(1, { duration: 2000, easing: Easing.linear }),
-        -1,
-        false
-      );
-
-      // Ring rotation
-      ringRotation.value = withRepeat(
-        withTiming(360, { duration: 8000, easing: Easing.linear }),
-        -1,
-        false
-      );
-
-      // Digit glow
-      digitGlow.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 500, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.6, { duration: 500, easing: Easing.inOut(Easing.ease) })
+          withTiming(1.15, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true
       );
     } else {
-      cancelAnimation(glowOpacity);
-      cancelAnimation(pulseScale);
-      cancelAnimation(scanLineY);
-      cancelAnimation(ringRotation);
-      cancelAnimation(digitGlow);
-      glowOpacity.value = withTiming(0.3);
-      pulseScale.value = withTiming(1);
-      digitGlow.value = withTiming(0.5);
+      cancelAnimation(dotOpacity);
+      cancelAnimation(dotScale);
+      dotOpacity.value = withSpring(isPaused ? 0.5 : 1, Springs.gentle);
+      dotScale.value = withSpring(isPaused ? 0.9 : 1, Springs.gentle);
     }
-  }, [isRecording, glowOpacity, pulseScale, scanLineY, ringRotation, digitGlow]);
+    // Cleanup on unmount
+    return () => {
+      cancelAnimation(dotOpacity);
+      cancelAnimation(dotScale);
+    };
+  }, [isActivelyRecording, isPaused]);
 
-  const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
+  // Timer scale animation on value change
+  useEffect(() => {
+    timerScale.value = withSequence(
+      withTiming(1.02, { duration: 100 }),
+      withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) })
+    );
+    return () => cancelAnimation(timerScale);
+  }, [seconds, timerScale]);
+
+  // Colon blink animation when paused
+  useEffect(() => {
+    if (isPaused) {
+      colonBlink.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 500 }),
+          withTiming(1, { duration: 500 })
+        ),
+        -1,
+        true
+      );
+    } else {
+      cancelAnimation(colonBlink);
+      colonBlink.value = withSpring(1, Springs.gentle);
+    }
+    return () => cancelAnimation(colonBlink);
+  }, [isPaused, colonBlink]);
+
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: dotOpacity.value,
+    transform: [{ scale: dotScale.value }],
   }));
 
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
+  const timerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: timerScale.value }],
   }));
 
-  const scanLineStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(scanLineY.value, [0, 1], [-60, 60]) }],
-    opacity: interpolate(scanLineY.value, [0, 0.5, 1], [0, 0.6, 0]),
+  const colonStyle = useAnimatedStyle(() => ({
+    opacity: colonBlink.value,
   }));
 
-  const ringStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${ringRotation.value}deg` }],
-  }));
-
-  const digitGlowStyle = useAnimatedStyle(() => ({
-    textShadowRadius: interpolate(digitGlow.value, [0.5, 1], [8, 20]),
-    opacity: interpolate(digitGlow.value, [0.5, 1], [0.9, 1]),
-  }));
-
-  const primaryColor = isWarning ? colors.error : colors.tint;
-  const secondaryColor = isWarning ? colors.errorLight : colors.tintLight;
+  const timerColor = isWarning ? colors.error : isPaused ? colors.textMuted : colors.text;
+  const progressColor = isWarning ? colors.error : colors.primary;
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
-      {/* Outer glow ring */}
-      <Animated.View style={[styles.outerGlow, glowStyle, { shadowColor: primaryColor }]} />
-
-      {/* Rotating ring with dashes */}
-      <Animated.View style={[styles.rotatingRing, ringStyle]}>
-        {[...Array(24)].map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.ringDash,
-              {
-                backgroundColor: i < Math.floor(progress * 24) ? primaryColor : colors.border,
-                transform: [
-                  { rotate: `${i * 15}deg` },
-                  { translateY: -85 },
-                ],
-              },
-            ]}
-          />
-        ))}
-      </Animated.View>
-
-      {/* Main timer box */}
-      <View style={[styles.timerBox, { borderColor: primaryColor }]}>
-        <LinearGradient
-          colors={[
-            colors.backgroundSecondary,
-            colors.background,
-            colors.backgroundSecondary,
-          ]}
-          style={styles.gradient}
-        />
-
-        {/* Scan line effect */}
+    <View style={styles.container}>
+      {/* Timer Display */}
+      <Animated.View style={[styles.timerDisplay, timerStyle]}>
+        {/* Recording indicator dot */}
         {isRecording && (
           <Animated.View
             style={[
-              styles.scanLine,
-              scanLineStyle,
-              { backgroundColor: primaryColor },
+              styles.recordingDot,
+              dotStyle,
+              { backgroundColor: isPaused ? colors.paused : colors.recording },
             ]}
           />
         )}
 
-        {/* Corner accents */}
-        <View style={[styles.cornerTL, { borderColor: primaryColor }]} />
-        <View style={[styles.cornerTR, { borderColor: primaryColor }]} />
-        <View style={[styles.cornerBL, { borderColor: primaryColor }]} />
-        <View style={[styles.cornerBR, { borderColor: primaryColor }]} />
-
-        {/* Time display */}
-        <View style={styles.timeDisplay}>
-          {/* Minutes */}
-          <View style={styles.digitGroup}>
-            <Animated.Text
-              style={[
-                styles.digit,
-                digitGlowStyle,
-                {
-                  color: primaryColor,
-                  textShadowColor: primaryColor,
-                },
-              ]}
-            >
-              {minutes}
-            </Animated.Text>
-            <ThemedText style={[styles.label, { color: colors.textMuted }]}>
-              MIN
-            </ThemedText>
-          </View>
-
-          {/* Separator with animation */}
-          <View style={styles.separatorContainer}>
-            <Animated.Text
-              style={[
-                styles.separator,
-                digitGlowStyle,
-                {
-                  color: primaryColor,
-                  textShadowColor: primaryColor,
-                },
-              ]}
-            >
-              :
-            </Animated.Text>
-          </View>
-
-          {/* Seconds */}
-          <View style={styles.digitGroup}>
-            <Animated.Text
-              style={[
-                styles.digit,
-                digitGlowStyle,
-                {
-                  color: primaryColor,
-                  textShadowColor: primaryColor,
-                },
-              ]}
-            >
-              {secs}
-            </Animated.Text>
-            <ThemedText style={[styles.label, { color: colors.textMuted }]}>
-              SEC
-            </ThemedText>
-          </View>
+        {/* Time with animated colon */}
+        <View style={styles.timeContainer}>
+          <ThemedText style={[styles.timeText, { color: timerColor }]}>
+            {timeParts.mins}
+          </ThemedText>
+          <Animated.Text style={[styles.colon, { color: timerColor }, colonStyle]}>
+            :
+          </Animated.Text>
+          <ThemedText style={[styles.timeText, { color: timerColor }]}>
+            {timeParts.secs}
+          </ThemedText>
         </View>
+      </Animated.View>
 
-        {/* Status indicator */}
-        <View style={styles.statusRow}>
-          {isRecording && (
-            <View style={styles.statusIndicator}>
-              <Animated.View
-                style={[
-                  styles.statusDot,
-                  glowStyle,
-                  { backgroundColor: isWarning ? colors.error : colors.recording },
-                ]}
-              />
-              <ThemedText style={[styles.statusText, { color: colors.textSecondary }]}>
-                {isWarning ? 'TIME LOW' : 'REC'}
-              </ThemedText>
-            </View>
-          )}
-        </View>
+      {/* Status Badge */}
+      <View style={[styles.statusBadge, { backgroundColor: isWarning ? colors.error + '15' : colors.primary + '15' }]}>
+        {isWarning && (
+          <>
+            <View style={[styles.warningDot, { backgroundColor: colors.error }]} />
+            <ThemedText style={[styles.statusText, { color: colors.error }]}>
+              Almost at limit
+            </ThemedText>
+          </>
+        )}
+        {!isWarning && isRecording && !isPaused && (
+          <>
+            <View style={[styles.recordingDotSmall, { backgroundColor: colors.recording }]} />
+            <ThemedText style={[styles.statusText, { color: colors.primary }]}>
+              Recording...
+            </ThemedText>
+          </>
+        )}
+        {!isWarning && isPaused && (
+          <>
+            <View style={[styles.pausedDot, { backgroundColor: colors.paused }]} />
+            <ThemedText style={[styles.statusText, { color: colors.paused }]}>
+              Paused
+            </ThemedText>
+          </>
+        )}
       </View>
 
-      {/* Progress arc indicator */}
-      <View style={styles.progressContainer}>
-        <View
-          style={[
-            styles.progressBar,
-            {
-              backgroundColor: colors.border,
-            },
-          ]}
-        >
-          <View
+      {/* Progress Bar */}
+      {isRecording && (
+        <View style={[styles.progressBarContainer, { backgroundColor: timerColor + '15' }]}>
+          <Animated.View
             style={[
-              styles.progressFill,
+              styles.progressBarFill,
               {
-                backgroundColor: primaryColor,
+                backgroundColor: progressColor,
                 width: `${progress * 100}%`,
               },
             ]}
           />
         </View>
-        <ThemedText style={[styles.progressText, { color: colors.textMuted }]}>
-          {Math.round(progress * 100)}%
-        </ThemedText>
-      </View>
-    </Animated.View>
+      )}
+    </View>
   );
 }
 
@@ -287,162 +207,80 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 220,
-    height: 220,
-  },
-  outerGlow: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 20,
-  },
-  rotatingRing: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringDash: {
-    position: 'absolute',
-    width: 3,
-    height: 12,
-    borderRadius: 2,
-  },
-  timerBox: {
-    width: 180,
-    height: 140,
-    borderRadius: 16,
-    borderWidth: 2,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  scanLine: {
-    position: 'absolute',
     width: '100%',
-    height: 2,
-    opacity: 0.5,
   },
-  cornerTL: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    width: 16,
-    height: 16,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderTopLeftRadius: 4,
-  },
-  cornerTR: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 16,
-    height: 16,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-    borderTopRightRadius: 4,
-  },
-  cornerBL: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    width: 16,
-    height: 16,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-    borderBottomLeftRadius: 4,
-  },
-  cornerBR: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    width: 16,
-    height: 16,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderBottomRightRadius: 4,
-  },
-  timeDisplay: {
+  timerDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing[3],
+    marginBottom: Spacing[2],
   },
-  digitGroup: {
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  timeContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 60,
   },
-  digit: {
-    fontSize: 48,
-    fontWeight: '300',
+  timeText: {
+    fontSize: 52,
+    fontWeight: '200',
     fontVariant: ['tabular-nums'],
     letterSpacing: 2,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    lineHeight: 56,
+    includeFontPadding: false,
+    textAlign: 'center',
   },
-  label: {
-    fontSize: 10,
-    fontWeight: '600',
+  colon: {
+    fontSize: 52,
+    fontWeight: '200',
     letterSpacing: 2,
-    marginTop: -4,
+    lineHeight: 56,
+    includeFontPadding: false,
+    fontFamily: 'System',
   },
-  separatorContainer: {
-    marginHorizontal: 4,
-    marginTop: -16,
-  },
-  separator: {
-    fontSize: 40,
-    fontWeight: '300',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  statusRow: {
-    marginTop: 8,
-    height: 20,
-    justifyContent: 'center',
-  },
-  statusIndicator: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing[2],
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[1.5],
+    borderRadius: 16,
+    marginTop: Spacing[2],
   },
-  statusDot: {
-    width: 8,
-    height: 8,
+  warningDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  recordingDotSmall: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  pausedDot: {
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
   statusText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    letterSpacing: 0.3,
+    lineHeight: 16,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 8,
-  },
-  progressBar: {
-    width: 120,
+  progressBarContainer: {
+    width: '100%',
+    maxWidth: 280,
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
+    marginTop: Spacing[3],
   },
-  progressFill: {
+  progressBarFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  progressText: {
-    fontSize: 11,
-    fontWeight: '600',
-    minWidth: 36,
   },
 });

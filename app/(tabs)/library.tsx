@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   FlatList,
-  Pressable,
   TextInput,
   Alert,
 } from 'react-native';
@@ -14,9 +13,18 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { formatRelativeTime, truncate } from '@/utils/formatters';
+import { formatRelativeTime } from '@/utils/formatters';
 import type { Draft } from '@/types/draft';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  FadeIn,
+  SlideIn,
+  PressableScale,
+  AnimatedCard,
+  AnimatedButton,
+} from '@/components/ui/animated';
+import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
+import { Duration, Springs, Stagger } from '@/constants/animations';
 
 type SortOption = 'date' | 'title';
 
@@ -104,38 +112,34 @@ export default function LibraryTab() {
       case 'ready':
         return colors.success;
       case 'published':
-        return colors.tint;
+        return colors.primary;
       default:
         return colors.textMuted;
     }
   };
 
-  const renderDraft = ({ item }: { item: Draft }) => (
-    <Pressable
-      style={({ pressed }) => [
-        styles.draftCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.cardBorder,
-          opacity: pressed ? 0.8 : 1,
-        },
-      ]}
+  const renderDraft = ({ item, index }: { item: Draft; index: number }) => (
+    <AnimatedCard
+      variant="elevated"
+      pressable
       onPress={() => handleDraftPress(item.id)}
-      onLongPress={() => handleDeleteDraft(item.id)}
+      delay={Stagger.delay(index)}
+      style={styles.draftCard}
     >
       <View style={styles.draftHeader}>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <ThemedText style={styles.statusText}>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '15' }]}>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
+          <ThemedText style={[styles.statusText, { color: getStatusColor(item.status) }]}>
             {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
           </ThemedText>
         </View>
-        <Pressable onPress={() => toggleFavorite(item.id)} hitSlop={10}>
+        <PressableScale onPress={() => toggleFavorite(item.id)} scale={0.9} hapticStyle="light">
           <Ionicons
             name={item.isFavorite ? 'star' : 'star-outline'}
-            size={22}
-            color={colors.warning}
+            size={20}
+            color={item.isFavorite ? colors.accent : colors.iconMuted}
           />
-        </Pressable>
+        </PressableScale>
       </View>
 
       <ThemedText style={[styles.draftTitle, { color: colors.text }]} numberOfLines={2}>
@@ -143,117 +147,138 @@ export default function LibraryTab() {
       </ThemedText>
 
       {item.content && (
-        <ThemedText style={[styles.draftPreview, { color: colors.textSecondary }]} numberOfLines={2}>
-          {truncate(item.content.replace(/[#*_\n]/g, ' '), 100)}
+        <ThemedText style={[styles.draftPreview, { color: colors.textSecondary }]} numberOfLines={3}>
+          {item.content.replace(/[#*_\n]/g, ' ')}
         </ThemedText>
       )}
 
-      <View style={styles.draftFooter}>
-        <ThemedText style={[styles.draftMeta, { color: colors.textMuted }]}>
-          {formatRelativeTime(new Date(item.createdAt))}
-        </ThemedText>
-        {item.wordCount && (
-          <ThemedText style={[styles.draftMeta, { color: colors.textMuted }]}>
-            {item.wordCount} words
+      <View style={[styles.draftFooter, { borderTopColor: colors.border }]}>
+        <View style={styles.draftMeta}>
+          <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+          <ThemedText style={[styles.draftMetaText, { color: colors.textMuted }]}>
+            {formatRelativeTime(new Date(item.createdAt))}
           </ThemedText>
+        </View>
+        {item.wordCount && (
+          <View style={styles.draftMeta}>
+            <Ionicons name="document-text-outline" size={16} color={colors.textMuted} />
+            <ThemedText style={[styles.draftMetaText, { color: colors.textMuted }]}>
+              {item.wordCount} words
+            </ThemedText>
+          </View>
         )}
       </View>
-    </Pressable>
+    </AnimatedCard>
   );
 
   const EmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name="document-text-outline" size={64} color={colors.textMuted} />
-      <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>
-        No drafts yet
-      </ThemedText>
-      <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
-        Start recording to create your first blog post
-      </ThemedText>
-      <Pressable
-        style={({ pressed }) => [
-          styles.emptyButton,
-          {
-            backgroundColor: colors.tint,
-            opacity: pressed ? 0.8 : 1,
-          },
-        ]}
-        onPress={() => router.push('/recording')}
-      >
-        <Ionicons name="mic" size={20} color="#fff" />
-        <ThemedText style={styles.emptyButtonText}>Start Recording</ThemedText>
-      </Pressable>
-    </View>
+    <FadeIn delay={Duration.fast}>
+      <View style={styles.emptyState}>
+        <View style={[styles.emptyIcon, { backgroundColor: colors.primaryLight }]}>
+          <Ionicons name="document-text-outline" size={48} color={colors.primary} />
+        </View>
+        <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>
+          No drafts yet
+        </ThemedText>
+        <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
+          Start recording to create your first blog post
+        </ThemedText>
+        <AnimatedButton
+          variant="primary"
+          size="lg"
+          leftIcon="mic"
+          onPress={() => router.push('/recording')}
+        >
+          Start Recording
+        </AnimatedButton>
+      </View>
+    </FadeIn>
   );
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
-        <View style={styles.header}>
-          <ThemedText style={[styles.title, { color: colors.text }]}>Library</ThemedText>
-        </View>
+        <SlideIn direction="down" delay={0}>
+          <View style={styles.header}>
+            <ThemedText style={[styles.title, { color: colors.text }]}>Library</ThemedText>
+            <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}
+            </ThemedText>
+          </View>
+        </SlideIn>
 
         {/* Search */}
-        <View style={styles.searchContainer}>
-          <View style={[styles.searchInputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
-            <Ionicons name="search" size={20} color={colors.placeholder} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search drafts..."
-              placeholderTextColor={colors.placeholder}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={colors.placeholder} />
-              </Pressable>
-            )}
+        <SlideIn direction="down" delay={Duration.fastest}>
+          <View style={styles.searchContainer}>
+            <View
+              style={[
+                styles.searchInputWrapper,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="search" size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.text, fontFamily: 'Nunito_400Regular' }]}
+                placeholder="Search drafts..."
+                placeholderTextColor={colors.placeholder}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <PressableScale onPress={() => setSearchQuery('')} scale={0.9} haptic={false}>
+                  <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                </PressableScale>
+              )}
+            </View>
           </View>
-        </View>
+        </SlideIn>
 
         {/* Sort Options */}
-        <View style={styles.sortContainer}>
-          <Pressable
-            style={[
-              styles.sortOption,
-              {
-                backgroundColor: sortBy === 'date' ? colors.tint : 'transparent',
-                borderColor: sortBy === 'date' ? colors.tint : colors.border,
-              },
-            ]}
-            onPress={() => setSortBy('date')}
-          >
-            <ThemedText
+        <SlideIn direction="down" delay={Duration.fast}>
+          <View style={styles.sortContainer}>
+            <PressableScale
+              onPress={() => setSortBy('date')}
+              haptic={false}
               style={[
-                styles.sortText,
-                { color: sortBy === 'date' ? '#fff' : colors.text },
+                styles.sortOption,
+                {
+                  backgroundColor: sortBy === 'date' ? colors.primary : colors.surface,
+                  borderColor: sortBy === 'date' ? colors.primary : colors.border,
+                },
               ]}
             >
-              Recent
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.sortOption,
-              {
-                backgroundColor: sortBy === 'title' ? colors.tint : 'transparent',
-                borderColor: sortBy === 'title' ? colors.tint : colors.border,
-              },
-            ]}
-            onPress={() => setSortBy('title')}
-          >
-            <ThemedText
+              <ThemedText
+                style={[
+                  styles.sortText,
+                  { color: sortBy === 'date' ? colors.textInverse : colors.text },
+                ]}
+              >
+                Recent
+              </ThemedText>
+            </PressableScale>
+            <PressableScale
+              onPress={() => setSortBy('title')}
+              haptic={false}
               style={[
-                styles.sortText,
-                { color: sortBy === 'title' ? '#fff' : colors.text },
+                styles.sortOption,
+                {
+                  backgroundColor: sortBy === 'title' ? colors.primary : colors.surface,
+                  borderColor: sortBy === 'title' ? colors.primary : colors.border,
+                },
               ]}
             >
-              Title
-            </ThemedText>
-          </Pressable>
-        </View>
+              <ThemedText
+                style={[
+                  styles.sortText,
+                  { color: sortBy === 'title' ? colors.textInverse : colors.text },
+                ]}
+              >
+                Title
+              </ThemedText>
+            </PressableScale>
+          </View>
+        </SlideIn>
 
         {/* Draft List */}
         <FlatList
@@ -277,120 +302,152 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingHorizontal: Spacing[6],
+    paddingTop: Spacing[8],
+    paddingBottom: Spacing[4],
+    minHeight: 70,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     letterSpacing: -0.5,
+    lineHeight: 38,
+    marginBottom: Spacing[1],
+    includeFontPadding: false,
+  },
+  subtitle: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.normal,
+    lineHeight: 20,
   },
   searchContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 12,
+    paddingHorizontal: Spacing[6],
+    marginBottom: Spacing[4],
   },
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    gap: 10,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing[4],
+    gap: Spacing[3],
+    ...Shadows.sm,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
-    fontSize: 16,
+    paddingVertical: Spacing[3],
+    fontSize: Typography.fontSize.base,
+    lineHeight: 20,
   },
   sortContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 16,
-    gap: 10,
+    paddingHorizontal: Spacing[6],
+    marginBottom: Spacing[4],
+    gap: Spacing[3],
   },
   sortOption: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: Spacing[6],
+    paddingVertical: Spacing[2.5],
+    borderRadius: BorderRadius.full,
+    borderWidth: 2,
   },
   sortText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 18,
   },
   listContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingHorizontal: Spacing[6],
+    paddingBottom: Spacing[8],
+    flexGrow: 1,
   },
   draftCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
+    marginBottom: Spacing[4],
+    padding: 0,
   },
   draftHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: Spacing[5],
+    paddingTop: Spacing[4],
+    paddingBottom: Spacing[3],
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[1.5],
+    borderRadius: BorderRadius.full,
+    gap: Spacing[2],
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
   statusText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 16,
   },
   draftTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: 24,
+    paddingHorizontal: Spacing[5],
+    marginBottom: Spacing[2],
   },
   draftPreview: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.sm,
     lineHeight: 20,
-    marginBottom: 12,
+    paddingHorizontal: Spacing[5],
+    marginBottom: Spacing[3],
+    opacity: 0.85,
   },
   draftFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[3],
+    borderTopWidth: 1,
   },
   draftMeta: {
-    fontSize: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[1.5],
+  },
+  draftMetaText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: 16,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 80,
-    paddingHorizontal: 24,
+    paddingTop: Spacing[16],
+    paddingHorizontal: Spacing[6],
+    paddingBottom: Spacing[8],
+  },
+  emptyIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: BorderRadius['2xl'],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing[6],
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: 28,
+    marginBottom: Spacing[2],
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.base,
     textAlign: 'center',
-    marginBottom: 28,
-  },
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  emptyButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    lineHeight: 22,
+    marginBottom: Spacing[8],
   },
 });

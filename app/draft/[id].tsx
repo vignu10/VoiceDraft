@@ -4,7 +4,6 @@ import {
   View,
   TextInput,
   ScrollView,
-  Pressable,
   Alert,
   Share,
   KeyboardAvoidingView,
@@ -20,6 +19,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { countWords } from '@/utils/formatters';
 import type { Draft } from '@/types/draft';
 import { Ionicons } from '@expo/vector-icons';
+import { PressableScale } from '@/components/ui/animated/pressable-scale';
+import { FadeIn } from '@/components/ui/animated/animated-wrappers';
+import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
 
 type Tab = 'edit' | 'preview';
 
@@ -136,13 +138,13 @@ export default function DraftEditorScreen() {
   const getTitleCharColor = () => {
     if (title.length > 60) return colors.error;
     if (title.length > 50) return colors.warning;
-    return colors.textMuted;
+    return colors.textTertiary;
   };
 
   const getMetaCharColor = () => {
     if (metaDescription.length > 160) return colors.error;
     if (metaDescription.length > 150) return colors.warning;
-    return colors.textMuted;
+    return colors.textTertiary;
   };
 
   if (!draft) {
@@ -161,62 +163,65 @@ export default function DraftEditorScreen() {
           style={styles.keyboardView}
         >
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <View style={[styles.tabs, { backgroundColor: colors.backgroundSecondary }]}>
-              <Pressable
-                style={[
-                  styles.tab,
-                  activeTab === 'edit' && { backgroundColor: colors.tint },
-                ]}
-                onPress={() => setActiveTab('edit')}
-              >
-                <Ionicons
-                  name="create-outline"
-                  size={18}
-                  color={activeTab === 'edit' ? '#fff' : colors.textSecondary}
-                />
-                <ThemedText
+          <FadeIn>
+            <View style={[styles.header, { borderBottomColor: colors.border }]}>
+              <View style={[styles.tabs, { backgroundColor: colors.backgroundSecondary }]}>
+                <PressableScale
+                  onPress={() => setActiveTab('edit')}
                   style={[
-                    styles.tabText,
-                    { color: activeTab === 'edit' ? '#fff' : colors.text },
+                    styles.tab,
+                    activeTab === 'edit' && { backgroundColor: colors.primary },
                   ]}
                 >
-                  Edit
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.tab,
-                  activeTab === 'preview' && { backgroundColor: colors.tint },
-                ]}
-                onPress={() => setActiveTab('preview')}
-              >
-                <Ionicons
-                  name="eye-outline"
-                  size={18}
-                  color={activeTab === 'preview' ? '#fff' : colors.textSecondary}
-                />
-                <ThemedText
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={activeTab === 'edit' ? colors.textInverse : colors.textSecondary}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.tabText,
+                      { color: activeTab === 'edit' ? colors.textInverse : colors.text },
+                    ]}
+                  >
+                    Edit
+                  </ThemedText>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => setActiveTab('preview')}
                   style={[
-                    styles.tabText,
-                    { color: activeTab === 'preview' ? '#fff' : colors.text },
+                    styles.tab,
+                    activeTab === 'preview' && { backgroundColor: colors.primary },
                   ]}
                 >
-                  Preview
-                </ThemedText>
-              </Pressable>
+                  <Ionicons
+                    name="eye-outline"
+                    size={18}
+                    color={activeTab === 'preview' ? colors.textInverse : colors.textSecondary}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.tabText,
+                      { color: activeTab === 'preview' ? colors.textInverse : colors.text },
+                    ]}
+                  >
+                    Preview
+                  </ThemedText>
+                </PressableScale>
+              </View>
+              <PressableScale
+                onPress={handleExport}
+                hapticStyle="medium"
+                style={[
+                  styles.exportButton,
+                  { backgroundColor: colors.primary, ...Shadows.sm },
+                ]}
+              >
+                <Ionicons name="share-outline" size={18} color={colors.textInverse} />
+                <ThemedText style={[styles.exportText, { color: colors.textInverse }]}>Export</ThemedText>
+              </PressableScale>
             </View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.exportButton,
-                { backgroundColor: colors.tint, opacity: pressed ? 0.8 : 1 },
-              ]}
-              onPress={handleExport}
-            >
-              <Ionicons name="share-outline" size={18} color="#fff" />
-              <ThemedText style={styles.exportText}>Export</ThemedText>
-            </Pressable>
-          </View>
+          </FadeIn>
 
           {activeTab === 'edit' ? (
             <ScrollView
@@ -283,7 +288,7 @@ export default function DraftEditorScreen() {
                 <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>
                   Content
                 </ThemedText>
-                <ThemedText style={[styles.fieldHint, { color: colors.textMuted }]}>
+                <ThemedText style={[styles.fieldHint, { color: colors.textTertiary }]}>
                   Supports Markdown formatting
                 </ThemedText>
                 <TextInput
@@ -305,7 +310,7 @@ export default function DraftEditorScreen() {
               </View>
             </ScrollView>
           ) : (
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.previewContent}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.previewPadding}>
               <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
                 {title || 'Untitled'}
               </ThemedText>
@@ -315,16 +320,16 @@ export default function DraftEditorScreen() {
                 </ThemedText>
               )}
               <View style={[styles.previewDivider, { backgroundColor: colors.border }]} />
-              <ThemedText style={[styles.previewContent, { color: colors.text }]}>
+              <ThemedText style={[styles.previewBody, { color: colors.text }]}>
                 {content || 'No content yet...'}
               </ThemedText>
             </ScrollView>
           )}
 
           {/* Footer */}
-          <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
+          <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.surface }]}>
             <View style={styles.footerLeft}>
-              <Ionicons name="document-text" size={16} color={colors.textMuted} />
+              <Ionicons name="document-text" size={16} color={colors.textTertiary} />
               <ThemedText style={[styles.wordCount, { color: colors.textSecondary }]}>
                 {countWords(content)} words
               </ThemedText>
@@ -332,8 +337,8 @@ export default function DraftEditorScreen() {
             <View style={styles.footerRight}>
               {isSaving ? (
                 <View style={styles.savingIndicator}>
-                  <Ionicons name="sync" size={14} color={colors.textMuted} />
-                  <ThemedText style={[styles.saveStatus, { color: colors.textMuted }]}>
+                  <Ionicons name="sync" size={14} color={colors.textTertiary} />
+                  <ThemedText style={[styles.saveStatus, { color: colors.textTertiary }]}>
                     Saving...
                   </ThemedText>
                 </View>
@@ -372,134 +377,142 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[4],
     borderBottomWidth: 1,
+    ...Shadows.sm,
   },
   tabs: {
     flexDirection: 'row',
-    borderRadius: 10,
-    padding: 4,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing[1.5],
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    gap: Spacing[2],
+    paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[2.5],
+    borderRadius: BorderRadius.lg,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
   },
   exportButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: Spacing[2],
+    paddingHorizontal: Spacing[4] + 4,
+    paddingVertical: Spacing[3],
+    borderRadius: BorderRadius.xl,
   },
   exportText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: Spacing[6],
   },
   field: {
-    marginBottom: 24,
+    marginBottom: Spacing[6],
   },
   fieldHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing[2],
   },
   fieldLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
   },
   fieldHint: {
-    fontSize: 13,
-    marginBottom: 8,
+    fontSize: Typography.fontSize.sm,
+    marginBottom: Spacing[2],
   },
   charCount: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.sm,
   },
   titleInput: {
-    fontSize: 18,
-    fontWeight: '600',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.semibold,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing[4],
+    ...Shadows.sm,
   },
   metaInput: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.base,
     lineHeight: 22,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing[4],
     minHeight: 90,
+    ...Shadows.sm,
   },
   contentInput: {
-    fontSize: 15,
+    fontSize: Typography.fontSize.base,
     lineHeight: 24,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing[4],
     minHeight: 300,
+    ...Shadows.sm,
   },
-  previewContent: {
-    padding: 20,
+  previewPadding: {
+    padding: Spacing[6],
   },
   previewTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-    lineHeight: 34,
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing[3],
+    lineHeight: 36,
   },
   previewMeta: {
-    fontSize: 16,
+    fontSize: Typography.fontSize.md,
     fontStyle: 'italic',
     lineHeight: 24,
-    marginBottom: 16,
+    marginBottom: Spacing[4],
   },
   previewDivider: {
     height: 1,
-    marginVertical: 20,
+    marginVertical: Spacing[5],
+  },
+  previewBody: {
+    fontSize: Typography.fontSize.base,
+    lineHeight: 24,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing[6],
+    paddingVertical: Spacing[4],
     borderTopWidth: 1,
+    ...Shadows.lg,
   },
   footerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing[1.5],
   },
   footerRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   wordCount: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.sm,
   },
   savingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing[1],
   },
   saveStatus: {
-    fontSize: 14,
+    fontSize: Typography.fontSize.sm,
   },
 });

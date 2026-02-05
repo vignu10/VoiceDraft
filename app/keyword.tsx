@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, TextInput, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, View, TextInput, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -9,6 +9,10 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 import { TONE_DESCRIPTIONS, LENGTH_WORD_COUNTS } from '@/constants/config';
 import type { Tone, Length } from '@/types/draft';
 import { Ionicons } from '@expo/vector-icons';
+import { PressableScale } from '@/components/ui/animated/pressable-scale';
+import { FadeIn, SlideIn } from '@/components/ui/animated/animated-wrappers';
+import { AnimatedButton } from '@/components/ui/animated/animated-button';
+import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
 
 const TONES: { value: Tone; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: 'professional', icon: 'briefcase' },
@@ -57,156 +61,152 @@ export default function KeywordScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
-          <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
-              <Ionicons name="options" size={28} color={colors.tint} />
+          <FadeIn>
+            <View style={styles.header}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="options" size={28} color={colors.primary} />
+              </View>
+              <ThemedText style={[styles.title, { color: colors.text }]}>
+                Blog Options
+              </ThemedText>
+              <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Customize how your blog post will be generated
+              </ThemedText>
             </View>
-            <ThemedText style={[styles.title, { color: colors.text }]}>
-              Blog Options
-            </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Customize how your blog post will be generated
-            </ThemedText>
-          </View>
+          </FadeIn>
 
           {/* Keyword Input */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.label, { color: colors.text }]}>
-              Target Keyword
-            </ThemedText>
-            <ThemedText style={[styles.labelHint, { color: colors.textMuted }]}>
-              Optional - for SEO optimization
-            </ThemedText>
-            <View style={[styles.inputContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
-              <Ionicons name="search" size={20} color={colors.placeholder} />
-              <TextInput
-                style={[styles.input, { color: colors.text }]}
-                placeholder="e.g., productivity tips"
-                placeholderTextColor={colors.placeholder}
-                value={keyword}
-                onChangeText={setKeyword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+          <SlideIn direction="up" delay={100}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.label, { color: colors.text }]}>
+                Target Keyword
+              </ThemedText>
+              <ThemedText style={[styles.labelHint, { color: colors.textTertiary }]}>
+                Optional - for SEO optimization
+              </ThemedText>
+              <View style={[styles.inputContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+                <Ionicons name="search" size={20} color={colors.placeholder} />
+                <TextInput
+                  style={[styles.input, { color: colors.text }]}
+                  placeholder="e.g., productivity tips"
+                  placeholderTextColor={colors.placeholder}
+                  value={keyword}
+                  onChangeText={setKeyword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
             </View>
-          </View>
+          </SlideIn>
 
           {/* Tone Selection */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.label, { color: colors.text }]}>
-              Writing Tone
-            </ThemedText>
-            <View style={styles.toneGrid}>
-              {TONES.map((t) => (
-                <Pressable
-                  key={t.value}
-                  style={[
-                    styles.toneCard,
-                    {
-                      backgroundColor: tone === t.value ? colors.tint : colors.card,
-                      borderColor: tone === t.value ? colors.tint : colors.cardBorder,
-                    },
-                  ]}
-                  onPress={() => setTone(t.value)}
-                >
-                  <Ionicons
-                    name={t.icon}
-                    size={24}
-                    color={tone === t.value ? '#fff' : colors.textSecondary}
-                  />
-                  <ThemedText
+          <SlideIn direction="up" delay={200}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.label, { color: colors.text }]}>
+                Writing Tone
+              </ThemedText>
+              <View style={styles.toneGrid}>
+                {TONES.map((t) => (
+                  <PressableScale
+                    key={t.value}
+                    onPress={() => setTone(t.value)}
                     style={[
-                      styles.toneLabel,
-                      { color: tone === t.value ? '#fff' : colors.text },
+                      styles.toneCard,
+                      {
+                        backgroundColor: tone === t.value ? colors.primary : colors.surface,
+                        borderColor: tone === t.value ? colors.primary : colors.border,
+                      },
+                      tone === t.value && Shadows.sm,
                     ]}
                   >
-                    {t.value.charAt(0).toUpperCase() + t.value.slice(1)}
-                  </ThemedText>
-                  <ThemedText
-                    style={[
-                      styles.toneDesc,
-                      { color: tone === t.value ? 'rgba(255,255,255,0.8)' : colors.textMuted },
-                    ]}
-                  >
-                    {TONE_DESCRIPTIONS[t.value]}
-                  </ThemedText>
-                </Pressable>
-              ))}
+                    <Ionicons
+                      name={t.icon}
+                      size={24}
+                      color={tone === t.value ? colors.textInverse : colors.textSecondary}
+                    />
+                    <ThemedText
+                      style={[
+                        styles.toneLabel,
+                        { color: tone === t.value ? colors.textInverse : colors.text },
+                      ]}
+                    >
+                      {t.value.charAt(0).toUpperCase() + t.value.slice(1)}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.toneDesc,
+                        { color: tone === t.value ? 'rgba(255,255,255,0.75)' : colors.textTertiary },
+                      ]}
+                    >
+                      {TONE_DESCRIPTIONS[t.value]}
+                    </ThemedText>
+                  </PressableScale>
+                ))}
+              </View>
             </View>
-          </View>
+          </SlideIn>
 
           {/* Length Selection */}
-          <View style={styles.section}>
-            <ThemedText style={[styles.label, { color: colors.text }]}>
-              Article Length
-            </ThemedText>
-            <View style={styles.lengthRow}>
-              {LENGTHS.map((l) => (
-                <Pressable
-                  key={l}
-                  style={[
-                    styles.lengthCard,
-                    {
-                      backgroundColor: length === l ? colors.tint : colors.card,
-                      borderColor: length === l ? colors.tint : colors.cardBorder,
-                    },
-                  ]}
-                  onPress={() => setLength(l)}
-                >
-                  <ThemedText
+          <SlideIn direction="up" delay={300}>
+            <View style={styles.section}>
+              <ThemedText style={[styles.label, { color: colors.text }]}>
+                Article Length
+              </ThemedText>
+              <View style={styles.lengthRow}>
+                {LENGTHS.map((l) => (
+                  <PressableScale
+                    key={l}
+                    onPress={() => setLength(l)}
                     style={[
-                      styles.lengthLabel,
-                      { color: length === l ? '#fff' : colors.text },
+                      styles.lengthCard,
+                      {
+                        backgroundColor: length === l ? colors.primary : colors.surface,
+                        borderColor: length === l ? colors.primary : colors.border,
+                      },
+                      length === l && Shadows.sm,
                     ]}
                   >
-                    {l.charAt(0).toUpperCase() + l.slice(1)}
-                  </ThemedText>
-                  <ThemedText
-                    style={[
-                      styles.lengthWords,
-                      { color: length === l ? 'rgba(255,255,255,0.8)' : colors.textMuted },
-                    ]}
-                  >
-                    {LENGTH_WORD_COUNTS[l].min}-{LENGTH_WORD_COUNTS[l].max}
-                  </ThemedText>
-                </Pressable>
-              ))}
+                    <ThemedText
+                      style={[
+                        styles.lengthLabel,
+                        { color: length === l ? colors.textInverse : colors.text },
+                      ]}
+                    >
+                      {l.charAt(0).toUpperCase() + l.slice(1)}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.lengthWords,
+                        { color: length === l ? 'rgba(255,255,255,0.75)' : colors.textTertiary },
+                      ]}
+                    >
+                      {LENGTH_WORD_COUNTS[l].min}-{LENGTH_WORD_COUNTS[l].max}
+                    </ThemedText>
+                  </PressableScale>
+                ))}
+              </View>
             </View>
-          </View>
+          </SlideIn>
         </ScrollView>
 
         {/* Actions */}
-        <View style={[styles.actions, { borderTopColor: colors.border }]}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.skipButton,
-              {
-                borderColor: colors.border,
-                opacity: pressed ? 0.7 : 1,
-              },
-            ]}
-            onPress={handleSkip}
-          >
-            <ThemedText style={[styles.skipButtonText, { color: colors.text }]}>
+        <FadeIn delay={400}>
+          <View style={[styles.actions, { borderTopColor: colors.border }]}>
+            <AnimatedButton variant="secondary" onPress={handleSkip}>
               Skip
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.continueButton,
-              {
-                backgroundColor: colors.tint,
-                opacity: pressed ? 0.8 : 1,
-              },
-            ]}
-            onPress={handleContinue}
-          >
-            <ThemedText style={styles.continueButtonText}>
-              Generate Blog
-            </ThemedText>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </Pressable>
-        </View>
+            </AnimatedButton>
+            <View style={styles.continueWrapper}>
+              <AnimatedButton
+                variant="primary"
+                onPress={handleContinue}
+                rightIcon="arrow-forward"
+                fullWidth
+              >
+                Generate Blog
+              </AnimatedButton>
+            </View>
+          </View>
+        </FadeIn>
       </SafeAreaView>
     </ThemedView>
   );
@@ -223,123 +223,104 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
+    padding: Spacing[6],
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: Spacing[8],
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 64,
+    height: 64,
+    borderRadius: BorderRadius['2xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing[5],
+    ...Shadows.md,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: Typography.fontWeight.extrabold,
+    marginBottom: Spacing[2],
+    letterSpacing: Typography.letterSpacing.tight,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: Typography.fontSize.md,
     textAlign: 'center',
   },
   section: {
-    marginBottom: 28,
+    marginBottom: Spacing[7],
   },
   label: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing[1],
   },
   labelHint: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: Typography.fontSize.sm,
+    marginBottom: Spacing[3],
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    gap: Spacing[3],
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing[4],
+    ...Shadows.sm,
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
-    fontSize: 16,
+    paddingVertical: Spacing[4],
+    fontSize: Typography.fontSize.md,
   },
   toneGrid: {
-    gap: 12,
+    gap: Spacing[3],
   },
   toneCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    borderWidth: 1,
-    borderRadius: 14,
-    padding: 16,
+    gap: Spacing[3] + 2,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius['2xl'],
+    padding: Spacing[4] + 4,
   },
   toneLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.md,
+    fontWeight: Typography.fontWeight.semibold,
     flex: 1,
   },
   toneDesc: {
-    fontSize: 13,
+    fontSize: Typography.fontSize.sm,
   },
   lengthRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing[3],
   },
   lengthCard: {
     flex: 1,
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.xl,
+    paddingVertical: Spacing[5],
+    paddingHorizontal: Spacing[3],
   },
   lengthLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
   },
   lengthWords: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: Typography.fontSize.xs,
+    marginTop: Spacing[1],
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 24,
-    paddingTop: 16,
+    gap: Spacing[3],
+    padding: Spacing[6],
+    paddingTop: Spacing[4],
     borderTopWidth: 1,
   },
-  skipButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  skipButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  continueButton: {
+  continueWrapper: {
     flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    borderRadius: 14,
-  },
-  continueButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

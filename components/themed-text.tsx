@@ -1,4 +1,4 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
+import { StyleSheet, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
@@ -7,6 +7,25 @@ export type ThemedTextProps = TextProps & {
   darkColor?: string;
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
+
+// Map fontWeight to Nunito font family
+function getNunitoFamily(weight?: TextStyle['fontWeight']): string {
+  switch (weight) {
+    case '800':
+    case 'bold':
+      return 'Nunito_700Bold';
+    case '700':
+      return 'Nunito_700Bold';
+    case '600':
+      return 'Nunito_600SemiBold';
+    case '500':
+      return 'Nunito_500Medium';
+    case '400':
+    case 'normal':
+    default:
+      return 'Nunito_400Regular';
+  }
+}
 
 export function ThemedText({
   style,
@@ -17,16 +36,20 @@ export function ThemedText({
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
+  // Resolve the type-based style
+  const typeStyle = type !== 'default' ? styles[type] : styles.default;
+
+  // Flatten all styles to extract the effective fontWeight
+  const flatStyle = (StyleSheet.flatten([typeStyle, style]) || {}) as TextStyle;
+  const fontFamily = getNunitoFamily(flatStyle.fontWeight);
+
   return (
     <Text
       style={[
         { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
+        typeStyle,
         style,
+        { fontFamily },
       ]}
       {...rest}
     />
@@ -46,7 +69,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    lineHeight: 32,
+    lineHeight: 38,
   },
   subtitle: {
     fontSize: 20,
@@ -55,6 +78,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    color: '#8B5CF6',
   },
 });

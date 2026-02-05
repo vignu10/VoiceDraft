@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { StyleSheet, View, ActivityIndicator, Pressable } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
@@ -11,8 +11,36 @@ import { generateId } from '@/utils/formatters';
 import type { Tone, Length, Draft } from '@/types/draft';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { MIN_TRANSCRIPT_LENGTH, MIN_TRANSCRIPT_WORDS } from '@/constants/config';
+import { FadeIn, SlideIn, ScaleIn } from '@/components/ui/animated/animated-wrappers';
+import { AnimatedButton } from '@/components/ui/animated/animated-button';
+import { AnimatedCard } from '@/components/ui/animated/animated-card';
+import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
 
 type Step = 'transcribing' | 'generating' | 'complete' | 'error';
+
+// Validate transcript has meaningful content
+function validateTranscript(text: string): { valid: boolean; reason?: string } {
+  const trimmed = text.trim();
+
+  // Check if empty
+  if (!trimmed) {
+    return { valid: false, reason: 'No speech was detected in your recording. Please try again and speak clearly into the microphone.' };
+  }
+
+  // Check minimum length
+  if (trimmed.length < MIN_TRANSCRIPT_LENGTH) {
+    return { valid: false, reason: 'The recording was too short. Please record at least a few sentences for the best results.' };
+  }
+
+  // Check minimum word count
+  const wordCount = trimmed.split(/\s+/).filter(word => word.length > 0).length;
+  if (wordCount < MIN_TRANSCRIPT_WORDS) {
+    return { valid: false, reason: `Only ${wordCount} words were detected. Please speak more content for a meaningful blog post.` };
+  }
+
+  return { valid: true };
+}
 
 export default function ProcessingScreen() {
   const params = useLocalSearchParams<{
@@ -39,6 +67,12 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
         const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+
+        // Validate transcription before calling generate API
+        const validation = validateTranscript(transcription.text);
+        if (!validation.valid) {
+          throw new Error(validation.reason);
+        }
 
         setStep('generating');
         const blog = await generateMutation.mutateAsync({
@@ -97,6 +131,12 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
         const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+
+        // Validate transcription before calling generate API
+        const validation = validateTranscript(transcription.text);
+        if (!validation.valid) {
+          throw new Error(validation.reason);
+        }
 
         setStep('generating');
         const blog = await generateMutation.mutateAsync({
@@ -179,7 +219,7 @@ export default function ProcessingScreen() {
         case 'complete':
           return colors.success;
         case 'active':
-          return colors.tint;
+          return colors.primary;
         case 'error':
           return colors.error;
         default:
@@ -200,7 +240,7 @@ export default function ProcessingScreen() {
             <Ionicons name="close" size={18} color="#fff" />
           )}
           {status === 'pending' && (
-            <Ionicons name={icon} size={16} color={colors.textMuted} />
+            <Ionicons name={icon} size={16} color={colors.textTertiary} />
           )}
         </View>
         <ThemedText
@@ -221,60 +261,66 @@ export default function ProcessingScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           {/* Icon */}
-          <View style={[styles.iconContainer, { backgroundColor: step === 'error' ? colors.errorLight : colors.tint + '15' }]}>
-            <Ionicons
-              name={step === 'error' ? 'alert-circle' : step === 'complete' ? 'checkmark-circle' : 'sparkles'}
-              size={40}
-              color={step === 'error' ? colors.error : colors.tint}
-            />
-          </View>
+          <ScaleIn>
+            <View style={[styles.iconContainer, { backgroundColor: step === 'error' ? colors.errorLight : colors.primaryLight }]}>
+              <Ionicons
+                name={step === 'error' ? 'alert-circle' : step === 'complete' ? 'checkmark-circle' : 'sparkles'}
+                size={40}
+                color={step === 'error' ? colors.error : colors.primary}
+              />
+            </View>
+          </ScaleIn>
 
-          <ThemedText style={[styles.title, { color: colors.text }]}>
-            {step === 'error' ? 'Something went wrong' : step === 'complete' ? 'All done!' : 'Creating your blog post'}
-          </ThemedText>
+          <FadeIn delay={100}>
+            <ThemedText style={[styles.title, { color: colors.text }]}>
+              {step === 'error' ? 'Something went wrong' : step === 'complete' ? 'All done!' : 'Creating your blog post'}
+            </ThemedText>
+          </FadeIn>
 
-          <View style={[styles.stepsCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <StepIndicator label="Transcribing audio" targetStep="transcribing" icon="mic" />
-            <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
-            <StepIndicator label="Generating blog post" targetStep="generating" icon="document-text" />
-            <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
-            <StepIndicator label="Optimizing for SEO" targetStep="complete" icon="trending-up" />
-          </View>
+          <SlideIn direction="up" delay={200}>
+            <AnimatedCard
+              variant="outlined"
+              style={styles.stepsCard}
+              animateEntry={false}
+            >
+              <StepIndicator label="Transcribing audio" targetStep="transcribing" icon="mic" />
+              <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
+              <StepIndicator label="Generating blog post" targetStep="generating" icon="document-text" />
+              <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
+              <StepIndicator label="Optimizing for SEO" targetStep="complete" icon="trending-up" />
+            </AnimatedCard>
+          </SlideIn>
 
           {error && (
-            <View style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
-              <Ionicons name="warning" size={20} color={colors.error} />
-              <ThemedText style={[styles.errorText, { color: colors.error }]}>
-                {error}
-              </ThemedText>
-            </View>
+            <FadeIn>
+              <View style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
+                <Ionicons name="warning" size={20} color={colors.error} />
+                <ThemedText style={[styles.errorText, { color: colors.error }]}>
+                  {error}
+                </ThemedText>
+              </View>
+            </FadeIn>
           )}
         </View>
 
         {step === 'error' && (
-          <View style={styles.actions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.cancelButton,
-                { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-              ]}
-              onPress={handleCancel}
-            >
-              <ThemedText style={[styles.cancelButtonText, { color: colors.text }]}>
+          <FadeIn>
+            <View style={styles.actions}>
+              <AnimatedButton variant="secondary" onPress={handleCancel}>
                 Cancel
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.retryButton,
-                { backgroundColor: colors.tint, opacity: pressed ? 0.8 : 1 },
-              ]}
-              onPress={handleRetry}
-            >
-              <Ionicons name="refresh" size={20} color="#fff" />
-              <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
-            </Pressable>
-          </View>
+              </AnimatedButton>
+              <View style={styles.retryWrapper}>
+                <AnimatedButton
+                  variant="primary"
+                  onPress={handleRetry}
+                  leftIcon="refresh"
+                  fullWidth
+                >
+                  Retry
+                </AnimatedButton>
+              </View>
+            </View>
+          </FadeIn>
         )}
       </SafeAreaView>
     </ThemedView>
@@ -290,96 +336,74 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    padding: 24,
+    padding: Spacing[6],
     alignItems: 'center',
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 96,
+    height: 96,
+    borderRadius: BorderRadius['3xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing[8],
+    ...Shadows.xl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 32,
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: Typography.fontWeight.extrabold,
+    marginBottom: Spacing[10],
     textAlign: 'center',
+    letterSpacing: Typography.letterSpacing.tight,
   },
   stepsCard: {
     width: '100%',
     maxWidth: 320,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: Spacing[4],
   },
   stepDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.sm,
   },
   stepLine: {
     width: 2,
-    height: 20,
-    marginLeft: 17,
-    marginVertical: 4,
+    height: 24,
+    marginLeft: 19,
+    marginVertical: Spacing[1.5],
   },
   stepLabel: {
-    fontSize: 16,
+    fontSize: Typography.fontSize.md,
     flex: 1,
   },
   stepLabelActive: {
-    fontWeight: '600',
+    fontWeight: Typography.fontWeight.semibold,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 12,
+    gap: Spacing[3],
+    marginTop: Spacing[8],
+    padding: Spacing[5],
+    borderRadius: BorderRadius.xl,
     width: '100%',
   },
   errorText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: Typography.fontSize.sm,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
-    padding: 24,
+    gap: Spacing[3],
+    padding: Spacing[6],
   },
-  cancelButton: {
+  retryWrapper: {
     flex: 1,
-    padding: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  retryButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    borderRadius: 14,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

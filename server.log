@@ -1,0 +1,29 @@
+[dotenv@17.2.3] injecting env (2) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+🚀 VoiceDraft API Server
+========================
+📡 Running on http://0.0.0.0:3000
+🌐 Local network: http://192.168.29.236:3000
+
+Available endpoints:
+  GET  /api/health     - Health check
+  POST /api/transcribe - Transcribe audio (Whisper)
+  POST /api/generate   - Generate blog post (GPT-4)
+
+✅ OpenAI API key configured
+
+📝 Received transcription request
+📁 File saved to: /home/matrix/voicedraft/uploads/1770287082236-recording.m4a
+🎤 Calling OpenAI Whisper API...
+✅ Transcription successful
+📄 Text: You...
+📝 Received transcription request
+📁 File saved to: /home/matrix/voicedraft/uploads/1770289092097-recording.m4a
+🎤 Calling OpenAI Whisper API...
+✅ Transcription successful
+📄 Text: hello this is a draft for the book building hard things about hard things the book explains the buil...
+📝 Received blog generation request
+📊 Transcript stats: 155 words, 824 characters
+🤖 Calling OpenAI GPT-4o...
+✅ Blog generation successful
+📄 Title: Why 'The Hard Thing About Hard Things' is a Must-Read
