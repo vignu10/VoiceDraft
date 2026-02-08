@@ -42,6 +42,9 @@ uploads/
 
 app-example
 
+# bugreports
+bugreport-*.zip
+
 # generated native folders
 /ios
 /android
