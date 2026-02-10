@@ -16,8 +16,8 @@ export interface Draft {
   content?: string;
   wordCount?: number;
   isFavorite: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // ISO date string for AsyncStorage compatibility
+  updatedAt: string; // ISO date string for AsyncStorage compatibility
 }
 
 export interface TranscriptionResult {

@@ -2,6 +2,7 @@
  * Theme color hook for accessing theme-aware colors
  */
 
+import { useMemo } from 'react';
 import { ThemeColors } from '@/constants/design-system';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -22,9 +23,13 @@ export function useThemeColor(
 }
 
 // Hook to get multiple theme colors at once - returns all theme colors
+// Memoized to prevent unnecessary re-renders
 export function useThemeColors() {
   const theme = useColorScheme() ?? 'light';
-  return ThemeColors[theme];
+  return useMemo(() => ({
+    ...ThemeColors[theme],
+    isDark: theme === 'dark',
+  }), [theme]);
 }
 
 // Alias for backward compatibility

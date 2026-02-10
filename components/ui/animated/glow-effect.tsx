@@ -1,9 +1,8 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSequence,
   withTiming,
   Easing,
@@ -43,11 +42,12 @@ export function GlowEffect({
   };
 
   const config = getIntensityConfig();
+  const glowIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (animated) {
-      glowOpacity.value = withRepeat(
-        withSequence(
+      const animateGlow = () => {
+        glowOpacity.value = withSequence(
           withTiming(config.opacity, {
             duration: Duration.pulse / 2,
             easing: Easing.inOut(Easing.ease),
@@ -56,11 +56,23 @@ export function GlowEffect({
             duration: Duration.pulse / 2,
             easing: Easing.inOut(Easing.ease),
           })
-        ),
-        -1,
-        true
-      );
+        );
+      };
+
+      animateGlow();
+      glowIntervalRef.current = setInterval(animateGlow, Duration.pulse);
+    } else {
+      if (glowIntervalRef.current) {
+        clearInterval(glowIntervalRef.current);
+        glowIntervalRef.current = null;
+      }
     }
+
+    return () => {
+      if (glowIntervalRef.current) {
+        clearInterval(glowIntervalRef.current);
+      }
+    };
   }, [animated, config.opacity, glowOpacity]);
 
   const glowStyle = useAnimatedStyle(() => ({
@@ -100,23 +112,18 @@ export function GlowRing({ size, color, style }: GlowRingProps) {
   const ringColor = color || colors.primary;
 
   useEffect(() => {
-    scale.value = withRepeat(
-      withTiming(1.5, { duration: 1500, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-    opacity.value = withRepeat(
-      withTiming(0, { duration: 1500, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
+    const animateRing = () => {
+      scale.value = withTiming(1.5, { duration: 1500, easing: Easing.out(Easing.ease) });
+      opacity.value = withTiming(0, { duration: 1500, easing: Easing.out(Easing.ease) });
+    };
+
+    animateRing();
 
     // Reset after each animation cycle
     const interval = setInterval(() => {
       scale.value = 1;
       opacity.value = 0.6;
-      scale.value = withTiming(1.5, { duration: 1500, easing: Easing.out(Easing.ease) });
-      opacity.value = withTiming(0, { duration: 1500, easing: Easing.out(Easing.ease) });
+      animateRing();
     }, 1500);
 
     return () => clearInterval(interval);

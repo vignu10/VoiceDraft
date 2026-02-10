@@ -134,6 +134,10 @@ export const ThemeColors = {
     accentLight: Palette.coral[50],
     accentDark: Palette.coral[600],
 
+    // Secondary - Teal
+    teal: Palette.teal[500],
+    tealLight: Palette.teal[50],
+
     // Card
     card: Palette.white,
     cardBorder: Palette.neutral[200],
@@ -211,6 +215,10 @@ export const ThemeColors = {
     accent: Palette.coral[400],
     accentLight: 'rgba(248, 127, 148, 0.12)',
     accentDark: Palette.coral[500],
+
+    // Secondary - Teal
+    teal: Palette.teal[400],
+    tealLight: 'rgba(20, 184, 166, 0.12)',
 
     // Card
     card: Palette.neutral[900],
@@ -424,3 +432,21 @@ export const ZIndex = {
   toast: 1400,
   tooltip: 1500,
 };
+
+// ============================================
+// COLOR UTILITIES
+// ============================================
+
+/**
+ * Convert hex color to rgba with specified opacity
+ * @param hex - Hex color string (with or without #)
+ * @param opacity - Opacity value from 0-1
+ * @returns rgba color string
+ */
+export function withOpacity(hex: string, opacity: number): string {
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}

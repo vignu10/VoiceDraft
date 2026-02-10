@@ -13,7 +13,7 @@ import { PressableScale } from './pressable-scale';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
 import { Typography, Spacing, BorderRadius } from '@/constants/design-system';
-import { Springs, Stagger } from '@/constants/animations';
+import { Springs } from '@/constants/animations';
 
 interface AnimatedListItemProps {
   children?: ReactNode;

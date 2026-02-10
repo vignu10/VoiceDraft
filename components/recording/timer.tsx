@@ -1,18 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSequence,
   withTiming,
   withSpring,
   Easing,
   cancelAnimation,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { formatDuration } from '@/utils/formatters';
 import { RECORDING_WARNING_THRESHOLD, MAX_RECORDING_DURATION } from '@/constants/config';
 import { Spacing, Typography } from '@/constants/design-system';
 import { Springs } from '@/constants/animations';
@@ -36,6 +35,7 @@ export function Timer({
   const isWarning = showWarning && seconds >= RECORDING_WARNING_THRESHOLD;
   const isActivelyRecording = isRecording && !isPaused;
   const progress = seconds / maxSeconds;
+  const reducedMotion = useReducedMotion();
 
   // Animation values
   const dotOpacity = useSharedValue(isActivelyRecording ? 0.4 : 1);
@@ -54,25 +54,46 @@ export function Timer({
   }, [seconds]);
 
   // Dot pulse animation
+  const dotOpacityIntervalRef = useRef<number | null>(null);
+  const dotScaleIntervalRef = useRef<number | null>(null);
+
   useEffect(() => {
+    // Skip animations if reduced motion is enabled
+    if (reducedMotion) {
+      dotOpacity.value = isPaused ? 0.5 : 1;
+      dotScale.value = isPaused ? 0.9 : 1;
+      return;
+    }
+
     if (isActivelyRecording) {
-      dotOpacity.value = withRepeat(
-        withSequence(
+      const animateDotOpacity = () => {
+        dotOpacity.value = withSequence(
           withTiming(0.4, { duration: 900, easing: Easing.inOut(Easing.ease) }),
           withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
-      dotScale.value = withRepeat(
-        withSequence(
+        );
+      };
+
+      const animateDotScale = () => {
+        dotScale.value = withSequence(
           withTiming(1.15, { duration: 900, easing: Easing.inOut(Easing.ease) }),
           withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
+        );
+      };
+
+      animateDotOpacity();
+      animateDotScale();
+
+      dotOpacityIntervalRef.current = setInterval(animateDotOpacity, 1800);
+      dotScaleIntervalRef.current = setInterval(animateDotScale, 1800);
     } else {
+      if (dotOpacityIntervalRef.current) {
+        clearInterval(dotOpacityIntervalRef.current);
+        dotOpacityIntervalRef.current = null;
+      }
+      if (dotScaleIntervalRef.current) {
+        clearInterval(dotScaleIntervalRef.current);
+        dotScaleIntervalRef.current = null;
+      }
       cancelAnimation(dotOpacity);
       cancelAnimation(dotScale);
       dotOpacity.value = withSpring(isPaused ? 0.5 : 1, Springs.gentle);
@@ -80,37 +101,66 @@ export function Timer({
     }
     // Cleanup on unmount
     return () => {
+      if (dotOpacityIntervalRef.current) {
+        clearInterval(dotOpacityIntervalRef.current);
+      }
+      if (dotScaleIntervalRef.current) {
+        clearInterval(dotScaleIntervalRef.current);
+      }
       cancelAnimation(dotOpacity);
       cancelAnimation(dotScale);
     };
-  }, [isActivelyRecording, isPaused]);
+  }, [isActivelyRecording, isPaused, dotOpacity, dotScale, reducedMotion]);
 
   // Timer scale animation on value change
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      timerScale.value = 1;
+      return;
+    }
     timerScale.value = withSequence(
       withTiming(1.02, { duration: 100 }),
       withTiming(1, { duration: 150, easing: Easing.out(Easing.cubic) })
     );
     return () => cancelAnimation(timerScale);
-  }, [seconds, timerScale]);
+  }, [seconds, timerScale, reducedMotion]);
 
   // Colon blink animation when paused
+  const colonBlinkIntervalRef = useRef<number | null>(null);
+
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      colonBlink.value = 1;
+      return;
+    }
+
     if (isPaused) {
-      colonBlink.value = withRepeat(
-        withSequence(
+      const animateColonBlink = () => {
+        colonBlink.value = withSequence(
           withTiming(0.3, { duration: 500 }),
           withTiming(1, { duration: 500 })
-        ),
-        -1,
-        true
-      );
+        );
+      };
+
+      animateColonBlink();
+      colonBlinkIntervalRef.current = setInterval(animateColonBlink, 1000);
     } else {
+      if (colonBlinkIntervalRef.current) {
+        clearInterval(colonBlinkIntervalRef.current);
+        colonBlinkIntervalRef.current = null;
+      }
       cancelAnimation(colonBlink);
       colonBlink.value = withSpring(1, Springs.gentle);
     }
-    return () => cancelAnimation(colonBlink);
-  }, [isPaused, colonBlink]);
+    return () => {
+      if (colonBlinkIntervalRef.current) {
+        clearInterval(colonBlinkIntervalRef.current);
+      }
+      cancelAnimation(colonBlink);
+    };
+  }, [isPaused, colonBlink, reducedMotion]);
 
   const dotStyle = useAnimatedStyle(() => ({
     opacity: dotOpacity.value,

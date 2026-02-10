@@ -12,15 +12,17 @@ export function formatDuration(seconds: number): string {
 /**
  * Format date for display in draft list
  */
-export function formatDate(date: Date): string {
-  return format(date, 'MMM d, yyyy');
+export function formatDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return format(dateObj, 'MMM d, yyyy');
 }
 
 /**
  * Format date as relative time (e.g., "2 hours ago")
  */
-export function formatRelativeTime(date: Date): string {
-  return formatDistanceToNow(date, { addSuffix: true });
+export function formatRelativeTime(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return formatDistanceToNow(dateObj, { addSuffix: true });
 }
 
 /**

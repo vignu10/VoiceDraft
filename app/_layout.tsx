@@ -6,13 +6,12 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { QueryProvider } from '@/providers/query-provider';
+import { DialogProvider } from '@/components/ui/dialog';
 import { useFonts } from '@expo-google-fonts/nunito/useFonts';
 import {
   Nunito_400Regular,
-  Nunito_500Medium,
   Nunito_600SemiBold,
   Nunito_700Bold,
-  Nunito_800ExtraBold,
 } from '@expo-google-fonts/nunito';
 import { useEffect } from 'react';
 
@@ -25,27 +24,34 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  // OPTIMIZATION: Load only essential font variants (3 instead of 5)
+  // This reduces initial bundle size and speeds up time-to-interactive
   const [fontsLoaded] = useFonts({
     Nunito_400Regular,
-    Nunito_500Medium,
     Nunito_600SemiBold,
     Nunito_700Bold,
-    Nunito_800ExtraBold,
   });
 
   useEffect(() => {
+    // OPTIMIZATION: Add timeout to hide splash screen after 3 seconds max
+    // This prevents indefinite splash screen on slow connections
+    const timeoutId = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 3000);
+
     if (fontsLoaded) {
+      clearTimeout(timeoutId);
       SplashScreen.hideAsync();
     }
+
+    return () => clearTimeout(timeoutId);
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
+  // OPTIMIZATION: Remove blocking render - show app immediately with fallback fonts
   return (
     <QueryProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <DialogProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
@@ -69,17 +75,11 @@ export default function RootLayout() {
               gestureEnabled: false,
             }}
           />
-          <Stack.Screen
-            name="draft/[id]"
-            options={{
-              headerShown: true,
-              title: 'Edit Draft',
-            }}
-          />
           <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true, title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
+    </DialogProvider>
     </QueryProvider>
   );
 }

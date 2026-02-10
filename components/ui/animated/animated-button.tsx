@@ -1,18 +1,10 @@
 import React, { ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { PressableScale } from './pressable-scale';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
 import { Typography, Spacing, BorderRadius, Shadows } from '@/constants/design-system';
-import { Springs, Duration } from '@/constants/animations';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -41,7 +33,6 @@ export function AnimatedButton({
   fullWidth = false,
 }: AnimatedButtonProps) {
   const colors = useThemeColors();
-  const shimmerPosition = useSharedValue(0);
 
   const getColors = () => {
     switch (variant) {

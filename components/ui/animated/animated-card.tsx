@@ -4,14 +4,13 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
   withDelay,
   interpolate,
 } from 'react-native-reanimated';
 import { PressableScale } from './pressable-scale';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { Spacing, BorderRadius, Shadows } from '@/constants/design-system';
-import { Duration, Easings, Springs } from '@/constants/animations';
+import { Springs } from '@/constants/animations';
 
 type CardVariant = 'flat' | 'elevated' | 'outlined';
 
@@ -21,8 +20,12 @@ interface AnimatedCardProps {
   style?: StyleProp<ViewStyle>;
   pressable?: boolean;
   onPress?: () => void;
+  onLongPress?: () => void;
   delay?: number;
   animateEntry?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: 'button' | 'text' | 'none' | 'link' | 'header' | 'adjustable' | 'image' | 'keyboardkey' | 'menuitem' | 'progressbar' | 'radio' | 'radiogroup' | 'scrollbar' | 'search' | 'spinbutton' | 'summary' | 'switch' | 'tab' | 'tablist' | 'timer' | 'toolbar' | 'list' | undefined;
 }
 
 export function AnimatedCard({
@@ -31,8 +34,12 @@ export function AnimatedCard({
   style,
   pressable = false,
   onPress,
+  onLongPress,
   delay = 0,
   animateEntry = true,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
 }: AnimatedCardProps) {
   const colors = useThemeColors();
   const progress = useSharedValue(animateEntry ? 0 : 1);
@@ -92,7 +99,14 @@ export function AnimatedCard({
 
   if (pressable && onPress) {
     return (
-      <PressableScale onPress={onPress} scale={0.98}>
+      <PressableScale
+        onPress={onPress}
+        onLongPress={onLongPress}
+        scale={0.98}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityRole={accessibilityRole}
+      >
         {cardContent}
       </PressableScale>
     );

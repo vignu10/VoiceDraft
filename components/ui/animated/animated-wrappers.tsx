@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useRef } from 'react';
 import { ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -6,8 +6,10 @@ import Animated, {
   withSpring,
   withTiming,
   withDelay,
+  withSequence,
   interpolate,
   Extrapolation,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { Duration, Easings, Springs } from '@/constants/animations';
 
@@ -28,13 +30,19 @@ export function FadeIn({
   style,
 }: FadeInProps) {
   const opacity = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      opacity.value = 1;
+      return;
+    }
     opacity.value = withDelay(
       delay,
       withTiming(1, { duration, easing: Easings.easeOut })
     );
-  }, [delay, duration, opacity]);
+  }, [delay, duration, opacity, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -68,10 +76,16 @@ export function SlideIn({
   style,
 }: SlideInProps) {
   const progress = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      progress.value = 1;
+      return;
+    }
     progress.value = withDelay(delay, withSpring(1, Springs.default));
-  }, [delay, progress]);
+  }, [delay, progress, reducedMotion]);
 
   const isVertical = direction === 'up' || direction === 'down';
   const sign = direction === 'up' || direction === 'left' ? 1 : -1;
@@ -80,10 +94,10 @@ export function SlideIn({
     'worklet';
     const offset = interpolate(progress.value, [0, 1], [distance * sign, 0]);
     return {
-      opacity: interpolate(progress.value, [0, 1], [0, 1]),
+      opacity: reducedMotion ? 1 : interpolate(progress.value, [0, 1], [0, 1]),
       transform: isVertical
-        ? [{ translateY: offset }]
-        : [{ translateX: offset }],
+        ? [{ translateY: reducedMotion ? 0 : offset }]
+        : [{ translateX: reducedMotion ? 0 : offset }],
     };
   });
 
@@ -111,16 +125,22 @@ export function ScaleIn({
   style,
 }: ScaleInProps) {
   const progress = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      progress.value = 1;
+      return;
+    }
     progress.value = withDelay(delay, withSpring(1, Springs.bouncy));
-  }, [delay, progress]);
+  }, [delay, progress, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
+    opacity: reducedMotion ? 1 : interpolate(progress.value, [0, 1], [0, 1]),
     transform: [
       {
-        scale: interpolate(
+        scale: reducedMotion ? 1 : interpolate(
           progress.value,
           [0, 1],
           [initialScale, 1],
@@ -183,8 +203,14 @@ export function Bounce({
   style,
 }: BounceProps) {
   const scale = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      scale.value = 1;
+      return;
+    }
     scale.value = withDelay(
       delay,
       withSpring(1, {
@@ -193,7 +219,7 @@ export function Bounce({
         mass: 0.8,
       })
     );
-  }, [delay, scale]);
+  }, [delay, scale, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -225,18 +251,30 @@ export function Pulse({
   duration = 1000,
 }: PulseProps) {
   const scale = useSharedValue(minScale);
+  const hasStarted = useRef(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      scale.value = 1;
+      return;
+    }
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+
     const animate = () => {
-      scale.value = withTiming(maxScale, { duration: duration / 2 }, () => {
-        scale.value = withTiming(minScale, { duration: duration / 2 });
-      });
+      scale.value = withSequence(
+        withTiming(maxScale, { duration: duration / 2 }),
+        withTiming(minScale, { duration: duration / 2 })
+      );
     };
 
     animate();
     const interval = setInterval(animate, duration);
+
     return () => clearInterval(interval);
-  }, [scale, minScale, maxScale, duration]);
+  }, [maxScale, minScale, duration, scale, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

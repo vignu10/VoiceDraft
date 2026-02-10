@@ -10,14 +10,12 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
-  interpolateColor,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { ThemedText } from '@/components/themed-text';
 import { Typography, Spacing, BorderRadius } from '@/constants/design-system';
-import { Duration, Springs, Easings } from '@/constants/animations';
+import { Springs } from '@/constants/animations';
 
 interface AnimatedInputProps extends Omit<TextInputProps, 'style'> {
   label?: string;

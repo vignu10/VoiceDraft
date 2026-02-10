@@ -1,22 +1,19 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Springs } from "@/constants/animations";
+import { useThemeColors } from "@/hooks/use-theme-color";
+import { useSettingsStore } from "@/stores";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { AccessibilityInfo, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-  withSpring,
-  withDelay,
   cancelAnimation,
   Easing,
-  interpolate,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
-import * as Haptics from 'expo-haptics';
-import { useSettingsStore } from '@/stores';
-import { useThemeColors } from '@/hooks/use-theme-color';
-import { Ionicons } from '@expo/vector-icons';
-import { Springs, Duration } from '@/constants/animations';
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 
 interface RecordButtonProps {
   isRecording: boolean;
@@ -33,112 +30,124 @@ export function RecordButton({
 }: RecordButtonProps) {
   const hapticFeedback = useSettingsStore((state) => state.hapticFeedback);
   const colors = useThemeColors();
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-  // Animation values
+  // Check for reduce motion preference
+  useEffect(() => {
+    const checkReduceMotion = async () => {
+      const isEnabled = await AccessibilityInfo.isReduceMotionEnabled();
+      setReduceMotion(isEnabled);
+    };
+    checkReduceMotion();
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion,
+    );
+    return () => subscription?.remove();
+  }, []);
+
+  // Animation values - reduced from 7 to 3
   const scale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0);
   const innerScale = useSharedValue(1);
-  const glowScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0);
-  const rippleScale = useSharedValue(0);
 
-  // Recording state animations
+  // Recording state animations - optimized to use only 2 animations
+  const pulseIntervalRef = useRef<number | null>(null);
+  const innerIntervalRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      // Outer expanding pulse rings (multi-wave effect)
-      pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1.5, { duration: 1500, easing: Easing.out(Easing.ease) }),
-          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        false
-      );
-      pulseOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0.5, { duration: 1500 }),
-          withTiming(0, { duration: 1500 })
-        ),
-        -1,
-        false
-      );
-
-      // Inner breathing animation (gentle heartbeat)
-      innerScale.value = withRepeat(
-        withSequence(
-          withTiming(1.08, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.96, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
-
-      // Glow effect behind button
-      glowScale.value = withRepeat(
-        withSequence(
-          withTiming(1.3, { duration: 1200, easing: Easing.out(Easing.ease) }),
-          withTiming(1.1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        true
-      );
-      glowOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0.6, { duration: 1200 }),
-          withTiming(0.3, { duration: 1200 })
-        ),
-        -1,
-        true
-      );
-
-      // Ripple effect (expanding rings) - delayed start
-      rippleScale.value = withDelay(
-        500,
-        withRepeat(
-          withSequence(
-            withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.ease) }),
-            withTiming(0.1, { duration: 200 })
-          ),
-          -1,
-          false
-        )
-      );
-
-    } else {
-      cancelAnimation(pulseScale);
-      cancelAnimation(pulseOpacity);
-      cancelAnimation(innerScale);
-      cancelAnimation(glowScale);
-      cancelAnimation(glowOpacity);
-      cancelAnimation(rippleScale);
-
-      pulseScale.value = withTiming(1);
-      pulseOpacity.value = withTiming(0);
-      innerScale.value = withTiming(1);
-      glowScale.value = withTiming(1);
-      glowOpacity.value = withTiming(isPaused ? 0.3 : 0);
-      rippleScale.value = withTiming(0);
+    // Skip all animations if reduce motion is enabled
+    if (reduceMotion) {
+      pulseScale.value = 1;
+      innerScale.value = 1;
+      return;
     }
-  }, [isRecording, isPaused]);
 
-  const handlePressIn = () => {
+    if (isRecording && !isPaused) {
+      // Single combined pulse animation
+      const animatePulse = () => {
+        pulseScale.value = withSequence(
+          withTiming(1.15, {
+            duration: 1500,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        );
+      };
+
+      // Gentle inner breathing
+      const animateInner = () => {
+        innerScale.value = withSequence(
+          withTiming(1.05, {
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(0.98, {
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        );
+      };
+
+      animatePulse();
+      animateInner();
+
+      pulseIntervalRef.current = setInterval(animatePulse, 3000);
+      innerIntervalRef.current = setInterval(animateInner, 2000);
+    } else {
+      // Cleanup animations properly
+      if (pulseIntervalRef.current) {
+        clearInterval(pulseIntervalRef.current);
+        pulseIntervalRef.current = null;
+      }
+      if (innerIntervalRef.current) {
+        clearInterval(innerIntervalRef.current);
+        innerIntervalRef.current = null;
+      }
+
+      cancelAnimation(pulseScale);
+      cancelAnimation(innerScale);
+
+      pulseScale.value = withTiming(1, { duration: 200 });
+      innerScale.value = withTiming(1, { duration: 200 });
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (pulseIntervalRef.current) {
+        clearInterval(pulseIntervalRef.current);
+      }
+      if (innerIntervalRef.current) {
+        clearInterval(innerIntervalRef.current);
+      }
+      cancelAnimation(pulseScale);
+      cancelAnimation(innerScale);
+    };
+  }, [isRecording, isPaused, reduceMotion, pulseScale, innerScale]);
+
+  const handlePressIn = useCallback(() => {
     if (hapticFeedback) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    // Quick press down animation
-    scale.value = withSpring(0.92, Springs.press);
-  };
+    if (!reduceMotion) {
+      scale.value = withSpring(0.92, Springs.press);
+    }
+  }, [hapticFeedback, reduceMotion, scale]);
 
-  const handlePressOut = () => {
-    scale.value = withSpring(1, Springs.snappy);
-  };
+  const handlePressOut = useCallback(() => {
+    if (!reduceMotion) {
+      scale.value = withSpring(1, Springs.snappy);
+    }
+  }, [reduceMotion, scale]);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     handlePressIn();
     onPress();
-    setTimeout(() => handlePressOut(), 100);
-  };
+    if (!reduceMotion) {
+      setTimeout(() => handlePressOut(), 100);
+    }
+  }, [onPress, handlePressIn, handlePressOut, reduceMotion]);
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -146,82 +155,48 @@ export function RecordButton({
 
   const pulseAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
+    opacity: reduceMotion
+      ? 0
+      : withTiming(isRecording && !isPaused ? 0.4 : 0, { duration: 200 }),
   }));
 
   const innerAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: innerScale.value }],
   }));
 
-  const glowAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glowScale.value }],
-    opacity: glowOpacity.value,
-  }));
-
-  const rippleAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: rippleScale.value }],
-    opacity: interpolate(rippleScale.value, [0, 1], [0.4, 0]),
-  }));
-
-  const getButtonColor = () => {
+  // Memoize style calculations
+  const buttonColor = useCallback(() => {
     if (isRecording && !isPaused) return colors.recording;
     if (isPaused) return colors.paused;
     return colors.tint;
-  };
+  }, [isRecording, isPaused, colors.recording, colors.paused, colors.tint]);
 
-  const getIcon = () => {
-    if (isPaused) return 'play';
-    if (isRecording) return 'pause';
-    return 'mic';
-  };
+  const iconName = useCallback(() => {
+    if (isPaused) return "play";
+    if (isRecording) return "pause";
+    return "mic";
+  }, [isPaused, isRecording]);
 
-  const getButtonShape = () => {
-    if (isRecording && !isPaused) return size * 0.35; // Square when recording
-    if (isPaused) return size * 0.4; // Slightly rounded square when paused
-    return size / 2; // Circle when not recording
-  };
+  const buttonShape = useCallback(() => {
+    if (isRecording && !isPaused) return size * 0.35;
+    if (isPaused) return size * 0.4;
+    return size / 2;
+  }, [isRecording, isPaused, size]);
+
 
   return (
     <View style={[styles.container, { width: size * 2, height: size * 2 }]}>
-      {/* Background glow */}
-      <Animated.View
-        style={[
-          styles.glow,
-          glowAnimatedStyle,
-          {
-            width: size * 1.4,
-            height: size * 1.4,
-            borderRadius: size * 0.7,
-            backgroundColor: getButtonColor(),
-          },
-        ]}
-      />
-
-      {/* Outer pulse ring */}
-      <Animated.View
-        style={[
-          styles.pulseRing,
-          pulseAnimatedStyle,
-          {
-            width: size * 1.5,
-            height: size * 1.5,
-            borderRadius: size * 0.75,
-            backgroundColor: getButtonColor(),
-          },
-        ]}
-      />
-
-      {/* Expanding ripple rings */}
-      {(isRecording && !isPaused) && (
+      {/* Single optimized pulse ring */}
+      {isRecording && !isPaused && (
         <Animated.View
           style={[
-            styles.rippleRing,
-            rippleAnimatedStyle,
+            styles.pulseRing,
+            pulseAnimatedStyle,
             {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              borderColor: getButtonColor(),
+              width: size * 1.5,
+              height: size * 1.5,
+              borderRadius: size * 0.75,
+              backgroundColor: buttonColor(),
             },
           ]}
         />
@@ -235,7 +210,7 @@ export function RecordButton({
             width: size * 1.2,
             height: size * 1.2,
             borderRadius: size * 0.6,
-            borderColor: isRecording ? getButtonColor() : colors.border,
+            borderColor: isRecording ? buttonColor() : colors.border,
             backgroundColor: colors.background,
           },
         ]}
@@ -245,6 +220,17 @@ export function RecordButton({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityState={{
+            selected: isRecording,
+          }}
+          accessibilityLabel={
+            isRecording
+              ? isPaused
+                ? "Resume recording"
+                : "Pause recording"
+              : "Start recording"
+          }
         >
           <Animated.View
             style={[
@@ -253,16 +239,17 @@ export function RecordButton({
               {
                 width: size,
                 height: size,
-                borderRadius: getButtonShape(),
-                backgroundColor: getButtonColor(),
+                borderRadius: buttonShape(),
+                backgroundColor: buttonColor(),
+                shadowColor: colors.shadowColorStrong,
               },
             ]}
           >
             <Animated.View style={innerAnimatedStyle}>
               <Ionicons
-                name={getIcon()}
+                name={iconName()}
                 size={size * 0.42}
-                color="#fff"
+                color={colors.textInverse}
               />
             </Animated.View>
           </Animated.View>
@@ -287,35 +274,27 @@ export function RecordButton({
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  glow: {
-    position: 'absolute',
+    justifyContent: "center",
+    alignItems: "center",
   },
   pulseRing: {
-    position: 'absolute',
-  },
-  rippleRing: {
-    position: 'absolute',
-    borderWidth: 2,
+    position: "absolute",
   },
   buttonContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 3,
   },
   button: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 15,
   },
   statusDot: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 8,
     width: 10,
     height: 10,

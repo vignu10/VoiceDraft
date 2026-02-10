@@ -13,13 +13,13 @@ import {
   PressableScale,
   AnimatedCard,
 } from '@/components/ui/animated';
-import { Spacing, Typography, BorderRadius } from '@/constants/design-system';
-import { Duration, Stagger } from '@/constants/animations';
+import { Spacing, Typography, BorderRadius, withOpacity, Palette } from '@/constants/design-system';
+import { Duration } from '@/constants/animations';
 
-const TONES: { value: Tone; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
-  { value: 'professional', icon: 'briefcase-outline', label: 'Professional', desc: 'Formal and authoritative' },
-  { value: 'casual', icon: 'cafe-outline', label: 'Casual', desc: 'Friendly and relaxed' },
-  { value: 'conversational', icon: 'chatbubbles-outline', label: 'Conversational', desc: 'Like talking to a friend' },
+const TONES: { value: Tone; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string; colorKey: 'primary' | 'accent' | 'teal' }[] = [
+  { value: 'professional', icon: 'briefcase-outline', label: 'Professional', desc: 'Formal and authoritative', colorKey: 'primary' },
+  { value: 'casual', icon: 'cafe-outline', label: 'Casual', desc: 'Friendly and relaxed', colorKey: 'accent' },
+  { value: 'conversational', icon: 'chatbubbles-outline', label: 'Conversational', desc: 'Like talking to a friend', colorKey: 'teal' },
 ];
 
 const LENGTHS: { value: Length; label: string; words: string }[] = [
@@ -77,34 +77,44 @@ export default function SettingsTab() {
                 DEFAULT TONE
               </ThemedText>
               <AnimatedCard variant="outlined" animateEntry={false} style={styles.card}>
-                {TONES.map((tone, index) => (
-                  <PressableScale
-                    key={tone.value}
-                    onPress={() => setDefaultTone(tone.value)}
-                    hapticStyle="light"
-                    style={[
-                      styles.optionRow,
-                      index < TONES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
-                    ]}
-                  >
-                    <View style={[styles.optionIcon, { backgroundColor: colors.primaryLight }]}>
-                      <Ionicons name={tone.icon} size={20} color={colors.primary} />
-                    </View>
-                    <View style={styles.optionText}>
-                      <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
-                        {tone.label}
-                      </ThemedText>
-                      <ThemedText style={[styles.optionDesc, { color: colors.textMuted }]}>
-                        {tone.desc}
-                      </ThemedText>
-                    </View>
-                    {defaultTone === tone.value && (
-                      <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
-                        <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                {TONES.map((tone, index) => {
+                  const toneColor = tone.colorKey === 'primary' ? colors.primary :
+                                   tone.colorKey === 'accent' ? colors.accent :
+                                   colors.teal;
+                  const toneColorLight = tone.colorKey === 'primary' ? colors.primaryLight :
+                                        tone.colorKey === 'accent' ? colors.accentLight :
+                                        Palette.teal[50];
+
+                  return (
+                    <PressableScale
+                      key={tone.value}
+                      onPress={() => setDefaultTone(tone.value)}
+                      hapticStyle="light"
+                      accessibilityLabel={`${tone.label} tone: ${tone.desc}${defaultTone === tone.value ? ', selected' : ''}`}
+                      style={[
+                        styles.optionRow,
+                        index < TONES.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
+                      ]}
+                    >
+                      <View style={[styles.optionIcon, { backgroundColor: toneColorLight }]}>
+                        <Ionicons name={tone.icon} size={20} color={toneColor} />
                       </View>
-                    )}
-                  </PressableScale>
-                ))}
+                      <View style={styles.optionText}>
+                        <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
+                          {tone.label}
+                        </ThemedText>
+                        <ThemedText style={[styles.optionDesc, { color: colors.textMuted }]}>
+                          {tone.desc}
+                        </ThemedText>
+                      </View>
+                      {defaultTone === tone.value && (
+                        <View style={[styles.checkmark, { backgroundColor: toneColor }]}>
+                          <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                        </View>
+                      )}
+                    </PressableScale>
+                  );
+                })}
               </AnimatedCard>
             </View>
           </SlideIn>
@@ -121,6 +131,7 @@ export default function SettingsTab() {
                     key={length.value}
                     onPress={() => setDefaultLength(length.value)}
                     hapticStyle="light"
+                    accessibilityLabel={`${length.label} length: ${length.words} words${defaultLength === length.value ? ', selected' : ''}`}
                     style={[
                       styles.lengthCard,
                       {
@@ -140,7 +151,7 @@ export default function SettingsTab() {
                     <ThemedText
                       style={[
                         styles.lengthWords,
-                        { color: defaultLength === length.value ? colors.textInverse + 'CC' : colors.textMuted },
+                        { color: defaultLength === length.value ? colors.textInverse : colors.textMuted },
                       ]}
                     >
                       {length.words} words
@@ -160,17 +171,18 @@ export default function SettingsTab() {
               <PressableScale
                 onPress={handleClearData}
                 hapticStyle="medium"
+                accessibilityLabel="Clear all data - This will delete all your drafts and reset settings"
                 style={[styles.dangerCard, { backgroundColor: colors.errorLight }]}
               >
                 <View style={styles.dangerContent}>
-                  <View style={[styles.dangerIcon, { backgroundColor: colors.error + '20' }]}>
+                  <View style={[styles.dangerIcon, { backgroundColor: withOpacity(colors.error, 0.12) }]}>
                     <Ionicons name="trash-outline" size={20} color={colors.error} />
                   </View>
                   <View style={styles.dangerText}>
                     <ThemedText style={[styles.dangerTitle, { color: colors.error }]}>
                       Clear All Data
                     </ThemedText>
-                    <ThemedText style={[styles.dangerDesc, { color: colors.error + 'CC' }]}>
+                    <ThemedText style={[styles.dangerDesc, { color: withOpacity(colors.error, 0.8) }]}>
                       Delete all drafts and reset settings
                     </ThemedText>
                   </View>
@@ -180,7 +192,7 @@ export default function SettingsTab() {
             </View>
           </SlideIn>
 
-          {/* About */}
+          {/* About - Simplified without version badge */}
           <SlideIn direction="up" delay={Duration.slow}>
             <View style={styles.section}>
               <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
@@ -196,11 +208,6 @@ export default function SettingsTab() {
                 <ThemedText style={[styles.appTagline, { color: colors.textSecondary }]}>
                   Voice to Blog in One Tap
                 </ThemedText>
-                <View style={[styles.versionBadge, { backgroundColor: colors.backgroundSecondary }]}>
-                  <ThemedText style={[styles.versionText, { color: colors.textMuted }]}>
-                    Version 1.0.0
-                  </ThemedText>
-                </View>
               </AnimatedCard>
             </View>
           </SlideIn>
@@ -227,16 +234,19 @@ const styles = StyleSheet.create({
     minHeight: 70,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 38,
+    fontSize: Typography.fontSize['3xl'],
+    fontWeight: Typography.fontWeight.extrabold,
+    letterSpacing: Typography.letterSpacing.tight,
+    lineHeight: Typography.fontSize['3xl'] * Typography.lineHeight.tight,
     includeFontPadding: false,
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.normal,
     marginTop: Spacing[2],
-    lineHeight: 20,
+    marginBottom: Spacing[1],
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   section: {
     paddingHorizontal: Spacing[6],
@@ -272,12 +282,14 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.medium,
-    lineHeight: 20,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   optionDesc: {
     fontSize: Typography.fontSize.sm,
-    lineHeight: 18,
-    marginTop: 2,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+    marginTop: Spacing[0.5],
+    includeFontPadding: false,
   },
   checkmark: {
     width: 24,
@@ -301,12 +313,14 @@ const styles = StyleSheet.create({
   lengthLabel: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
-    lineHeight: 20,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   lengthWords: {
     fontSize: Typography.fontSize.sm,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
     marginTop: Spacing[1],
+    includeFontPadding: false,
   },
   dangerCard: {
     flexDirection: 'row',
@@ -333,11 +347,13 @@ const styles = StyleSheet.create({
   dangerTitle: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
-    lineHeight: 20,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   dangerDesc: {
     fontSize: Typography.fontSize.sm,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   aboutCard: {
     padding: Spacing[6],
@@ -354,22 +370,13 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
-    lineHeight: 24,
+    lineHeight: Typography.fontSize.xl * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   appTagline: {
     fontSize: Typography.fontSize.sm,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
     marginTop: Spacing[1],
-  },
-  versionBadge: {
-    marginTop: Spacing[3],
-    paddingHorizontal: Spacing[3],
-    paddingVertical: Spacing[2],
-    borderRadius: BorderRadius.full,
-  },
-  versionText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    lineHeight: 16,
+    includeFontPadding: false,
   },
 });

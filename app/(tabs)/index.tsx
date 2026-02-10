@@ -4,286 +4,87 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { formatRelativeTime } from '@/utils/formatters';
-import type { Draft } from '@/types/draft';
-import { Ionicons } from '@expo/vector-icons';
-import { FadeIn, SlideIn, PressableScale, AnimatedListItem, GlowEffect } from '@/components/ui/animated';
+import { getTimeBasedGreeting, onboardingMessages } from '@/utils/delight-messages';
+import { useAchievementsStore } from '@/stores';
+import { PressableScale, FadeIn, Pulse } from '@/components/ui/animated';
 import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
-import { Duration, Springs, Easings, Stagger } from '@/constants/animations';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-  withSpring,
-  withDelay,
-  Easing,
-  interpolate,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
+import { Duration } from '@/constants/animations';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RecordTab() {
-  const [recentDrafts, setRecentDrafts] = useState<Draft[]>([]);
   const colors = useThemeColors();
 
-  // Continuous floating animation for title
-  const floatProgress = useSharedValue(0);
-  const titleScale = useSharedValue(0.95);
-  const titleOpacity = useSharedValue(0);
+  // Check if this is first time user
+  const totalDrafts = useAchievementsStore((state) => state.totalDrafts);
+  const isFirstTime = totalDrafts === 0;
 
-  useEffect(() => {
-    // Float animation - continuous gentle movement
-    floatProgress.value = withRepeat(
-      withTiming(1, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-
-    // Initial entrance animation
-    titleOpacity.value = withDelay(0, withSpring(1, Springs.gentle));
-    titleScale.value = withDelay(0, withSpring(1, Springs.bouncy));
-  }, []);
-
-  const titleAnimatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    const floatOffset = Math.cos(floatProgress.value * Math.PI * 2) * 4;
-    return {
-      opacity: titleOpacity.value,
-      transform: [
-        { translateY: floatOffset },
-        { scale: titleScale.value },
-      ],
-    };
-  });
-
-  // Enhanced pulse animation for record button
-  const pulseScale = useSharedValue(1);
-  const glowScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0.5);
-
-  useEffect(() => {
-    // Main button pulse
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    // Glow effect pulse (out of phase)
-    glowScale.value = withRepeat(
-      withSequence(
-        withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.3, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-  }, [pulseScale, glowScale, glowOpacity]);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const loadRecentDrafts = useCallback(async () => {
-    try {
-      const data = await AsyncStorage.getItem('drafts');
-      if (data) {
-        const drafts: Draft[] = JSON.parse(data);
-        setRecentDrafts(drafts.slice(0, 3));
-      }
-    } catch (error) {
-      console.error('Error loading drafts:', error);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadRecentDrafts();
-    }, [loadRecentDrafts])
-  );
+  // Greeting messages based on time of day
+  const greeting = getTimeBasedGreeting();
+  const subtitleOptions = [
+    'Turn your voice into polished content',
+    'Speak your mind, we\'ll do the rest',
+    'From voice notes to blog posts',
+    'Your ideas, beautifully structured',
+  ];
+  const subtitle = subtitleOptions[Math.floor(Math.random() * subtitleOptions.length)];
 
   const handleStartRecording = () => {
     router.push('/recording');
   };
 
-  const handleDraftPress = (id: string) => {
-    router.push({
-      pathname: '/draft/[id]',
-      params: { id },
-    });
-  };
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header - Clean and spacious with floating animation */}
-        <View style={styles.header}>
-          <Animated.Text
-            style={[
-              styles.appTitle,
-              { color: colors.primary },
-              titleAnimatedStyle,
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit={false}
-          >
-            VoiceDraft
-          </Animated.Text>
-          <FadeIn delay={Duration.fast}>
-            <ThemedText style={[styles.tagline, { color: colors.textSecondary }]}>
-              Turn your voice into polished content
-            </ThemedText>
-          </FadeIn>
-        </View>
-
-        {/* Main Content - Better spacing and hierarchy */}
+        {/* Simplified: Single focused action */}
         <View style={styles.content}>
-          <FadeIn delay={Duration.normal}>
-            <View style={styles.promptContainer}>
-              <ThemedText style={[styles.prompt, { color: colors.text }]}>
-                Ready to create?
-              </ThemedText>
-              <ThemedText style={[styles.promptSubtext, { color: colors.textSecondary }]}>
-                Speak naturally and we'll handle the rest
-              </ThemedText>
-            </View>
-          </FadeIn>
-
-          {/* Record Button - With glow effect */}
-          <SlideIn direction="up" delay={Duration.moderate}>
-            <View style={styles.recordButtonContainer}>
-              {/* Outer glow */}
-              <Animated.View
-                style={[
-                  styles.recordGlow,
-                  {
-                    backgroundColor: colors.primary,
-                    opacity: glowOpacity.value * 0.3,
-                  },
-                  useAnimatedStyle(() => ({
-                    transform: [{ scale: glowScale.value }],
-                  })),
-                ]}
-              />
-
-              <PressableScale
-                onPress={handleStartRecording}
-                scale={0.92}
-                hapticStyle="medium"
-              >
-                <Animated.View
-                  style={[
-                    styles.recordButton,
-                    pulseStyle,
-                    {
-                      backgroundColor: colors.primary,
-                      ...Shadows.xl,
-                    },
-                  ]}
-                >
-                  <Ionicons name="mic" size={40} color={colors.textInverse} />
-                </Animated.View>
-              </PressableScale>
-            </View>
-          </SlideIn>
-
-          <FadeIn delay={Duration.moderate + Duration.fast}>
-            <ThemedText style={[styles.hint, { color: colors.textMuted }]}>
-              Tap to start recording
+          <FadeIn>
+            <ThemedText style={[styles.title, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
+              VoiceDraft
             </ThemedText>
           </FadeIn>
-        </View>
 
-        {/* Recent Drafts */}
-        {recentDrafts.length > 0 && (
-          <SlideIn direction="up" delay={Duration.slow}>
-            <View
-              style={[
-                styles.recentSection,
-                { borderTopColor: colors.border, backgroundColor: colors.backgroundSecondary },
-              ]}
+          <FadeIn delay={Duration.fast}>
+            <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={2} ellipsizeMode="tail">
+              {isFirstTime ? onboardingMessages.welcome.subtitle : greeting}
+            </ThemedText>
+          </FadeIn>
+
+          <FadeIn delay={Duration.fast * 2}>
+            <ThemedText style={[styles.description, { color: colors.textTertiary }]} numberOfLines={2} ellipsizeMode="tail">
+              {subtitle}
+            </ThemedText>
+          </FadeIn>
+
+          {/* Decorative gradient circles for warmth */}
+      <View style={styles.decorations}>
+        <View style={[styles.decorationCircle, styles.decorationTopRight, { backgroundColor: colors.primaryLight }]} />
+        <View style={[styles.decorationCircle, styles.decorationBottomLeft, { backgroundColor: colors.accentLight }]} />
+      </View>
+
+          <View style={styles.spacer} />
+
+          {/* Single record button - the core action */}
+          <Pulse minScale={1} maxScale={1.03} duration={2000}>
+            <PressableScale
+              onPress={handleStartRecording}
+              scale={0.94}
+              hapticStyle="medium"
+              accessibilityRole="button"
+              accessibilityLabel="Start recording"
+              style={styles.recordButtonContainer}
             >
-              <View style={styles.recentHeader}>
-                <ThemedText style={[styles.recentTitle, { color: colors.text }]}>
-                  Recent Drafts
-                </ThemedText>
-                <ThemedText style={[styles.recentCount, { color: colors.textMuted }]}>
-                  {recentDrafts.length}
-                </ThemedText>
+              <View style={[styles.recordButton, { backgroundColor: colors.primary, ...Shadows.glow }]}>
+                <Ionicons name="mic" size={48} color={colors.textInverse} />
               </View>
-              {recentDrafts.map((draft, index) => (
-                <AnimatedListItem
-                  key={draft.id}
-                  delay={Duration.slow + Stagger.delay(index + 1)}
-                  onPress={() => handleDraftPress(draft.id)}
-                  showDivider={index < recentDrafts.length - 1}
-                  style={{ paddingHorizontal: 0 }}
-                >
-                  <View style={styles.draftItem}>
-                    <View
-                      style={[
-                        styles.draftIcon,
-                        { backgroundColor: colors.primaryLight },
-                      ]}
-                    >
-                      <Ionicons
-                        name="document-text"
-                        size={20}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.draftInfo}>
-                      <ThemedText
-                        style={[styles.draftTitle, { color: colors.text }]}
-                        numberOfLines={2}
-                      >
-                        {draft.title || 'Untitled Draft'}
-                      </ThemedText>
-                      <View style={styles.draftMeta}>
-                        <ThemedText
-                          style={[styles.draftTime, { color: colors.textMuted }]}
-                        >
-                          {formatRelativeTime(new Date(draft.createdAt))}
-                        </ThemedText>
-                        {draft.wordCount && (
-                          <>
-                            <ThemedText style={[styles.metaDot, { color: colors.textMuted }]}>
-                              •
-                            </ThemedText>
-                            <ThemedText style={[styles.draftTime, { color: colors.textMuted }]}>
-                              {draft.wordCount} words
-                            </ThemedText>
-                          </>
-                        )}
-                      </View>
-                    </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={colors.textMuted}
-                    />
-                  </View>
-                </AnimatedListItem>
-              ))}
-            </View>
-          </SlideIn>
-        )}
+            </PressableScale>
+          </Pulse>
+
+          <View style={[styles.hintContainer, { backgroundColor: colors.backgroundSecondary }]}>
+            <ThemedText style={[styles.hint, { color: colors.textSecondary }]}>
+              {isFirstTime ? onboardingMessages.firstRecording.hint : 'Tap to start recording'}
+            </ThemedText>
+          </View>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -296,134 +97,83 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    alignItems: 'center',
-    paddingTop: Spacing[10],
-    paddingBottom: Spacing[4],
-    paddingHorizontal: Spacing[6],
-    minHeight: 90,
-    justifyContent: 'center',
-  },
-  appTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    lineHeight: 40,
-    marginBottom: Spacing[2],
-    fontFamily: 'Nunito_800ExtraBold',
-    includeFontPadding: false,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-  },
-  tagline: {
-    fontSize: Typography.fontSize.sm,
-    letterSpacing: 0.2,
-    fontWeight: Typography.fontWeight.normal,
-    textAlign: 'center',
-    paddingHorizontal: Spacing[4],
-    lineHeight: 20,
-  },
   content: {
-    paddingHorizontal: Spacing[6],
-    paddingVertical: Spacing[4],
-  },
-  promptContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing[8],
+    paddingHorizontal: Spacing[6],
+    paddingTop: Spacing[8],
   },
-  prompt: {
-    fontSize: 28,
-    fontWeight: Typography.fontWeight.bold,
-    textAlign: 'center',
-    lineHeight: 36,
+  title: {
+    fontSize: Typography.fontSize['4xl'],
+    fontWeight: Typography.fontWeight.extrabold,
+    letterSpacing: Typography.letterSpacing.tight,
     marginBottom: Spacing[2],
+    textAlign: 'center',
+    lineHeight: Typography.fontSize['4xl'] * 1.3,
   },
-  promptSubtext: {
+  subtitle: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.normal,
     textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: Spacing[8],
+    marginBottom: Spacing[3],
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
+  },
+  description: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.normal,
+    textAlign: 'center',
+    marginBottom: Spacing[3],
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
+  },
+  spacer: {
+    flex: 0.4,
   },
   recordButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: Spacing[6],
-    position: 'relative',
   },
-  recordGlow: {
-    position: 'absolute',
+  recordButton: {
     width: 140,
     height: 140,
     borderRadius: 70,
-  },
-  recordButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1,
   },
   hint: {
     fontSize: Typography.fontSize.sm,
-    letterSpacing: 0.3,
-    textAlign: 'center',
-  },
-  recentSection: {
-    paddingHorizontal: Spacing[6],
-    paddingTop: Spacing[6],
-    paddingBottom: Spacing[8],
-    borderTopWidth: 1,
-    marginTop: Spacing[2],
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing[4],
-  },
-  recentTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    letterSpacing: -0.3,
-  },
-  recentCount: {
-    fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
+    textAlign: 'center',
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
-  draftItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing[3],
+  hintContainer: {
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[2.5],
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing[4],
   },
-  draftIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing[3],
+  decorations: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
   },
-  draftInfo: {
-    flex: 1,
+  decorationCircle: {
+    position: 'absolute',
+    borderRadius: BorderRadius.full,
+    opacity: 0.4,
   },
-  draftTitle: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-    lineHeight: 21,
-    marginBottom: Spacing[1],
+  decorationTopRight: {
+    width: 200,
+    height: 200,
+    top: -60,
+    right: -60,
   },
-  draftMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing[2],
-  },
-  draftTime: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.normal,
-  },
-  metaDot: {
-    fontSize: Typography.fontSize.xs,
+  decorationBottomLeft: {
+    width: 160,
+    height: 160,
+    bottom: -40,
+    left: -40,
   },
 });

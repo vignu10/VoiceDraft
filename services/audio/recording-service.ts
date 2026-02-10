@@ -23,7 +23,8 @@ class RecordingService {
   private isInitialized = false;
   private isRecordingActive = false;
   private isPausedState = false;
-  private recordedDuration = 0; // Track duration ourselves
+  private recordedDuration = 0;
+  private isPreparing = false;
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -51,21 +52,33 @@ class RecordingService {
     onMetering: MeteringCallback,
     onDuration: DurationCallback
   ): Promise<void> {
+    if (this.isPreparing) {
+      console.log('Recording is already being prepared, please wait...');
+      return;
+    }
+
+    if (this.isRecordingActive && !this.isPausedState) {
+      console.log('Recording is already active');
+      return;
+    }
+
+    this.isPreparing = true;
+
     try {
       await this.initialize();
 
-      // Clean up any existing recording first
       if (this.recording) {
         try {
-          await this.cleanup();
+          await this.recording.stopAndUnloadAsync();
         } catch (e) {
-          console.error('Error cleaning up previous recording:', e);
+          console.error('Error stopping previous recording:', e);
         }
+        this.recording = null;
       }
 
       this.onMeteringUpdate = onMetering;
       this.onDurationUpdate = onDuration;
-      this.isRecordingActive = true;
+      this.isRecordingActive = false;
       this.isPausedState = false;
       this.recordedDuration = 0;
 
@@ -113,10 +126,14 @@ class RecordingService {
 
       this.recording.setProgressUpdateInterval(100);
       await this.recording.startAsync();
+
+      this.isRecordingActive = true;
     } catch (error) {
       console.error('Error starting recording:', error);
       await this.cleanup();
       throw error;
+    } finally {
+      this.isPreparing = false;
     }
   }
 
@@ -169,27 +186,23 @@ class RecordingService {
       throw new Error('No recording to stop');
     }
 
-    const recordingToStop = this.recording; // Save reference
+    const recordingToStop = this.recording;
     let uri: string | null = null;
 
     try {
-      // Get URI before stopping (it becomes unavailable after)
       uri = recordingToStop.getURI();
 
-      // If paused, we need to handle it differently
       if (this.isPausedState) {
         try {
           await recordingToStop.startAsync();
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (e) {
           console.warn('Could not resume before stop:', e);
-          // Continue anyway
         }
       }
 
       await recordingToStop.stopAndUnloadAsync();
 
-      // Use our tracked duration
       const duration = this.recordedDuration;
 
       await this.cleanup();
@@ -228,7 +241,7 @@ class RecordingService {
   }
 
   async cancelRecording(): Promise<void> {
-    const recordingToCancel = this.recording; // Save reference
+    const recordingToCancel = this.recording;
     let uri: string | null = null;
 
     try {
@@ -239,7 +252,6 @@ class RecordingService {
     } catch (error) {
       console.error('Error canceling recording:', error);
     } finally {
-      // Delete the file if it exists
       if (uri) {
         try {
           await deleteAsync(uri);
@@ -253,12 +265,23 @@ class RecordingService {
   }
 
   private async cleanup(): Promise<void> {
-    this.recording = null;
+    if (this.recording) {
+      try {
+        // The recording is already unloaded after stopAndUnloadAsync
+        // Just clear the reference
+      } catch (e) {
+        console.error('Error during cleanup:', e);
+      }
+      this.recording = null;
+    }
+
     this.onMeteringUpdate = null;
     this.onDurationUpdate = null;
     this.isRecordingActive = false;
     this.isPausedState = false;
     this.recordedDuration = 0;
+    this.isPreparing = false;
+    this.isInitialized = false;
   }
 
   async deleteRecording(uri: string): Promise<void> {

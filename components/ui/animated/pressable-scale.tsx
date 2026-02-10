@@ -4,6 +4,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import { Springs } from '@/constants/animations';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +25,7 @@ export function PressableScale({
   scale = 0.97,
   style,
   onPress,
+  onLongPress,
   haptic = true,
   hapticStyle = 'light',
   disabled,
@@ -31,17 +33,24 @@ export function PressableScale({
 }: PressableScaleProps) {
   const scaleValue = useSharedValue(1);
   const hapticFeedback = useSettingsStore((state) => state.hapticFeedback);
+  const reducedMotion = useReducedMotion();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
   }));
 
   const handlePressIn = () => {
-    scaleValue.value = withSpring(scale, Springs.press);
+    // Skip animation if reduced motion is enabled
+    if (!reducedMotion) {
+      scaleValue.value = withSpring(scale, Springs.press);
+    }
   };
 
   const handlePressOut = () => {
-    scaleValue.value = withSpring(1, Springs.press);
+    // Skip animation if reduced motion is enabled
+    if (!reducedMotion) {
+      scaleValue.value = withSpring(1, Springs.press);
+    }
   };
 
   const handlePress = (event: any) => {
@@ -56,11 +65,20 @@ export function PressableScale({
     onPress?.(event);
   };
 
+  const handleLongPress = (event: any) => {
+    // Optional: Different haptic for long press
+    if (haptic && hapticFeedback) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    onLongPress?.(event);
+  };
+
   return (
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={handlePress}
+      onLongPress={handleLongPress}
       disabled={disabled}
       style={[animatedStyle, style, disabled && { opacity: 0.5 }]}
       {...props}

@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, DimensionValue } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withTiming,
   interpolate,
   Easing,
@@ -27,16 +26,27 @@ export function Skeleton({
 }: SkeletonProps) {
   const colors = useThemeColors();
   const shimmerProgress = useSharedValue(0);
+  const shimmerIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    shimmerProgress.value = withRepeat(
-      withTiming(1, {
+    const animateShimmer = () => {
+      shimmerProgress.value = withTiming(1, {
         duration: Duration.skeleton,
         easing: Easing.inOut(Easing.ease),
-      }),
-      -1,
-      false
-    );
+      });
+    };
+
+    animateShimmer();
+    shimmerIntervalRef.current = setInterval(() => {
+      shimmerProgress.value = 0;
+      animateShimmer();
+    }, Duration.skeleton);
+
+    return () => {
+      if (shimmerIntervalRef.current) {
+        clearInterval(shimmerIntervalRef.current);
+      }
+    };
   }, [shimmerProgress]);
 
   const animatedStyle = useAnimatedStyle(() => ({

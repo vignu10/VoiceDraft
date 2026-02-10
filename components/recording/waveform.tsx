@@ -3,6 +3,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { memo } from 'react';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 interface WaveformProps {
@@ -14,7 +15,8 @@ interface WaveformProps {
   barCount?: number;
 }
 
-function WaveformBar({ level, maxHeight }: { level: number; maxHeight: number }) {
+// Memoized waveform bar for better performance
+const WaveformBar = memo(function WaveformBar({ level, maxHeight }: { level: number; maxHeight: number }) {
   const tintColor = useThemeColor({}, 'tint');
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -36,26 +38,23 @@ function WaveformBar({ level, maxHeight }: { level: number; maxHeight: number })
       ]}
     />
   );
-}
+});
 
-export function Waveform({
+export const Waveform = memo(function Waveform({
   levels,
   isRecording,
   height = 100,
   barWidth = 4,
   barGap = 3,
-  barCount = 40,
+  barCount = 20, // Reduced from 40 to 20 for better performance
 }: WaveformProps) {
   const backgroundColor = useThemeColor({}, 'background');
 
   // Pad or slice levels to match barCount
-  const displayLevels = [...Array(barCount)].map((_, i) => {
-    const levelIndex = levels.length - barCount + i;
-    if (levelIndex >= 0 && levelIndex < levels.length) {
-      return levels[levelIndex];
-    }
-    return isRecording ? 0.1 : 0.05; // Minimum bar height
-  });
+  // Memoize this calculation to avoid recreating array on every render
+  const displayLevels = levels.length > 0
+    ? levels.slice(-barCount).concat(Array(Math.max(0, barCount - levels.length)).fill(isRecording ? 0.1 : 0.05))
+    : Array(barCount).fill(isRecording ? 0.1 : 0.05);
 
   return (
     <View style={[styles.container, { height, backgroundColor }]}>
@@ -71,7 +70,7 @@ export function Waveform({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
