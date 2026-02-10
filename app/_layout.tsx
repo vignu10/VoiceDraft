@@ -75,7 +75,6 @@ export default function RootLayout() {
               gestureEnabled: false,
             }}
           />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true, title: 'Modal' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

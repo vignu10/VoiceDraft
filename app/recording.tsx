@@ -1,14 +1,19 @@
-import { RecordButton, Timer, Waveform } from "@/components/recording";
+import {
+  AmbientRecordingBg,
+  PremiumRecordButton,
+  PremiumWaveform,
+  Timer,
+} from "@/components/recording";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { FadeIn, SlideIn } from "@/components/ui/animated/animated-wrappers";
 import { PressableScale } from "@/components/ui/animated/pressable-scale";
-import { useDialog } from "@/components/ui/dialog";
 import {
   MiniCelebration,
   WelcomeTooltip,
   useDelightToast,
 } from "@/components/ui/delight";
+import { useDialog } from "@/components/ui/dialog";
 import {
   MAX_RECORDING_DURATION,
   MIN_RECORDING_DURATION,
@@ -33,14 +38,16 @@ import {
 } from "@/utils/delight-messages";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Custom hook for throttled metering levels
 function useThrottledMeteringLevels(isRecording: boolean, isPaused: boolean) {
   const [levels, setLevels] = useState<number[]>([]);
-  const getMeteringLevels = useRecordingStore((state) => state.getMeteringLevels);
+  const getMeteringLevels = useRecordingStore(
+    (state) => state.getMeteringLevels,
+  );
   const lastUpdateRef = useRef(0);
   const rafRef = useRef<number | undefined>(undefined);
 
@@ -70,7 +77,7 @@ function useThrottledMeteringLevels(isRecording: boolean, isPaused: boolean) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [isRecording, isPaused, getMeteringLevels]);
+  }, [isRecording, isPaused, getMeteringLevels]); // Removed getMeteringLevels - it's a stable function reference from zustand
 
   return levels;
 }
@@ -105,44 +112,56 @@ function StateCard({
   colors,
 }: StateCardProps) {
   // Card configuration based on type - memoized to prevent recreation
-  const config = useMemo(() => ({
-    resume: {
-      icon: "play" as const,
-      iconBg: colors.primaryLight,
-      iconColor: colors.primary,
-      title: formatDuration(duration) + " recorded",
-      subtitle: getRecordingTip("resume"),
-      primaryLabel: "Resume",
-      primaryBg: colors.primary,
-      primaryIcon: "play" as const,
-      secondaryLabel: "Start Fresh",
-      showKeyword: false,
-    },
-    continueDraft: {
-      icon: "document-text" as const,
-      iconBg: colors.primaryLight,
-      iconColor: colors.primary,
-      title: lastDraftTitle || "Untitled Draft",
-      subtitle: getContinueDraftMessage("subtitles"),
-      primaryLabel: "Continue",
-      primaryBg: colors.primary,
-      primaryIcon: "create" as const,
-      secondaryLabel: "Discard",
-      showKeyword: true,
-    },
-    recordingReady: {
-      icon: "checkmark-circle" as const,
-      iconBg: colors.successLight,
-      iconColor: colors.success,
-      title: "Recording Saved!",
-      subtitle: `${formatDuration(duration)} `,
-      primaryLabel: "Continue",
-      primaryBg: colors.success,
-      primaryIcon: "arrow-forward" as const,
-      secondaryLabel: "Discard",
-      showKeyword: false,
-    },
-  }[type]), [type, duration, lastDraftTitle, colors.primaryLight, colors.primary, colors.successLight, colors.success]);
+  const config = useMemo(
+    () =>
+      ({
+        resume: {
+          icon: "play" as const,
+          iconBg: colors.primaryLight,
+          iconColor: colors.primary,
+          title: formatDuration(duration) + " recorded",
+          subtitle: getRecordingTip("resume"),
+          primaryLabel: "Resume",
+          primaryBg: colors.primary,
+          primaryIcon: "play" as const,
+          secondaryLabel: "Start Fresh",
+          showKeyword: false,
+        },
+        continueDraft: {
+          icon: "document-text" as const,
+          iconBg: colors.primaryLight,
+          iconColor: colors.primary,
+          title: lastDraftTitle || "Untitled Draft",
+          subtitle: getContinueDraftMessage("subtitles"),
+          primaryLabel: "Continue",
+          primaryBg: colors.primary,
+          primaryIcon: "create" as const,
+          secondaryLabel: "Discard",
+          showKeyword: true,
+        },
+        recordingReady: {
+          icon: "checkmark-circle" as const,
+          iconBg: colors.successLight,
+          iconColor: colors.success,
+          title: "Recording Saved!",
+          subtitle: `${formatDuration(duration)} `,
+          primaryLabel: "Continue",
+          primaryBg: colors.success,
+          primaryIcon: "arrow-forward" as const,
+          secondaryLabel: "Discard",
+          showKeyword: false,
+        },
+      })[type],
+    [
+      type,
+      duration,
+      lastDraftTitle,
+      colors.primaryLight,
+      colors.primary,
+      colors.successLight,
+      colors.success,
+    ],
+  );
 
   return (
     <SlideIn direction="up" delay={100}>
@@ -498,7 +517,8 @@ export default function RecordingScreen() {
   const handleReset = useCallback(async () => {
     const confirmed = await showDialog({
       title: "Reset Recording?",
-      message: "This will discard your current recording and you can start fresh.",
+      message:
+        "This will discard your current recording and you can start fresh.",
       confirmText: "Reset",
       variant: "destructive",
       onConfirm: async () => {
@@ -601,7 +621,8 @@ export default function RecordingScreen() {
   const handleDiscardDraft = useCallback(async () => {
     const confirmed = await showDialog({
       title: "Discard Draft?",
-      message: "This will remove the draft and you can start fresh. Your draft will still be available in the library.",
+      message:
+        "This will remove the draft and you can start fresh. Your draft will still be available in the library.",
       confirmText: "Discard",
       cancelText: "Keep Draft",
       variant: "destructive",
@@ -721,6 +742,9 @@ export default function RecordingScreen() {
         delay={800}
       />
 
+      {/* Ambient background that appears during recording */}
+      <AmbientRecordingBg isRecording={isRecording} isPaused={isPaused} />
+
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* Header */}
         <FadeIn>
@@ -790,23 +814,16 @@ export default function RecordingScreen() {
               </FadeIn>
             )}
 
-          {/* Waveform - simplified without border container */}
+          {/* Premium Waveform with gradient bars and glow */}
           <SlideIn direction="up" delay={100}>
             <View
-              style={[
-                styles.waveformContainer,
-                {
-                  backgroundColor:
-                    isRecording && !isPaused
-                      ? colors.recordingLight
-                      : colors.backgroundSecondary,
-                },
-              ]}
+              style={styles.waveformContainer}
               accessibilityLabel={`Audio waveform ${isRecording && !isPaused ? "showing recording levels" : "ready to record"}`}
             >
-              <Waveform
+              <PremiumWaveform
                 levels={meteringLevels}
                 isRecording={isRecording && !isPaused}
+                isPaused={isPaused}
                 height={120}
               />
             </View>
@@ -886,8 +903,8 @@ export default function RecordingScreen() {
             ]}
             accessibilityLabel="Recording controls"
           >
-            {/* Main Record/Pause Button */}
-            <RecordButton
+            {/* Main Record/Pause Button - Premium with multi-layer glow */}
+            <PremiumRecordButton
               isRecording={isRecording}
               isPaused={isPaused}
               onPress={handleRecordPress}

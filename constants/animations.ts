@@ -3,7 +3,7 @@
  * Consistent, smooth animations throughout the app
  */
 
-import { Easing } from 'react-native-reanimated';
+import { Easing } from "react-native-reanimated";
 
 // ============================================
 // DURATION TOKENS
@@ -112,11 +112,11 @@ export const Springs = {
     mass: 1.2,
   },
 
-  // Button press
+  // Button press - snappy and responsive
   press: {
-    damping: 15,
-    stiffness: 400,
-    mass: 0.5,
+    damping: 25,
+    stiffness: 600,
+    mass: 0.3,
   },
 
   // Modal/sheet

@@ -22,7 +22,7 @@ interface PressableScaleProps extends Omit<PressableProps, 'style'> {
 
 export function PressableScale({
   children,
-  scale = 0.97,
+  scale = 0.98,
   style,
   onPress,
   onLongPress,

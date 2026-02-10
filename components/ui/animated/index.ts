@@ -12,3 +12,4 @@ export { AnimatedBadge } from './animated-badge';
 export { PressableScale } from './pressable-scale';
 export { FadeIn, SlideIn, ScaleIn, Stagger, Bounce, Pulse } from './animated-wrappers';
 export { GlowEffect } from './glow-effect';
+export { FadeInElegant, SlideInElegant, BounceInElegant, ScaleInElegant } from './elegant-entrance';
