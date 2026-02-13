@@ -1,50 +1,78 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# ========== MONOREPO ROOT ==========
+# Workspace dependencies (if any)
 node_modules/
 
+# ========== MOBILE APP ==========
+# Mobile app dependencies
+mobile-app/node_modules/
+
 # Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+mobile-app/.expo/
+mobile-app/dist/
+mobile-app/web-build/
+mobile-app/expo-env.d.ts
 
 # Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+mobile-app/.kotlin/
+mobile-app/*.orig.*
+mobile-app/*.jks
+mobile-app/*.p8
+mobile-app/*.p12
+mobile-app/*.key
+mobile-app/*.mobileprovision
 
 # Metro
-.metro-health-check*
+mobile-app/.metro-health-check*
 
 # debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+mobile-app/npm-debug.*
+mobile-app/yarn-debug.*
+mobile-app/yarn-error.*
 
 # macOS
-.DS_Store
-*.pem
+mobile-app/.DS_Store
+mobile-app/*.pem
 
-# local env files
-.env*.local
-.env
+# local env files (keep .env.example)
+mobile-app/.env
+mobile-app/.env*.local
 
-# uploads directory
-uploads/
-
-# typescript
-*.tsbuildinfo
-
-app-example
+# TypeScript
+mobile-app/*.tsbuildinfo
 
 # bugreports
-bugreport-*.zip
+mobile-app/bugreport-*.zip
 
 # generated native folders
-/ios
-/android
+mobile-app/ios/
+mobile-app/android/
+
+# ========== BACKEND ==========
+# Backend dependencies
+backend/node_modules/
+
+# Backend logs
+backend/server.log
+backend/*.log
+
+# Backend uploads (local storage)
+backend/uploads/
+backend/uploads/*
+
+# Backend env files (keep .env.example)
+backend/.env
+backend/.env*.local
+
+# ========== COMMON ==========
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
