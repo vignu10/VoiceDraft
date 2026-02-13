@@ -1,15 +1,16 @@
 {
-  "name": "voicedraft",
-  "main": "expo-router/entry",
+  "name": "voicedraft-monorepo",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "dev:web": "cd web && npm run dev",
+    "dev:mobile": "cd mobile-app && expo start",
+    "build:web": "cd web && npm run build",
+    "build:mobile": "cd mobile-app && expo build",
+    "install:all": "npm install && cd web && npm install && cd ../mobile-app && npm install",
+    "start": "npm run dev:mobile",
     "api": "node server.js",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "lint": "expo lint"
+    "android": "npm run dev:mobile -- --android",
+    "ios": "npm run dev:mobile -- --ios"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
