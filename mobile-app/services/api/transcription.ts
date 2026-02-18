@@ -1,4 +1,4 @@
-import { getInfoAsync } from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system/legacy';
 import { apiClient } from './client';
 import type { TranscriptionResult } from '@/types/draft';
 
@@ -8,26 +8,29 @@ export async function transcribeAudio(
   console.log('[Transcribe] Starting with audioUri:', audioUri);
 
   // Verify file exists
-  const fileInfo = await getInfoAsync(audioUri);
+  const fileInfo = await FileSystem.getInfoAsync(audioUri);
   console.log('[Transcribe] File info:', fileInfo);
 
   if (!fileInfo.exists) {
     throw new Error('Audio file not found');
   }
 
-  // Create form data with audio file
-  const formData = new FormData();
-  formData.append('file', {
-    uri: audioUri,
-    type: 'audio/m4a',
-    name: 'recording.m4a',
-  } as unknown as Blob);
+  // Read file as base64
+  console.log('[Transcribe] Reading file as base64...');
+  const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+    encoding: 'base64',
+  });
+  console.log('[Transcribe] File size:', base64Audio.length, 'chars');
 
-  console.log('[Transcribe] Calling API with FormData');
+  // Send as JSON with base64 encoded audio
+  console.log('[Transcribe] Calling API with base64 audio');
 
-  const response = await apiClient.post<TranscriptionResult>(
-    '/api/transcribe',
-    formData
+  const response = await apiClient.post<{ text: string; duration: number; language: string }>(
+    '/api/transcribe/base64',
+    {
+      audio: base64Audio,
+      format: 'm4a',
+    }
   );
 
   console.log('[Transcribe] Response:', response);
@@ -36,5 +39,9 @@ export async function transcribeAudio(
     throw new Error(response.error || 'Transcription failed');
   }
 
-  return response.data;
+  return {
+    text: response.data.text,
+    duration: response.data.duration,
+    language: response.data.language,
+  };
 }

@@ -46,11 +46,15 @@ class ApiClient {
       console.log('[API] POST:', url);
       console.log('[API] Data type:', isFormData ? 'FormData' : 'JSON');
 
+      const headers: HeadersInit = isFormData
+        ? { ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {}) }
+        : this.getHeaders();
+
+      console.log('[API] Headers:', JSON.stringify(headers));
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: isFormData
-          ? { ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {}) }
-          : this.getHeaders(),
+        headers,
         body: isFormData ? data : JSON.stringify(data),
       });
 
