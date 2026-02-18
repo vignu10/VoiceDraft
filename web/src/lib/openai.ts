@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -10,8 +10,8 @@ export async function transcribeAudio(
   audioBuffer: Buffer,
   mimeType: string
 ): Promise<{ text: string; duration: number; language: string }> {
-  // Create a File object from the buffer
-  const file = new File([audioBuffer], 'audio.' + getExtension(mimeType), {
+  // Create a File object from the buffer using OpenAI's toFile utility
+  const file = await toFile(audioBuffer, 'audio.' + getExtension(mimeType), {
     type: mimeType,
   });
 
@@ -116,7 +116,7 @@ Return your response as valid JSON with this exact structure:
     response_format: { type: 'json_object' },
   });
 
-  const result = JSON.parse(completion.choices[0].message.content);
+  const result = JSON.parse(completion.choices[0].message.content ?? '{}');
   console.log('✅ Blog generation successful');
   console.log(`📄 Title: ${result.title}`);
 
@@ -154,7 +154,7 @@ Return your response as JSON with this structure:
     response_format: { type: 'json_object' },
   });
 
-  const result = JSON.parse(completion.choices[0].message.content);
+  const result = JSON.parse(completion.choices[0].message.content ?? '{}');
   console.log('✅ Section regeneration successful');
 
   return result;
