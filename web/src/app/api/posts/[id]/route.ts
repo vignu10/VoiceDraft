@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
 import type { Post, UpdatePostRequest } from '@/lib/types';
 
@@ -18,7 +18,7 @@ async function verifyOwnership(req: NextRequest, postId: string) {
   }
 
   // Get post with journal to verify ownership
-  const { data: post } = await supabase
+  const { data: post } = await supabaseAdmin
     .from('posts')
     .select('journal_id')
     .eq('id', postId)
@@ -29,7 +29,7 @@ async function verifyOwnership(req: NextRequest, postId: string) {
   }
 
   // Get journal to verify ownership
-  const { data: journal } = await supabase
+  const { data: journal } = await supabaseAdmin
     .from('journals')
     .select('auth_user_id')
     .eq('id', post.journal_id)
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Post not found or forbidden' }, { status: 404 });
     }
 
-    const { data: post } = await supabase
+    const { data: post } = await supabaseAdmin
       .from('posts')
       .select('*')
       .eq('id', params.id)
@@ -76,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     // If changing slug, verify it's unique within journal
     if (body.slug) {
-      const { data: existing } = await supabase
+      const { data: existing } = await supabaseAdmin
         .from('posts')
         .select('slug')
         .eq('slug', body.slug)
@@ -88,7 +88,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }
     }
 
-    const { data: post, error } = await supabase
+    const { data: post, error } = await supabaseAdmin
       .from('posts')
       .update({
         ...body,
@@ -117,7 +117,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       return NextResponse.json({ error: 'Post not found or forbidden' }, { status: 404 });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('posts')
       .delete()
       .eq('id', params.id);

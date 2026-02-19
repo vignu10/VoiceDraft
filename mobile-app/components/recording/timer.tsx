@@ -54,8 +54,8 @@ export function Timer({
   }, [seconds]);
 
   // Dot pulse animation
-  const dotOpacityIntervalRef = useRef<number | null>(null);
-  const dotScaleIntervalRef = useRef<number | null>(null);
+  const dotOpacityIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dotScaleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Skip animations if reduced motion is enabled
@@ -127,7 +127,7 @@ export function Timer({
   }, [seconds, timerScale, reducedMotion]);
 
   // Colon blink animation when paused
-  const colonBlinkIntervalRef = useRef<number | null>(null);
+  const colonBlinkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Skip animation if reduced motion is enabled

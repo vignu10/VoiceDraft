@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
 import type { Style } from '@/lib/types';
 
@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    const { data: journal, error } = await supabase
+    const { data: journal, error } = await supabaseAdmin
       .from('journals')
       .update({
         styles,

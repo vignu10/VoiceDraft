@@ -26,7 +26,7 @@ export function Skeleton({
 }: SkeletonProps) {
   const colors = useThemeColors();
   const shimmerProgress = useSharedValue(0);
-  const shimmerIntervalRef = useRef<number | null>(null);
+  const shimmerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const animateShimmer = () => {

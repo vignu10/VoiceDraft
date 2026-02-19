@@ -39,7 +39,7 @@ export function AnimatedButton({
       case 'primary':
         return {
           bg: colors.primary,
-          text: '#ffffff',
+          text: colors.textInverse,
           border: 'transparent',
         };
       case 'secondary':
@@ -57,13 +57,13 @@ export function AnimatedButton({
       case 'danger':
         return {
           bg: colors.error,
-          text: '#ffffff',
+          text: colors.textInverse,
           border: 'transparent',
         };
       case 'success':
         return {
           bg: colors.success,
-          text: '#ffffff',
+          text: colors.textInverse,
           border: 'transparent',
         };
     }

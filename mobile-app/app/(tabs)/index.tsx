@@ -34,9 +34,11 @@ export default function RecordTab() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Simplified: Single focused action */}
-        <View style={styles.content}>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+          {/* Simplified: Single focused action */}
+          <View style={styles.content}>
           <FadeIn>
             <ThemedText style={[styles.title, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
               VoiceDraft
@@ -56,10 +58,10 @@ export default function RecordTab() {
           </FadeIn>
 
           {/* Decorative gradient circles for warmth */}
-      <View style={styles.decorations}>
-        <View style={[styles.decorationCircle, styles.decorationTopRight, { backgroundColor: colors.primaryLight }]} />
-        <View style={[styles.decorationCircle, styles.decorationBottomLeft, { backgroundColor: colors.accentLight }]} />
-      </View>
+          <View style={styles.decorations}>
+            <View style={[styles.decorationCircle, styles.decorationTopRight, { backgroundColor: colors.primaryLight }]} />
+            <View style={[styles.decorationCircle, styles.decorationBottomLeft, { backgroundColor: colors.accentLight }]} />
+          </View>
 
           <View style={styles.spacer} />
 
@@ -103,6 +105,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing[6],
     paddingTop: Spacing[8],
+    paddingBottom: 120,
   },
   title: {
     fontSize: Typography.fontSize['4xl'],
@@ -110,7 +113,7 @@ const styles = StyleSheet.create({
     letterSpacing: Typography.letterSpacing.tight,
     marginBottom: Spacing[2],
     textAlign: 'center',
-    lineHeight: Typography.fontSize['4xl'] * 1.3,
+    lineHeight: Typography.fontSize['4xl'] * Typography.lineHeight.tight,
   },
   subtitle: {
     fontSize: Typography.fontSize.base,

@@ -10,7 +10,7 @@ export function HapticTab(props: BottomTabBarButtonProps) {
       // Increase touch target size for better usability
       hitSlop={12}
       style={styles.tabButton}
-      onPressIn={(ev) => {
+      onPressIn={(ev: any) => {
         if (process.env.EXPO_OS === 'ios') {
           // Add a soft haptic feedback when pressing down on the tabs.
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

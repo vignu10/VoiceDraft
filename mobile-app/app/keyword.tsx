@@ -15,11 +15,11 @@ import {
   withOpacity,
 } from "@/constants/design-system";
 import { useThemeColors } from "@/hooks/use-theme-color";
-import { useSettingsStore, useRecordingStore } from "@/stores";
+import { useRecordingStore, useSettingsStore } from "@/stores";
 import type { Length, Tone } from "@/types/draft";
 import { getKeywordTip, keywordEncouragement } from "@/utils/delight-messages";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BackHandler,
@@ -287,7 +287,15 @@ function AnimatedTipIcon({ colors }: { colors: ReturnType<typeof useThemeColors>
 }
 
 export default function KeywordScreen() {
-  const params = useLocalSearchParams<{ audioUri: string; duration: string }>();
+  const params = useLocalSearchParams<{
+    audioUri?: string;
+    audioFileUrl?: string;
+    audioS3Key?: string;
+    duration: string;
+    fileSize?: string;
+    mimeType?: string;
+    isGuestFlow?: string;
+  }>();
   const { defaultTone, defaultLength } = useSettingsStore();
   const colors = useThemeColors();
   const { clearLastDraft } = useRecordingStore();
@@ -297,6 +305,9 @@ export default function KeywordScreen() {
   const [length, setLength] = useState<Length>(defaultLength);
   const [tip, setTip] = useState(getKeywordTip());
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Determine if we're using S3 (new) or local audio (legacy)
+  const isUsingS3 = !!params.audioFileUrl && !!params.audioS3Key;
 
   // Clear the last draft when user is on keyword screen (preparing to create new draft)
   useFocusEffect(
@@ -337,11 +348,23 @@ export default function KeywordScreen() {
     router.push({
       pathname: "/draft/processing",
       params: {
-        audioUri: params.audioUri,
+        // S3 params (new flow)
+        ...(isUsingS3 && {
+          audioFileUrl: params.audioFileUrl,
+          audioS3Key: params.audioS3Key,
+          fileSize: params.fileSize,
+          mimeType: params.mimeType,
+        }),
+        // Legacy params (fallback)
+        ...(!isUsingS3 && {
+          audioUri: params.audioUri,
+        }),
         duration: params.duration,
         keyword: keyword || undefined,
         tone,
         length,
+        // Pass guest flow flag through
+        ...(params.isGuestFlow === 'true' && { isGuestFlow: 'true' }),
       },
     });
   };
@@ -350,17 +373,31 @@ export default function KeywordScreen() {
     router.push({
       pathname: "/draft/processing",
       params: {
-        audioUri: params.audioUri,
+        // S3 params (new flow)
+        ...(isUsingS3 && {
+          audioFileUrl: params.audioFileUrl,
+          audioS3Key: params.audioS3Key,
+          fileSize: params.fileSize,
+          mimeType: params.mimeType,
+        }),
+        // Legacy params (fallback)
+        ...(!isUsingS3 && {
+          audioUri: params.audioUri,
+        }),
         duration: params.duration,
         tone,
         length,
+        // Pass guest flow flag through
+        ...(params.isGuestFlow === 'true' && { isGuestFlow: 'true' }),
       },
     });
   };
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView mode="padding" edges={["top"]} style={{ flex: 1 }}>
+        <View style={styles.safeArea}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -512,6 +549,7 @@ export default function KeywordScreen() {
             </View>
           </View>
         </FadeIn>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -551,7 +589,7 @@ const styles = StyleSheet.create({
     letterSpacing: Typography.letterSpacing.tight,
     textAlign: "center",
     includeFontPadding: false,
-    lineHeight: Typography.fontSize["2xl"] * 1.3,
+    lineHeight: Typography.fontSize["2xl"] * Typography.lineHeight.tight,
   },
   subtitle: {
     fontSize: Typography.fontSize.md,
@@ -568,7 +606,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.semibold,
     marginBottom: Spacing[2],
     includeFontPadding: false,
-    lineHeight: Typography.fontSize.lg * 1.3,
+    lineHeight: Typography.fontSize.lg * Typography.lineHeight.tight,
   },
   labelHint: {
     fontSize: Typography.fontSize.sm,

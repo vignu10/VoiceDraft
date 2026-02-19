@@ -72,7 +72,7 @@ export function PremiumRecordButton({
   const buttonShape = useSharedValue(1); // 1 = circle, 0.35 = rounded square
 
   // Recording animation refs
-  const pulseIntervalRef = useRef<number | null>(null);
+  const pulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Recording state animations
   useEffect(() => {

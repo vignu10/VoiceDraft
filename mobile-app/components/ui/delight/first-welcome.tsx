@@ -163,6 +163,7 @@ export function FirstWelcome({ visible, onComplete }: FirstWelcomeProps) {
           style={styles.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          disableHardwareAcceleration={true}
         >
           {/* Sparkle icon */}
           <Animated.View style={sparkleStyle}>

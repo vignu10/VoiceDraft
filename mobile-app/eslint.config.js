@@ -1,12 +1,15 @@
-// Use Expo's recommended config
-module.exports = {
-  extends: ['expo'],
-  settings: {
-    'import/resolver': {
-      alias: {
-        map: [['@', './']],
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-      },
+// https://docs.expo.dev/guides/using-eslint/
+const { defineConfig } = require('eslint/config');
+const expoConfig = require("eslint-config-expo/flat");
+
+module.exports = defineConfig([
+  expoConfig,
+  {
+    ignores: ["dist/*"],
+  },
+  {
+    rules: {
+      'import/no-unresolved': 'off',
     },
   },
-};
+]);

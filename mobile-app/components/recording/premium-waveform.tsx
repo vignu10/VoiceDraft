@@ -48,7 +48,9 @@ const WaveformBar = memo(
     const reducedMotion = useReducedMotion();
 
     const animatedStyle = useAnimatedStyle(() => {
-      const height = Math.max(4, level * maxHeight);
+      // Remove minimum height - allow true silence (0) to be represented
+      // Use a small minimum (2px) for visibility of very quiet sounds
+      const height = Math.max(2, level * maxHeight);
       if (reducedMotion) {
         return {
           height,
@@ -69,6 +71,7 @@ const WaveformBar = memo(
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={styles.barGradient}
+          disableHardwareAcceleration={true}
         />
       </Animated.View>
     );
@@ -104,17 +107,16 @@ export const PremiumWaveform = memo(
     const reducedMotion = useReducedMotion();
 
     // Memoize display levels to prevent unnecessary re-renders of WaveformBar children
+    // Remove artificial minimums - allow true silence (0) to be represented
     const displayLevels = useMemo(() => {
       if (levels.length > 0) {
         return levels
           .slice(-barCount)
           .concat(
-            Array(Math.max(0, barCount - levels.length)).fill(
-              isRecording ? 0.12 : 0.06,
-            ),
+            Array(Math.max(0, barCount - levels.length)).fill(0), // No minimum padding
           );
       }
-      return Array(barCount).fill(isRecording ? 0.12 : 0.06);
+      return Array(barCount).fill(0); // No minimum padding
     }, [levels, barCount, isRecording]);
 
     // Glow animation during recording
@@ -157,7 +159,7 @@ export const PremiumWaveform = memo(
             >
               <WaveformBar
                 level={level}
-                maxHeight={height * 0.75}
+                maxHeight={height * 0.9}
                 isRecording={isRecording && !isPaused}
               />
             </View>

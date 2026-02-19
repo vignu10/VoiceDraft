@@ -143,13 +143,10 @@ export const useAchievementsStore = create<AchievementsState>()(
 
       // Actions
       recordDraftCreated: () => {
-        set((state) => {
-          const isFirstDraft = !state.firstDraftCreated;
-          return {
-            totalDrafts: state.totalDrafts + 1,
-            firstDraftCreated: true,
-          };
-        });
+        set((state) => ({
+          totalDrafts: state.totalDrafts + 1,
+          firstDraftCreated: true,
+        }));
       },
 
       recordWordsWritten: (wordCount) => {

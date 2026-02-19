@@ -2,10 +2,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { FadeIn } from "@/components/ui/animated/animated-wrappers";
 import { PressableScale } from "@/components/ui/animated/pressable-scale";
+import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
+import { GuestDraftGate } from "@/components/ui/guest-draft-gate";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
+import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
-import { useAchievementsStore } from "@/stores";
+import { useAchievementsStore, useGuestDraftStore } from "@/stores";
 import type { Draft } from "@/types/draft";
 import { getWordCountMilestone } from "@/utils/delight-messages";
 import { countWords } from "@/utils/formatters";
@@ -13,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,13 +27,27 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  runOnJS,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Tab = "edit" | "preview";
 
 export default function DraftEditorScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, isGuestFlow: isGuestFlowParam } = useLocalSearchParams<{
+    id: string;
+    isGuestFlow?: string;
+  }>();
+  const isGuestFlow = isGuestFlowParam === "true";
   const colors = useThemeColors();
+  const { isAuthenticated, trialCompletedSuccessfully } = useGuestTrial();
+
+  // Guest draft store
+  const guestDraft = useGuestDraftStore((state) => state.draft);
+  const clearGuestDraft = useGuestDraftStore((state) => state.clearGuestDraft);
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("edit");
@@ -45,8 +62,64 @@ export default function DraftEditorScreen() {
   }>({ visible: false });
   const [previousWordCount, setPreviousWordCount] = useState(0);
 
-  const celebrationTimerRef = useRef<number | null>(null);
-  const errorTimerRef = useRef<number | null>(null);
+  // Content gating state
+  const [showContentGate, setShowContentGate] = useState(false);
+  const [scrollPercentage, setScrollPercentage] = useState(0);
+  const scrollY = useSharedValue(0);
+  const contentHeight = useSharedValue(0);
+  const layoutHeight = useSharedValue(0);
+
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Scroll threshold for showing gate (30%)
+  const SCROLL_THRESHOLD = 0.3;
+
+  // Handle scroll position for content gating
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+      contentHeight.value = event.contentSize.height;
+      layoutHeight.value = event.layoutMeasurement.height;
+
+      // Calculate scroll percentage
+      const maxScroll = event.contentSize.height - event.layoutMeasurement.height;
+      if (maxScroll > 0) {
+        const percentage = event.contentOffset.y / maxScroll;
+        
+        // Only trigger gate for guest users who have used their trial
+        runOnJS(setScrollPercentage)(Math.round(percentage * 100));
+        
+        // Show gate when scroll exceeds threshold
+        if (percentage > SCROLL_THRESHOLD) {
+          runOnJS(triggerContentGate)();
+        }
+      }
+    },
+  });
+
+  // Trigger content gate for guest users (not for guest flow - GuestDraftGate handles that)
+  const triggerContentGate = useCallback(() => {
+    // Only show gate if:
+    // 1. User is NOT authenticated
+    // 2. User has completed a draft (trial completed successfully)
+    // 3. Gate is not already showing
+    // 4. This is NOT a guest flow (guest flow uses GuestDraftGate instead)
+    if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow) {
+      setShowContentGate(true);
+    }
+  }, [isAuthenticated, trialCompletedSuccessfully, showContentGate, isGuestFlow]);
+
+  // Navigation handlers for content gate
+  const handleSignIn = useCallback(() => {
+    setShowContentGate(false);
+    router.push("/auth/sign-in");
+  }, []);
+
+  const handleSignUp = useCallback(() => {
+    setShowContentGate(false);
+    router.push("/auth/sign-up");
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -62,6 +135,68 @@ export default function DraftEditorScreen() {
   const { showToast } = useDelightToast();
 
   const loadDraft = useCallback(async () => {
+    // DEBUG: Log guest draft loading
+    console.log('[DEBUG] loadDraft called with:', { id, isGuestFlow, isGuestFlowParam, guestDraftFromStore: !!guestDraft });
+    
+    // Guest flow: load from in-memory store instead of AsyncStorage
+    // Also detect guest draft automatically if id is "guest" or if guest draft exists
+    let guestDraftToLoad = guestDraft;
+
+    // If we're trying to load a guest draft but the store doesn't have it yet,
+    // try to load it directly from AsyncStorage (handles case where Zustand hasn't hydrated yet)
+    if (id === "guest" && !guestDraftToLoad) {
+      console.log('[DEBUG] id is "guest" but no store draft, trying AsyncStorage fallback');
+      try {
+        const stored = await AsyncStorage.getItem('guest-draft-storage');
+        console.log('[DEBUG] AsyncStorage raw data:', stored ? 'exists' : 'null');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          console.log('[DEBUG] Parsed storage:', JSON.stringify(parsed, null, 2));
+          if (parsed.state?.draft) {
+            guestDraftToLoad = parsed.state.draft;
+            console.log('[DEBUG] Found draft in AsyncStorage:', !!guestDraftToLoad);
+          }
+        }
+      } catch (error) {
+        console.error('[DEBUG] Error loading guest draft from AsyncStorage:', error);
+      }
+    }
+
+    const isGuestDraft = (isGuestFlow && id === "guest") || (id === "guest" && guestDraftToLoad);
+    console.log('[DEBUG] isGuestDraft:', isGuestDraft, { isGuestFlow, id, hasGuestDraftToLoad: !!guestDraftToLoad });
+
+    if (isGuestDraft && guestDraftToLoad) {
+      const wordCount = countWords(guestDraftToLoad.content);
+      // Map GuestDraft → Draft shape expected by the editor
+      const mapped: Draft = {
+        id: guestDraftToLoad.id,
+        title: guestDraftToLoad.title,
+        content: guestDraftToLoad.content,
+        metaDescription: "",
+        wordCount,
+        createdAt: guestDraftToLoad.createdAt,
+        updatedAt: guestDraftToLoad.createdAt,
+        transcript: guestDraftToLoad.transcription,
+        targetKeyword: guestDraftToLoad.keywords?.[0],
+        status: "ready",
+        tone: "casual",
+        length: "medium",
+        isFavorite: false,
+      };
+      setDraft(mapped);
+      setTitle(guestDraftToLoad.title || "");
+      setMetaDescription("");
+      setContent(guestDraftToLoad.content || "");
+      setPreviousWordCount(wordCount);
+
+      // Auto-set guest flow mode when guest draft is loaded
+      if (!isGuestFlow) {
+        // Update params to enable guest flow features (blur gate)
+        router.setParams({ isGuestFlow: 'true' });
+      }
+      return;
+    }
+
     try {
       const data = await AsyncStorage.getItem("drafts");
       if (data) {
@@ -78,11 +213,18 @@ export default function DraftEditorScreen() {
     } catch (error) {
       console.error("Error loading draft:", error);
     }
-  }, [id]);
+  }, [id, isGuestFlow, guestDraft]);
 
   useEffect(() => {
     loadDraft();
   }, [loadDraft]);
+
+  // Guest flow: always show preview mode (read-only)
+  useEffect(() => {
+    if (isGuestFlow) {
+      setActiveTab("preview");
+    }
+  }, [isGuestFlow]);
 
   const saveDraft = useCallback(async () => {
     if (!draft) return;
@@ -142,11 +284,19 @@ export default function DraftEditorScreen() {
   ]);
 
   useEffect(() => {
+    // Guest drafts are read-only — skip auto-save
+    if (isGuestFlow) return;
     const timer = setTimeout(() => {
       if (draft) saveDraft();
     }, 1000);
     return () => clearTimeout(timer);
-  }, [title, metaDescription, content, saveDraft, draft]);
+  }, [title, metaDescription, content, saveDraft, draft, isGuestFlow]);
+
+  // Guest flow: sign-up handler
+  const handleGuestSignUp = useCallback(() => {
+    clearGuestDraft();
+    router.push("/auth/sign-up");
+  }, [clearGuestDraft]);
 
   const handleExport = () => {
     Alert.alert("Export", "Choose format", [
@@ -204,8 +354,10 @@ export default function DraftEditorScreen() {
         onComplete={() => setCelebration({ visible: false })}
       />
 
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <KeyboardAvoidingView
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+        <View style={styles.safeArea}>
+          <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
@@ -215,7 +367,7 @@ export default function DraftEditorScreen() {
               {/* Left: Back + Title info */}
               <View style={styles.headerLeft}>
                 <PressableScale
-                  onPress={() => router.push("/(tabs)/library")}
+                  onPress={() => router.push(isGuestFlow ? "/(tabs)" : "/(tabs)/library")}
                   style={styles.iconOnlyBtn}
                 >
                   <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -258,42 +410,46 @@ export default function DraftEditorScreen() {
 
               {/* Right: Actions */}
               <View style={styles.headerRight}>
-                {/* Tab toggle - icon only */}
-                <PressableScale
-                  onPress={() =>
-                    setActiveTab(activeTab === "edit" ? "preview" : "edit")
-                  }
-                  style={[
-                    styles.iconBtn,
-                    styles.iconBtnOutline,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
-                  accessibilityLabel={`Switch to ${activeTab === "edit" ? "preview" : "edit"} mode`}
-                >
-                  <Ionicons
-                    name={
-                      activeTab === "edit" ? "eye-outline" : "create-outline"
+                {/* Tab toggle - hide for guest flow (read-only) */}
+                {!isGuestFlow && (
+                  <PressableScale
+                    onPress={() =>
+                      setActiveTab(activeTab === "edit" ? "preview" : "edit")
                     }
-                    size={22}
-                    color={colors.primary}
-                  />
-                </PressableScale>
+                    style={[
+                      styles.iconBtn,
+                      styles.iconBtnOutline,
+                      {
+                        borderColor: colors.border,
+                        backgroundColor: colors.surface,
+                      },
+                    ]}
+                    accessibilityLabel={`Switch to ${activeTab === "edit" ? "preview" : "edit"} mode`}
+                  >
+                    <Ionicons
+                      name={
+                        activeTab === "edit" ? "eye-outline" : "create-outline"
+                      }
+                      size={22}
+                      color={colors.primary}
+                    />
+                  </PressableScale>
+                )}
 
-                {/* Export - icon only */}
-                <PressableScale
-                  onPress={handleExport}
-                  style={[styles.iconBtn, { backgroundColor: colors.primary }]}
-                  accessibilityLabel="Export draft"
-                >
-                  <Ionicons
-                    name="share-outline"
-                    size={20}
-                    color={colors.textInverse}
-                  />
-                </PressableScale>
+                {/* Export - hide for guest flow */}
+                {!isGuestFlow && (
+                  <PressableScale
+                    onPress={handleExport}
+                    style={[styles.iconBtn, { backgroundColor: colors.primary }]}
+                    accessibilityLabel="Export draft"
+                  >
+                    <Ionicons
+                      name="share-outline"
+                      size={20}
+                      color={colors.textInverse}
+                    />
+                  </PressableScale>
+                )}
               </View>
             </View>
           </FadeIn>
@@ -422,12 +578,14 @@ export default function DraftEditorScreen() {
               </View>
             </ScrollView>
           ) : (
-            <ScrollView
+            <Animated.ScrollView
               style={styles.scrollView}
               contentContainerStyle={[
                 styles.previewContent,
                 { backgroundColor: colors.surface },
               ]}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
             >
               <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
                 {title || "Untitled"}
@@ -445,9 +603,23 @@ export default function DraftEditorScreen() {
               <ThemedText style={[styles.previewBody, { color: colors.text }]}>
                 {content || "No content..."}
               </ThemedText>
-            </ScrollView>
+            </Animated.ScrollView>
           )}
-        </KeyboardAvoidingView>
+
+          {/* Content Gate Overlay - only shown for guest users */}
+          <ContentGate
+            visible={showContentGate}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            scrollPercentage={scrollPercentage}
+          />
+
+          {/* GuestDraftGate - blurs half content and shows sign-up prompt for guest flow */}
+          {isGuestFlow && (
+            <GuestDraftGate onSignUp={handleGuestSignUp} />
+          )}
+          </KeyboardAvoidingView>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -488,8 +660,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     includeFontPadding: false,
-    lineHeight: 24,
-    letterSpacing: -0.3,
+    lineHeight: Typography.fontSize.lg * Typography.lineHeight.tight,
+    letterSpacing: Typography.letterSpacing.tight,
   },
   headerMeta: {
     flexDirection: "row",
@@ -500,7 +672,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
   errorText: {
     fontWeight: Typography.fontWeight.semibold,
@@ -533,12 +705,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
   count: {
     fontSize: Typography.fontSize.xs,
     includeFontPadding: false,
-    lineHeight: 14,
+    lineHeight: Typography.fontSize.xs * Typography.lineHeight.relaxed,
   },
   input: {
     borderWidth: 1,
@@ -554,13 +726,13 @@ const styles = StyleSheet.create({
   },
   metaInput: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.4,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     minHeight: 72,
     includeFontPadding: false,
   },
   contentInput: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.5,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     minHeight: 200,
     includeFontPadding: false,
   },
@@ -580,7 +752,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginVertical: Spacing[4] },
   previewBody: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.6,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     includeFontPadding: false,
   },
 });

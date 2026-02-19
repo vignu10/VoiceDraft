@@ -15,16 +15,22 @@ export async function optionalAuth(req: NextRequest) {
   return await getUserFromRequest(req);
 }
 
-export function handleError(error: any, message?: string) {
+interface ErrorWithStatus extends Error {
+  status?: number;
+  stack?: string;
+}
+
+export function handleError(error: unknown, message?: string) {
   console.error('API Error:', error);
 
-  const errorMessage = error?.message || message || 'An error occurred';
+  const err = error as ErrorWithStatus;
+  const errorMessage = err?.message || message || 'An error occurred';
 
   return NextResponse.json(
     {
       error: errorMessage,
-      ...(process.env.NODE_ENV === 'development' && { details: error?.stack }),
+      ...(process.env.NODE_ENV === 'development' && { details: err?.stack }),
     },
-    { status: error?.status || 500 }
+    { status: err?.status || 500 }
   );
 }

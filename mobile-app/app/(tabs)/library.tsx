@@ -1,35 +1,37 @@
-import { useState, useCallback, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TextInput,
-  Modal,
-  TouchableOpacity,
-} from 'react-native';
-import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useThemeColors } from '@/hooks/use-theme-color';
-import { useDialog } from '@/components/ui/dialog';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { formatRelativeTime } from '@/utils/formatters';
-import type { Draft } from '@/types/draft';
-import { Ionicons } from '@expo/vector-icons';
 import {
-  FadeIn,
-  SlideIn,
-  PressableScale,
-  AnimatedCard,
   AnimatedButton,
+  AnimatedCard,
+  FadeIn,
+  PressableScale,
+  SlideIn,
 } from '@/components/ui/animated';
-import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
+import { useDialog } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/loading';
 import { Duration, Stagger } from '@/constants/animations';
-import * as Haptics from 'expo-haptics';
-import { listPosts, deletePost, publishPost, unpublishPost } from '@/services/api/posts';
+import { BorderRadius, Palette, Shadows, Spacing, Typography, withOpacity } from '@/constants/design-system';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { deletePost, listPosts, publishPost, unpublishPost } from '@/services/api/posts';
 import { useAuthStore } from '@/stores/auth-store';
+import type { Draft } from '@/types/draft';
+import { formatRelativeTime } from '@/utils/formatters';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SortOption = 'date' | 'title';
 
@@ -50,7 +52,9 @@ export default function LibraryTab() {
 
   const loadPosts = useCallback(async () => {
     if (!isAuthenticated) {
-      setSyncError('Please sign in to view your drafts');
+      setDrafts([]);
+      setIsLoading(false);
+      setSyncError(null);
       return;
     }
 
@@ -225,7 +229,7 @@ export default function LibraryTab() {
         await AsyncStorage.setItem('drafts', JSON.stringify(favDrafts));
         break;
     }
-  }, [drafts, menuDraftId, showDialog, router]);
+  }, [drafts, menuDraftId, showDialog]);
 
   const handlePublishToggle = useCallback(async (draft: Draft) => {
     try {
@@ -276,11 +280,21 @@ export default function LibraryTab() {
   }, [filteredDrafts]);
 
   const selectedCount = selectedIds.size;
-  const hasSelections = selectedCount > 0;
   const isAllSelected = filteredDrafts.length > 0 && selectedCount === filteredDrafts.length;
+
+  // Color accent for each draft based on index for playful variety
+  const getDraftAccent = (index: number) => {
+    const accents = [
+      { primary: Palette.periwinkle[500], light: Palette.periwinkle[50], gradient: ['#8B5CF6', '#A78BFA'] },
+      { primary: Palette.coral[500], light: Palette.coral[50], gradient: ['#EC5D72', '#FFA8B4'] },
+      { primary: Palette.teal[500], light: Palette.teal[50], gradient: ['#14B8A6', '#5EEAD4'] },
+    ];
+    return accents[index % accents.length];
+  };
 
   const renderDraft = useCallback(({ item, index }: { item: Draft; index: number }) => {
     const isSelected = selectedIds.has(item.id);
+    const accent = getDraftAccent(index);
 
     return (
       <AnimatedCard
@@ -290,7 +304,11 @@ export default function LibraryTab() {
         onPress={() => handleDraftPress(item.id)}
         onLongPress={() => handleLongPress(item.id)}
         delay={Stagger.delay(index)}
-        style={[styles.draftCard, isSelected && styles.draftCardSelected]}
+        style={[
+          styles.draftCard,
+          { borderLeftColor: accent.primary, borderLeftWidth: 4 },
+          isSelected && styles.draftCardSelected,
+        ]}
         accessibilityLabel={`${item.title || 'Untitled Draft'}, ${formatRelativeTime(new Date(item.createdAt))}`}
         accessibilityHint={isSelectMode ? (isSelected ? 'Selected. Tap to deselect.' : 'Tap to select.') : 'Tap to open, long press for options.'}
       >
@@ -299,13 +317,20 @@ export default function LibraryTab() {
           <View
             style={[
               styles.selectionIndicator,
-              { backgroundColor: isSelected ? colors.primary : colors.surface },
-              { borderColor: isSelected ? colors.primary : colors.border },
+              { backgroundColor: isSelected ? accent.primary : colors.surface },
+              { borderColor: isSelected ? accent.primary : colors.border },
             ]}
           >
             {isSelected && (
               <Ionicons name="checkmark-circle" size={20} color={colors.textInverse} />
             )}
+          </View>
+        )}
+
+        {/* Published badge */}
+        {item.status === 'published' && !isSelectMode && (
+          <View style={[styles.publishedBadge, { backgroundColor: accent.light }]}>
+            <Ionicons name="eye" size={12} color={accent.primary} />
           </View>
         )}
 
@@ -324,45 +349,95 @@ export default function LibraryTab() {
         {/* Footer with metadata */}
         <View style={[styles.draftFooter, isSelectMode && styles.draftFooterWithSelect]}>
           <View style={styles.draftMeta}>
-            <Ionicons name="time-outline" size={16} color={colors.textMuted} />
-            <ThemedText style={[styles.draftMetaText, { color: colors.textMuted }]}>
-              {formatRelativeTime(new Date(item.createdAt))}
+            <View style={[styles.metaIcon, { backgroundColor: withOpacity(accent.primary, 0.1) }]}>
+              <Ionicons name="time-outline" size={14} color={accent.primary} />
+            </View>
+            <ThemedText style={[styles.draftMetaText, { color: colors.textSecondary }]}>
+              {formatRelativeTime(new Date(item.createdAt)) || 'Just now'}
             </ThemedText>
           </View>
 
-          {item.wordCount && (
+          {item.wordCount != null && item.wordCount > 0 && (
             <View style={styles.draftMeta}>
-              <Ionicons name="document-text-outline" size={16} color={colors.textMuted} />
-              <ThemedText style={[styles.draftMetaText, { color: colors.textMuted }]}>
-                {item.wordCount} words
+              <View style={[styles.metaIcon, { backgroundColor: withOpacity(colors.accent, 0.1) }]}>
+                <Ionicons name="document-text-outline" size={14} color={colors.accent} />
+              </View>
+              <ThemedText style={[styles.draftMetaText, { color: colors.textSecondary }]}>
+                {String(item.wordCount)} words
               </ThemedText>
             </View>
           )}
         </View>
       </AnimatedCard>
     );
-  }, [selectedIds, isSelectMode, colors.primary, colors.surface, colors.border, colors.textInverse, colors.text, colors.textSecondary, colors.textMuted, colors.accent]);
+  }, [selectedIds, isSelectMode, colors, handleDraftPress, handleLongPress]);
 
   const EmptyState = useCallback(() => (
     <FadeIn delay={Duration.fast}>
       <View style={styles.emptyState}>
-        <View style={[styles.emptyIcon, { backgroundColor: colors.primaryLight }]}>
-          <Ionicons name="document-text-outline" size={48} color={colors.primary} />
+        {/* Animated decorative circles */}
+        <View style={styles.emptyDecorations}>
+          <View style={[styles.decorationCircle, styles.deco1, { backgroundColor: colors.primaryLight }]} />
+          <View style={[styles.decorationCircle, styles.deco2, { backgroundColor: colors.accentLight }]} />
+          <View style={[styles.decorationCircle, styles.deco3, { backgroundColor: withOpacity(colors.teal, 0.2) }]} />
         </View>
+
+        {/* Playful icon with bounce animation */}
+        <View style={[styles.emptyIconContainer, { backgroundColor: colors.primaryLight }]}>
+          <Ionicons name="mic" size={56} color={colors.primary} />
+        </View>
+
         <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>
-          No drafts yet
+          Your library awaits
         </ThemedText>
         <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
-          Start recording to create your first blog post
+          Transform your voice into beautiful blog posts
         </ThemedText>
-        <AnimatedButton
-          variant="primary"
-          size="lg"
-          leftIcon="mic"
-          onPress={() => router.push('/recording')}
-        >
-          Start Recording
-        </AnimatedButton>
+
+        <View style={styles.emptyButton}>
+          <AnimatedButton
+            variant="primary"
+            size="lg"
+            leftIcon="add"
+            onPress={() => router.push('/recording')}
+          >
+            Create Your First Draft
+          </AnimatedButton>
+        </View>
+      </View>
+    </FadeIn>
+  ), [colors]);
+
+  const AuthRequiredState = useCallback(() => (
+    <FadeIn delay={Duration.fast}>
+      <View style={styles.emptyState}>
+        {/* Animated decorative circles */}
+        <View style={styles.emptyDecorations}>
+          <View style={[styles.decorationCircle, styles.deco1, { backgroundColor: colors.accentLight }]} />
+          <View style={[styles.decorationCircle, styles.deco2, { backgroundColor: colors.primaryLight }]} />
+        </View>
+
+        <View style={[styles.emptyIconContainer, { backgroundColor: colors.accentLight }]}>
+          <Ionicons name="lock-closed" size={56} color={colors.accent} />
+        </View>
+
+        <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>
+          Unlock your library
+        </ThemedText>
+        <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
+          Sign in to access and manage all your drafts
+        </ThemedText>
+
+        <View style={styles.emptyButton}>
+          <AnimatedButton
+            variant="primary"
+            size="lg"
+            leftIcon="log-in-outline"
+            onPress={() => router.replace('/auth/sign-in')}
+          >
+            Sign In to Continue
+          </AnimatedButton>
+        </View>
       </View>
     </FadeIn>
   ), [colors]);
@@ -370,174 +445,224 @@ export default function LibraryTab() {
   const selectAllText = isAllSelected ? 'Deselect All' : 'Select All';
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <SlideIn direction="down" delay={0}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <ThemedText style={[styles.title, { color: colors.text }]}>Library</ThemedText>
-              <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}
-              </ThemedText>
-            </View>
-
-            {!isSelectMode ? (
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={startSelectMode}
-                accessibilityLabel="Select multiple drafts"
-              >
-                <Ionicons name="ellipsis-horizontal" size={24} color={colors.text} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={exitSelectMode}
-                accessibilityLabel="Exit selection mode"
-              >
-                <Ionicons name="close-circle" size={24} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </SlideIn>
-
-        {/* Selection Bar */}
-        {isSelectMode && (
-          <FadeIn>
-            <View style={[styles.selectionBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-              <View style={styles.selectionCountContainer}>
-                <View style={[styles.selectionCountBadge, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+    <>
+      <ThemedView style={styles.container}>
+        {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+        <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+          <View style={styles.safeArea}>
+            {/* Playful Gradient Header */}
+            <SlideIn direction="down" delay={0}>
+              <View style={styles.header}>
+                <View style={styles.headerLeft}>
+                  <View style={styles.titleContainer}>
+                    <LinearGradient
+                      colors={[colors.primary, colors.accent]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.titleGradient}
+                    >
+                      <ThemedText style={styles.title}>Library</ThemedText>
+                    </LinearGradient>
+                  </View>
+                  <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}{drafts.length > 0 && ' · '}{drafts.length === 0 ? 'Start creating!' : 'Ready to publish?'}
+                  </ThemedText>
                 </View>
-                <ThemedText style={[styles.selectionText, { color: colors.text }]}>
-                  {selectedCount} selected
+
+                {!isSelectMode ? (
+                  <PressableScale
+                    style={styles.iconButton}
+                    onPress={startSelectMode}
+                    hapticStyle="light"
+                    accessibilityLabel="Select multiple drafts"
+                  >
+                    <View style={[styles.iconButtonBg, { backgroundColor: colors.primaryLight }]}>
+                      <Ionicons name="layers-outline" size={22} color={colors.primary} />
+                    </View>
+                  </PressableScale>
+                ) : (
+                  <PressableScale
+                    style={styles.iconButton}
+                    onPress={exitSelectMode}
+                    hapticStyle="light"
+                    accessibilityLabel="Exit selection mode"
+                  >
+                    <View style={[styles.iconButtonBg, { backgroundColor: colors.errorLight }]}>
+                      <Ionicons name="close" size={22} color={colors.error} />
+                    </View>
+                  </PressableScale>
+                )}
+              </View>
+            </SlideIn>
+
+            {/* Selection Bar */}
+            {isSelectMode && (
+              <FadeIn>
+                <View style={[styles.selectionBar, { backgroundColor: colors.primary, borderTopColor: colors.primary }]}>
+                  <View style={styles.selectionCountContainer}>
+                    <View style={[styles.selectionCountBadge, { backgroundColor: colors.textInverse }]}>
+                      <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                    </View>
+                    <ThemedText style={[styles.selectionText, { color: colors.textInverse }]}>
+                      {selectedCount} selected
+                    </ThemedText>
+                  </View>
+
+                  <PressableScale
+                    onPress={selectAll}
+                    haptic={false}
+                    style={[styles.selectionAction, { backgroundColor: withOpacity(colors.textInverse, 0.2) }]}
+                    accessibilityLabel={selectAllText}
+                  >
+                    <ThemedText style={[styles.selectionActionText, { color: colors.textInverse }]}>
+                      {selectAllText}
+                    </ThemedText>
+                  </PressableScale>
+
+                  <PressableScale
+                    onPress={deleteSelected}
+                    haptic={false}
+                    style={[styles.deleteButton, { backgroundColor: colors.error }]}
+                    accessibilityLabel="Delete selected drafts"
+                  >
+                    <Ionicons name="trash" size={20} color={colors.textInverse} />
+                  </PressableScale>
+                </View>
+              </FadeIn>
+            )}
+
+            {/* Search */}
+            <SlideIn direction="down" delay={Duration.fastest}>
+              <View style={styles.searchContainer}>
+                <View
+                  style={[
+                    styles.searchInputWrapper,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  <View style={[styles.searchIconBg, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="search" size={18} color={colors.primary} />
+                  </View>
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.text }]}
+                    placeholder="Search your drafts..."
+                    placeholderTextColor={colors.placeholder}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    accessibilityLabel="Search drafts"
+                  />
+                  {searchQuery.length > 0 && (
+                    <PressableScale
+                      onPress={() => setSearchQuery('')}
+                      scale={0.9}
+                      haptic={false}
+                      accessibilityLabel="Clear search"
+                      style={styles.clearButton}
+                    >
+                      <View style={[styles.clearButtonBg, { backgroundColor: colors.border }]}>
+                        <Ionicons name="close" size={16} color={colors.text} />
+                      </View>
+                    </PressableScale>
+                  )}
+                </View>
+              </View>
+            </SlideIn>
+
+            {/* Sort Options - Pill style */}
+            <SlideIn direction="down" delay={Duration.fastest}>
+              <View style={styles.sortContainer}>
+                <PressableScale
+                  onPress={() => setSortBy('date')}
+                  haptic={false}
+                  style={[
+                    styles.sortOption,
+                    {
+                      backgroundColor: sortBy === 'date' ? colors.primary : colors.surface,
+                      borderColor: sortBy === 'date' ? colors.primary : colors.border,
+                      shadowColor: sortBy === 'date' ? colors.primary : undefined,
+                      shadowOpacity: sortBy === 'date' ? 0.3 : 0,
+                      elevation: sortBy === 'date' ? 4 : 0,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={16}
+                    color={sortBy === 'date' ? colors.textInverse : colors.textSecondary}
+                    style={{ marginRight: Spacing[1] }}
+                  />
+                  <ThemedText
+                    style={[styles.sortText, { color: sortBy === 'date' ? colors.textInverse : colors.text }]}
+                  >
+                    Recent
+                  </ThemedText>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => setSortBy('title')}
+                  haptic={false}
+                  style={[
+                    styles.sortOption,
+                    {
+                      backgroundColor: sortBy === 'title' ? colors.accent : colors.surface,
+                      borderColor: sortBy === 'title' ? colors.accent : colors.border,
+                      shadowColor: sortBy === 'title' ? colors.accent : undefined,
+                      shadowOpacity: sortBy === 'title' ? 0.3 : 0,
+                      elevation: sortBy === 'title' ? 4 : 0,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="text-outline"
+                    size={16}
+                    color={sortBy === 'title' ? colors.textInverse : colors.textSecondary}
+                    style={{ marginRight: Spacing[1] }}
+                  />
+                  <ThemedText
+                    style={[styles.sortText, { color: sortBy === 'title' ? colors.textInverse : colors.text }]}
+                  >
+                    Title
+                  </ThemedText>
+                </PressableScale>
+              </View>
+            </SlideIn>
+
+            {/* Draft List */}
+            {isLoading ? (
+              <View style={styles.listContent}>
+                <LoadingSpinner
+                  size="lg"
+                  message="Loading your drafts..."
+                  centerInContainer={true}
+                />
+              </View>
+            ) : (
+              <FlatList
+                data={filteredDrafts}
+                renderItem={renderDraft}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                ListEmptyComponent={!isAuthenticated ? AuthRequiredState : EmptyState}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={false}
+                maxToRenderPerBatch={8}
+                windowSize={10}
+                initialNumToRender={12}
+                updateCellsBatchingPeriod={50}
+              />
+            )}
+
+            {/* Sync Error Message */}
+            {syncError && (
+              <View style={[styles.syncErrorBanner, { backgroundColor: colors.errorLight }]}>
+                <Ionicons name="alert-circle" size={20} color={colors.error} />
+                <ThemedText style={[styles.syncErrorText, { color: colors.error }]}>
+                  {syncError}
                 </ThemedText>
               </View>
-
-              <PressableScale
-                onPress={selectAll}
-                haptic={false}
-                style={[styles.selectionAction, { borderColor: colors.border }]}
-                accessibilityLabel={selectAllText}
-              >
-                <ThemedText style={[styles.selectionActionText, { color: colors.primary }]}>
-                  {selectAllText}
-                </ThemedText>
-              </PressableScale>
-
-              <PressableScale
-                onPress={deleteSelected}
-                haptic={false}
-                style={[styles.deleteButton, { borderColor: hasSelections ? colors.error : colors.error + '15' }]}
-                disabled={!hasSelections}
-                accessibilityLabel="Delete selected drafts"
-              >
-                <Ionicons name="trash" size={20} color={hasSelections ? colors.textInverse : colors.textMuted} />
-              </PressableScale>
-            </View>
-          </FadeIn>
-        )}
-
-        {/* Search */}
-        <SlideIn direction="down" delay={Duration.fastest}>
-          <View style={styles.searchContainer}>
-            <View
-              style={[
-                styles.searchInputWrapper,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Ionicons name="search" size={20} color={colors.textMuted} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search drafts..."
-                placeholderTextColor={colors.placeholder}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                accessibilityLabel="Search drafts"
-              />
-              {searchQuery.length > 0 && (
-                <PressableScale
-                  onPress={() => setSearchQuery('')}
-                  scale={0.9}
-                  haptic={false}
-                  accessibilityLabel="Clear search"
-                >
-                  <Ionicons name="close-circle" size={20} color={colors.textMuted} />
-                </PressableScale>
-              )}
-            </View>
+            )}
           </View>
-        </SlideIn>
-
-        {/* Sort Options */}
-        <SlideIn direction="down" delay={Duration.fastest}>
-          <View style={styles.sortContainer}>
-            <PressableScale
-              onPress={() => setSortBy('date')}
-              haptic={false}
-              style={[
-                styles.sortOption,
-                {
-                  backgroundColor: sortBy === 'date' ? colors.primary : 'transparent',
-                  borderColor: sortBy === 'date' ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <ThemedText
-                style={[styles.sortText, { color: sortBy === 'date' ? colors.textInverse : colors.text }]}
-              >
-                Recent
-              </ThemedText>
-            </PressableScale>
-            <PressableScale
-              onPress={() => setSortBy('title')}
-              haptic={false}
-              style={[
-                styles.sortOption,
-                {
-                  backgroundColor: sortBy === 'title' ? colors.primary : 'transparent',
-                  borderColor: sortBy === 'title' ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <ThemedText
-                style={[styles.sortText, { color: sortBy === 'title' ? colors.textInverse : colors.text }]}
-              >
-                Title
-              </ThemedText>
-            </PressableScale>
-          </View>
-        </SlideIn>
-
-        {/* Draft List */}
-        <FlatList
-          data={filteredDrafts}
-          renderItem={renderDraft}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={EmptyState}
-          showsVerticalScrollIndicator={false}
-          removeClippedSubviews={false}
-          maxToRenderPerBatch={8}
-          windowSize={10}
-          initialNumToRender={12}
-          updateCellsBatchingPeriod={50}
-        />
-
-        {/* Sync Error Message */}
-        {syncError && (
-          <View style={styles.syncErrorBanner}>
-            <Ionicons name="alert-circle" size={20} color={colors.error} />
-            <ThemedText style={[styles.syncErrorText, { color: colors.text }]}>
-              {syncError}
-            </ThemedText>
-          </View>
-        )}
-      </SafeAreaView>
-
-      {/* Draft Menu Modal */}
+        </SafeAreaView>
+      </ThemedView>
       <Modal
         visible={showMenu}
         transparent={true}
@@ -559,7 +684,9 @@ export default function LibraryTab() {
                 handleDraftPress(menuDraftId!);
               }}
             >
-              <Ionicons name="document-text-outline" size={22} color={colors.primary} />
+              <View style={[styles.menuIconBg, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+              </View>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>Open Draft</ThemedText>
             </TouchableOpacity>
 
@@ -568,11 +695,13 @@ export default function LibraryTab() {
               style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => handleMenuAction('favorite')}
             >
-              <Ionicons
-                name={drafts.find(d => d.id === menuDraftId)?.isFavorite ? 'star' : 'star-outline'}
-                size={22}
-                color={colors.accent}
-              />
+              <View style={[styles.menuIconBg, { backgroundColor: colors.accentLight }]}>
+                <Ionicons
+                  name={drafts.find(d => d.id === menuDraftId)?.isFavorite ? 'star' : 'star-outline'}
+                  size={20}
+                  color={colors.accent}
+                />
+              </View>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>
                 {drafts.find(d => d.id === menuDraftId)?.isFavorite ? 'Unfavorite' : 'Favorite'}
               </ThemedText>
@@ -583,7 +712,9 @@ export default function LibraryTab() {
               style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => handleMenuAction('duplicate')}
             >
-              <Ionicons name="copy-outline" size={22} color={colors.info} />
+              <View style={[styles.menuIconBg, { backgroundColor: colors.tealLight || withOpacity(colors.teal, 0.1) }]}>
+                <Ionicons name="copy-outline" size={20} color={colors.teal} />
+              </View>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>Duplicate</ThemedText>
             </TouchableOpacity>
 
@@ -592,7 +723,9 @@ export default function LibraryTab() {
               style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={() => handleMenuAction('share')}
             >
-              <Ionicons name="share-outline" size={22} color={colors.success} />
+              <View style={[styles.menuIconBg, { backgroundColor: colors.successLight }]}>
+                <Ionicons name="share-outline" size={20} color={colors.success} />
+              </View>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>Share</ThemedText>
             </TouchableOpacity>
 
@@ -607,11 +740,13 @@ export default function LibraryTab() {
                 }
               }}
             >
-              <Ionicons
-                name={drafts.find(d => d.id === menuDraftId)?.status === 'published' ? 'eye-off' : 'eye'}
-                size={22}
-                color={colors.info}
-              />
+              <View style={[styles.menuIconBg, { backgroundColor: colors.infoLight }]}>
+                <Ionicons
+                  name={drafts.find(d => d.id === menuDraftId)?.status === 'published' ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={colors.info}
+                />
+              </View>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>
                 {drafts.find(d => d.id === menuDraftId)?.status === 'published' ? 'Unpublish' : 'Publish'}
               </ThemedText>
@@ -622,13 +757,15 @@ export default function LibraryTab() {
               style={styles.menuItemDestructive}
               onPress={() => handleMenuAction('delete')}
             >
-              <Ionicons name="trash-outline" size={22} color={colors.error} />
-              <ThemedText style={[styles.menuText, { color: colors.text }]}>Delete</ThemedText>
+              <View style={[styles.menuIconBg, { backgroundColor: colors.errorLight }]}>
+                <Ionicons name="trash-outline" size={20} color={colors.error} />
+              </View>
+              <ThemedText style={[styles.menuText, { color: colors.error }]}>Delete</ThemedText>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
-    </ThemedView>
+    </>
   );
 }
 
@@ -639,42 +776,67 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  // Header with playful gradient
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: Spacing[6],
     paddingTop: Spacing[8],
-    paddingBottom: Spacing[4],
-    minHeight: 70,
+    paddingBottom: Spacing[5],
+    minHeight: 90,
   },
   headerLeft: {
     flex: 1,
   },
+  titleContainer: {
+    marginBottom: Spacing[1],
+  },
+  titleGradient: {
+    paddingHorizontal: Spacing[2],
+    paddingVertical: Spacing[0.5],
+    borderRadius: BorderRadius.sm,
+    alignSelf: 'flex-start',
+  },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontSize: Typography.fontSize['5xl'], // Dramatically larger
+    fontWeight: Typography.fontWeight.extrabold,
+    letterSpacing: Typography.letterSpacing.wider,
+    lineHeight: Typography.fontSize['5xl'] * Typography.lineHeight.tight,
+    includeFontPadding: false,
   },
   subtitle: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.normal,
-    marginTop: 2,
+    fontSize: Typography.fontSize.md,
+    fontWeight: Typography.fontWeight.medium,
+    marginTop: Spacing[1],
+    lineHeight: Typography.fontSize.md * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
   },
   iconButton: {
     padding: Spacing[2],
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 48,
+    minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  iconButtonBg: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Selection bar with bold colors
   selectionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing[5],
-    paddingVertical: Spacing[3],
-    borderTopWidth: 1,
+    paddingVertical: Spacing[4],
+    marginHorizontal: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    ...Shadows.md,
   },
   selectionCountContainer: {
     flexDirection: 'row',
@@ -682,23 +844,23 @@ const styles = StyleSheet.create({
     gap: Spacing[3],
   },
   selectionCountBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
   selectionText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold,
-    letterSpacing: -0.2,
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold,
+    letterSpacing: Typography.letterSpacing.tight,
+    includeFontPadding: false,
   },
   selectionAction: {
-    paddingHorizontal: Spacing[4],
-    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[2.5],
     borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    minWidth: 44,
+    minWidth: 48,
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
@@ -707,18 +869,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
-    letterSpacing: -0.2,
+    letterSpacing: Typography.letterSpacing.tight,
   },
   deleteButton: {
-    paddingHorizontal: Spacing[4],
-    paddingVertical: Spacing[2],
+    width: 44,
+    height: 44,
     borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    minWidth: 44,
-    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    ...Shadows.sm,
   },
+
+  // Sort options with bolder styling
   sortContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing[6],
@@ -726,21 +888,26 @@ const styles = StyleSheet.create({
     gap: Spacing[3],
   },
   sortOption: {
-    paddingHorizontal: Spacing[6],
-    paddingVertical: Spacing[2.5],
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[3],
     borderRadius: BorderRadius.full,
     borderWidth: 2,
-    minWidth: 44,
+    minWidth: 48,
     minHeight: 44,
     justifyContent: 'center',
-    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
   sortText: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
-    letterSpacing: -0.2,
+    letterSpacing: Typography.letterSpacing.tight,
   },
+
+  // Search with colorful icon
   searchContainer: {
     paddingHorizontal: Spacing[6],
     paddingBottom: Spacing[4],
@@ -749,61 +916,98 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     paddingHorizontal: Spacing[4],
+    paddingVertical: Spacing[1],
     gap: Spacing[3],
     ...Shadows.sm,
+  },
+  searchIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchInput: {
     flex: 1,
     paddingVertical: Spacing[3],
     fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
     includeFontPadding: false,
   },
+  clearButton: {
+    padding: Spacing[1],
+  },
+  clearButtonBg: {
+    width: 24,
+    height: 24,
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Draft list
   listContent: {
     paddingHorizontal: Spacing[6],
-    paddingBottom: 120,
+    paddingBottom: 140,
     flexGrow: 1,
   },
+
+  // Draft cards with bold colored borders
   draftCard: {
     marginBottom: Spacing[4],
     padding: 0,
-    borderLeftWidth: 3,
-    borderLeftColor: 'transparent',
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...Shadows.sm,
   },
   draftCardSelected: {
-    borderLeftColor: 'transparent',
+    opacity: 0.9,
   },
   selectionIndicator: {
     position: 'absolute',
     top: Spacing[4],
     left: Spacing[4],
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     zIndex: 1,
   },
+  publishedBadge: {
+    position: 'absolute',
+    top: Spacing[4],
+    right: Spacing[4],
+    paddingHorizontal: Spacing[2],
+    paddingVertical: Spacing[1],
+    borderRadius: BorderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[0.5],
+  },
   draftTitle: {
-    fontSize: 18,
+    fontSize: Typography.fontSize.xl, // Bigger title
     fontWeight: Typography.fontWeight.bold,
-    paddingHorizontal: 0,
+    paddingHorizontal: Spacing[5],
     paddingRight: Spacing[5],
-    marginBottom: Spacing[2],
+    paddingTop: Spacing[5],
+    paddingBottom: Spacing[2],
     includeFontPadding: false,
+    letterSpacing: Typography.letterSpacing.tight,
   },
   draftTitleWithSelect: {
     paddingLeft: 52,
   },
   draftPreview: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.base, // Slightly larger
     fontWeight: Typography.fontWeight.normal,
-    paddingHorizontal: 0,
+    paddingHorizontal: Spacing[5],
     paddingRight: Spacing[5],
-    marginBottom: Spacing[3],
-    lineHeight: 20,
+    paddingBottom: Spacing[3],
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     includeFontPadding: false,
   },
   draftContentWithSelect: {
@@ -813,10 +1017,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[4],
     borderTopWidth: 1,
     borderTopColor: 'transparent',
-    paddingTop: Spacing[3],
-    paddingBottom: Spacing[3],
   },
   draftFooterWithSelect: {
     paddingLeft: 52,
@@ -824,43 +1028,88 @@ const styles = StyleSheet.create({
   draftMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing[1.5],
+    gap: Spacing[2],
+  },
+  metaIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: BorderRadius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   draftMetaText: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
   },
+
+  // Empty state with playful decorations
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: Spacing[16],
+    paddingTop: Spacing[20],
     paddingHorizontal: Spacing[6],
+    minHeight: 400,
   },
-  emptyIcon: {
+  emptyDecorations: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+  },
+  decorationCircle: {
+    position: 'absolute',
+    borderRadius: BorderRadius.full,
+    opacity: 0.6,
+  },
+  deco1: {
+    width: 180,
+    height: 180,
+    top: -60,
+    right: -40,
+  },
+  deco2: {
+    width: 140,
+    height: 140,
+    bottom: 80,
+    left: -30,
+  },
+  deco3: {
     width: 100,
     height: 100,
-    borderRadius: BorderRadius['2xl'],
+    bottom: 40,
+    right: 60,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: BorderRadius['3xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing[4],
+    marginBottom: Spacing[6],
+    ...Shadows.md,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: Typography.fontWeight.semibold,
-    marginTop: Spacing[4],
-    marginBottom: Spacing[2],
+    fontSize: Typography.fontSize['3xl'], // Larger
+    fontWeight: Typography.fontWeight.extrabold,
+    marginBottom: Spacing[3],
     includeFontPadding: false,
+    letterSpacing: Typography.letterSpacing.tight,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: Typography.fontSize.base,
     textAlign: 'center',
-    marginTop: Spacing[2],
-    paddingHorizontal: Spacing[8],
+    marginBottom: Spacing[6],
+    paddingHorizontal: Spacing[6],
     includeFontPadding: false,
-    lineHeight: 22,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
   },
+  emptyButton: {
+    width: '100%',
+    maxWidth: 280,
+  },
+
+  // Menu modal
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -868,8 +1117,8 @@ const styles = StyleSheet.create({
   menuContainer: {
     marginHorizontal: Spacing[6],
     marginBottom: Spacing[4],
-    borderRadius: BorderRadius.lg,
-    paddingTop: Spacing[2],
+    borderRadius: BorderRadius.xl,
+    paddingTop: Spacing[3],
     paddingBottom: Spacing[4],
     ...Shadows.xl,
   },
@@ -880,12 +1129,20 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[4],
     gap: Spacing[4],
   },
+  menuIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   menuItemDestructive: {
     justifyContent: 'center',
+    marginTop: Spacing[2],
   },
   menuText: {
     fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
   },
   syncErrorBanner: {
@@ -893,12 +1150,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing[3],
     paddingHorizontal: Spacing[6],
-    paddingVertical: Spacing[3],
-    backgroundColor: 'rgba(239, 68, 68, 0.95)',
+    paddingVertical: Spacing[4],
+    marginHorizontal: Spacing[6],
+    marginBottom: Spacing[4],
+    borderRadius: BorderRadius.xl,
   },
   syncErrorText: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
   },
 });

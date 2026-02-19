@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
 import type { Post, CreatePostRequest } from '@/lib/types';
 
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get user's journal
-    const { data: journal } = await supabase
+    const { data: journal } = await supabaseAdmin
       .from('journals')
       .select('id')
       .eq('auth_user_id', user.id)
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url!);
     const statusFilter = searchParams.get('status') || 'draft';
 
-    const { data: posts, error } = await supabase
+    const { data: posts, error } = await supabaseAdmin
       .from('posts')
       .select('*')
       .eq('journal_id', journal.id)
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const body: CreatePostRequest = await req.json();
 
     // Get user's journal
-    const { data: journal } = await supabase
+    const { data: journal } = await supabaseAdmin
       .from('journals')
       .select('id')
       .eq('auth_user_id', user.id)
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') + '-' + Date.now();
 
-    const { data: post, error } = await supabase
+    const { data: post, error } = await supabaseAdmin
       .from('posts')
       .insert({
         journal_id: journal.id,
@@ -94,8 +94,14 @@ export async function POST(req: NextRequest) {
         meta_description: body.meta_description,
         target_keyword: body.target_keyword,
         transcript: body.transcript,
+        // S3 audio fields
         audio_file_url: body.audio_file_url,
+        audio_s3_key: body.audio_s3_key,
+        audio_file_size_bytes: body.audio_file_size_bytes,
+        audio_mime_type: body.audio_mime_type,
         audio_duration_seconds: body.audio_duration_seconds,
+        audio_format: body.audio_format,
+        // Other fields
         style_used: body.style_used || 0,
         word_count: body.word_count || 0,
         reading_time_minutes: Math.ceil((body.word_count || 0) / 200),

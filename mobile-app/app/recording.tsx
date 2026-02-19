@@ -1,7 +1,7 @@
 import {
   AmbientRecordingBg,
   PremiumRecordButton,
-  PremiumWaveform,
+  SimulatedWaveform,
   Timer,
 } from "@/components/recording";
 import { ThemedText } from "@/components/themed-text";
@@ -14,6 +14,7 @@ import {
   useDelightToast,
 } from "@/components/ui/delight";
 import { useDialog } from "@/components/ui/dialog";
+import { LoadingOverlay } from "@/components/ui/loading";
 import {
   MAX_RECORDING_DURATION,
   MIN_RECORDING_DURATION,
@@ -24,9 +25,13 @@ import {
   Spacing,
   Typography,
 } from "@/constants/design-system";
+import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
 import { recordingService } from "@/services/audio/recording-service";
-import { useAchievementsStore, useRecordingStore } from "@/stores";
+import {
+  useAchievementsStore,
+  useRecordingStore,
+} from "@/stores";
 import {
   formatDuration,
   getContinueDraftMessage,
@@ -41,46 +46,6 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Custom hook for throttled metering levels
-function useThrottledMeteringLevels(isRecording: boolean, isPaused: boolean) {
-  const [levels, setLevels] = useState<number[]>([]);
-  const getMeteringLevels = useRecordingStore(
-    (state) => state.getMeteringLevels,
-  );
-  const lastUpdateRef = useRef(0);
-  const rafRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!isRecording || isPaused) {
-      setLevels([]);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-      return;
-    }
-
-    const updateLevels = () => {
-      const now = Date.now();
-      // Throttle updates to ~10fps (100ms) instead of 60fps
-      if (now - lastUpdateRef.current >= 100) {
-        setLevels(getMeteringLevels());
-        lastUpdateRef.current = now;
-      }
-      rafRef.current = requestAnimationFrame(updateLevels);
-    };
-
-    rafRef.current = requestAnimationFrame(updateLevels);
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [isRecording, isPaused, getMeteringLevels]); // Removed getMeteringLevels - it's a stable function reference from zustand
-
-  return levels;
-}
 
 // Check if audio has meaningful sound levels
 function hasAudioActivity(levels: number[]): boolean {
@@ -151,7 +116,7 @@ function StateCard({
           secondaryLabel: "Discard",
           showKeyword: false,
         },
-      })[type],
+      }[type]),
     [
       type,
       duration,
@@ -248,7 +213,12 @@ function StateCard({
                 color={colors.textInverse}
               />
             )}
-            <ThemedText style={styles.stateCardPrimaryText}>
+            <ThemedText
+              style={[
+                styles.stateCardPrimaryText,
+                { color: colors.textInverse },
+              ]}
+            >
               {config.primaryLabel}
             </ThemedText>
             {type === "recordingReady" && (
@@ -287,9 +257,17 @@ export default function RecordingScreen() {
     clearLastDraft,
   } = useRecordingStore();
 
-  // Use throttled metering levels for smooth waveform rendering
-  const meteringLevels = useThrottledMeteringLevels(isRecording, isPaused);
+  // Guest trial hook - check if user can record
+  const {
+    isAuthenticated,
+    canRecord,
+    shouldPromptSignIn,
+    remainingDrafts,
+    maxFreeDrafts,
+    minutesUntilReset,
+  } = useGuestTrial();
 
+  // Use throttled metering levels for smooth waveform rendering
   const colors = useThemeColors();
   const { showDialog } = useDialog();
 
@@ -302,7 +280,7 @@ export default function RecordingScreen() {
   });
 
   // Track timers for cleanup
-  const celebrationTimerRef = useRef<number | null>(null);
+  const celebrationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Hero message state for empty ready state
   const [heroMessage, setHeroMessage] = useState("");
@@ -312,6 +290,11 @@ export default function RecordingScreen() {
 
   // Toast for micro-interactions
   const { showToast } = useDelightToast();
+
+  // Upload loading state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState("");
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -346,10 +329,58 @@ export default function RecordingScreen() {
   }, [duration, isRecording, isPaused, lastMilestone, showToast]);
 
   const processRecording = useCallback(async () => {
-    try {
-      const result = await recordingService.stopRecording();
+    // Guest flow: stop locally and navigate to keyword screen with isGuestFlow=true
+    if (!isAuthenticated) {
+      try {
+        const result = await recordingService.stopRecordingLocally();
+        if (!result?.uri) {
+          Alert.alert("Recording Error", "Failed to save recording");
+          return;
+        }
 
-      setAudioUri(result.uri);
+        setRecording(false);
+        setPaused(false);
+        setLastMilestone(0);
+
+        // Navigate to keyword screen with guest flag
+        // markTrialUsed() will be called in processing.tsx after successful draft generation
+        router.push({
+          pathname: "/keyword",
+          params: {
+            audioUri: result.uri,
+            duration: String(duration),
+            isGuestFlow: "true",
+          },
+        });
+      } catch {
+        Alert.alert(
+          "Recording Error",
+          "Failed to save recording. Please try again.",
+        );
+        setRecording(false);
+        setPaused(false);
+        await resetStore();
+      }
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadMessage("Preparing upload...");
+
+      // Upload to S3 directly (new S3 + API-driven architecture)
+      const s3Result = await recordingService.stopRecordingAndUploadToS3(
+        (progress) => {
+          setUploadProgress(progress.percentage);
+          setUploadMessage(
+            `Uploading audio... ${Math.round(progress.percentage)}%`,
+          );
+          console.log(`[Recording] Upload progress: ${progress.percentage}%`);
+        },
+      );
+
+      setIsUploading(false);
       setRecording(false);
       setPaused(false);
 
@@ -373,7 +404,7 @@ export default function RecordingScreen() {
       });
 
       // Track recording for achievements
-      recordRecording(result.duration);
+      recordRecording(s3Result.duration);
 
       // Navigate after celebration - track timer for cleanup
       if (celebrationTimerRef.current) {
@@ -383,10 +414,17 @@ export default function RecordingScreen() {
         setCelebration({ visible: false, message: "" });
         router.push({
           pathname: "/keyword",
-          params: { audioUri: result.uri, duration: result.duration },
+          params: {
+            audioFileUrl: s3Result.audioFileUrl,
+            audioS3Key: s3Result.audioS3Key,
+            duration: s3Result.duration.toString(),
+            fileSize: s3Result.fileSize?.toString() || "",
+            mimeType: s3Result.mimeType || "",
+          },
         });
       }, 1500);
     } catch (error) {
+      setIsUploading(false);
       console.error("Recording error:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
@@ -399,7 +437,14 @@ export default function RecordingScreen() {
         },
       ]);
     }
-  }, [setAudioUri, setRecording, setPaused, resetStore, recordRecording]);
+  }, [
+    setRecording,
+    setPaused,
+    resetStore,
+    recordRecording,
+    isAuthenticated,
+    duration,
+  ]);
 
   const handleStop = useCallback(async () => {
     // Validate minimum duration - use warm message
@@ -437,6 +482,32 @@ export default function RecordingScreen() {
   }, [duration, handleStop]);
 
   const handleStartRecording = useCallback(async () => {
+    // Check if user can record (authenticated or has remaining drafts)
+    if (!canRecord) {
+      // User is not authenticated and has no remaining drafts
+      const resetMessage = minutesUntilReset
+        ? ` Try again in ${minutesUntilReset} minutes.`
+        : "";
+
+      Alert.alert(
+        "Free Trial Limit Reached",
+        `You've used all ${maxFreeDrafts} free drafts.${resetMessage}`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Sign Up",
+            onPress: () => {
+              router.push("/auth/sign-up");
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     try {
       await recordingService.startRecording(
         (level: number) => addMeteringLevel(level),
@@ -462,12 +533,15 @@ export default function RecordingScreen() {
       ]);
     }
   }, [
+    canRecord,
     addMeteringLevel,
     setDuration,
     setRecording,
     setPaused,
     resetStore,
     hasExistingRecording,
+    maxFreeDrafts,
+    minutesUntilReset,
   ]);
 
   const handlePauseResume = useCallback(async () => {
@@ -727,6 +801,13 @@ export default function RecordingScreen() {
         onComplete={() => setCelebration({ visible: false, message: "" })}
       />
 
+      {/* Upload loading overlay */}
+      <LoadingOverlay
+        visible={isUploading}
+        message={uploadMessage}
+        progress={uploadProgress}
+      />
+
       {/* Welcome tooltip for first-time users */}
       <WelcomeTooltip
         visible={
@@ -745,225 +826,272 @@ export default function RecordingScreen() {
       {/* Ambient background that appears during recording */}
       <AmbientRecordingBg isRecording={isRecording} isPaused={isPaused} />
 
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {/* Header */}
-        <FadeIn>
-          <View
-            style={styles.header}
-            accessibilityLabel={`${isRecording ? (isPaused ? "Recording paused" : "Recording in progress") : "Ready to record"}`}
-          >
-            <PressableScale
-              onPress={handleCancel}
-              hapticStyle="light"
-              accessibilityLabel="Cancel recording and return to home"
-            >
-              <ThemedText
-                style={[styles.cancelButton, { color: colors.primary }]}
-              >
-                Cancel
-              </ThemedText>
-            </PressableScale>
-            <View style={styles.titleContainer}>
-              {isRecording && !isPaused && (
-                <View
-                  style={[
-                    styles.recordingDot,
-                    { backgroundColor: colors.recording },
-                  ]}
-                  accessibilityLabel="Recording indicator"
-                />
-              )}
-              {isRecording && isPaused && (
-                <View
-                  style={[
-                    styles.recordingDot,
-                    { backgroundColor: colors.paused },
-                  ]}
-                  accessibilityLabel="Paused indicator"
-                />
-              )}
-              <ThemedText style={[styles.title, { color: colors.text }]}>
-                {isRecording ? (isPaused ? "Paused" : "Recording") : "Ready"}
-              </ThemedText>
-            </View>
-            <View style={styles.placeholder} />
-          </View>
-        </FadeIn>
+      <SafeAreaView
+        mode="padding"
+        edges={["top", "bottom"]}
+        /* @ts-ignore - SafeAreaView needs flex: 1 to expand */
 
-        {/* Content */}
-        <View style={styles.content}>
-          {/* Hero Message - shown in empty ready state */}
-          {!isRecording &&
-            !isPaused &&
-            !showResumeCard &&
-            !showContinueDraftCard &&
-            !showRecordingReadyCard && (
-              <FadeIn delay={100}>
-                <View style={styles.heroContainer}>
+        style={{ flex: 1 }}
+      >
+        <View style={styles.safeArea}>
+          {/* Header */}
+          <FadeIn>
+            <View
+              style={styles.header}
+              accessibilityLabel={`${
+                isRecording
+                  ? isPaused
+                    ? "Recording paused"
+                    : "Recording in progress"
+                  : "Ready to record"
+              }`}
+            >
+              <PressableScale
+                onPress={handleCancel}
+                hapticStyle="light"
+                accessibilityLabel="Cancel recording and return to home"
+              >
+                <ThemedText
+                  style={[styles.cancelButton, { color: colors.primary }]}
+                >
+                  Cancel
+                </ThemedText>
+              </PressableScale>
+              <View style={styles.titleContainer}>
+                {isRecording && !isPaused && (
+                  <View
+                    style={[
+                      styles.recordingDot,
+                      { backgroundColor: colors.recording },
+                    ]}
+                    accessibilityLabel="Recording indicator"
+                  />
+                )}
+                {isRecording && isPaused && (
+                  <View
+                    style={[
+                      styles.recordingDot,
+                      { backgroundColor: colors.paused },
+                    ]}
+                    accessibilityLabel="Paused indicator"
+                  />
+                )}
+                <ThemedText style={[styles.title, { color: colors.text }]}>
+                  {isRecording ? (isPaused ? "Paused" : "Recording") : "Ready"}
+                </ThemedText>
+              </View>
+              <View style={styles.placeholder} />
+            </View>
+          </FadeIn>
+
+          {/* Content */}
+          <View style={styles.content}>
+            {/* Guest Draft Counter - show for non-authenticated users */}
+            {!isAuthenticated && remainingDrafts < maxFreeDrafts && (
+              <FadeIn delay={50}>
+                <View
+                  style={[
+                    styles.guestCounterBadge,
+                    { backgroundColor: colors.primaryLight },
+                  ]}
+                >
+                  <Ionicons name="gift" size={14} color={colors.primary} />
                   <ThemedText
-                    style={[styles.heroMessage, { color: colors.text }]}
+                    style={[styles.guestCounterText, { color: colors.primary }]}
                   >
-                    {heroMessage}
-                  </ThemedText>
-                  <ThemedText
-                    style={[styles.heroHint, { color: colors.textSecondary }]}
-                  >
-                    {getRecordingHint()}
+                    {remainingDrafts} free draft{remainingDrafts !== 1 ? "s" : ""} left
                   </ThemedText>
                 </View>
               </FadeIn>
             )}
 
-          {/* Premium Waveform with gradient bars and glow */}
-          <SlideIn direction="up" delay={100}>
-            <View
-              style={styles.waveformContainer}
-              accessibilityLabel={`Audio waveform ${isRecording && !isPaused ? "showing recording levels" : "ready to record"}`}
-            >
-              <PremiumWaveform
-                levels={meteringLevels}
-                isRecording={isRecording && !isPaused}
-                isPaused={isPaused}
-                height={120}
-              />
-            </View>
-          </SlideIn>
+            {/* Hero Message - shown in empty ready state */}
+            {!isRecording &&
+              !isPaused &&
+              !showResumeCard &&
+              !showContinueDraftCard &&
+              !showRecordingReadyCard && (
+                <FadeIn delay={100}>
+                  <View style={styles.heroContainer}>
+                    <ThemedText
+                      style={[styles.heroMessage, { color: colors.text }]}
+                    >
+                      {heroMessage}
+                    </ThemedText>
+                    <ThemedText
+                      style={[styles.heroHint, { color: colors.textSecondary }]}
+                    >
+                      {getRecordingHint()}
+                    </ThemedText>
+                  </View>
+                </FadeIn>
+              )}
 
-          {/* Timer - simplified with less vertical space */}
-          <SlideIn direction="up" delay={200}>
+            {/* Waveform with gradient bars and glow */}
+            <SlideIn direction="up" delay={100}>
+              <View
+                style={styles.waveformContainer}
+                accessibilityLabel={`Audio waveform ${
+                  isRecording && !isPaused
+                    ? "showing recording levels"
+                    : "ready to record"
+                }`}
+              >
+                <SimulatedWaveform
+                  isRecording={isRecording && !isPaused}
+                  height={120}
+                  barCount={40}
+                  barWidth={4}
+                  barGap={2}
+                />
+              </View>
+            </SlideIn>
+
+            {/* Timer - simplified with less vertical space */}
+            <SlideIn direction="up" delay={200}>
+              <View
+                style={styles.timerContainer}
+                accessibilityLabel={`Recording duration: ${Math.floor(
+                  duration / 60,
+                )} minutes ${duration % 60} seconds`}
+              >
+                <Timer
+                  seconds={duration}
+                  isRecording={isRecording}
+                  isPaused={isPaused}
+                />
+              </View>
+            </SlideIn>
+
+            {/* Tip - only show when no state card is visible */}
+            {!showResumeCard &&
+              !showContinueDraftCard &&
+              !showRecordingReadyCard && (
+                <FadeIn delay={300}>
+                  <ThemedText
+                    style={[styles.tip, { color: colors.textSecondary }]}
+                    accessibilityLiveRegion="polite"
+                  >
+                    {getTipText()}
+                  </ThemedText>
+                </FadeIn>
+              )}
+          </View>
+
+          {/* Unified State Card - adapts to current state */}
+          {showResumeCard && (
+            <StateCard
+              type="resume"
+              duration={duration}
+              onPrimaryAction={handleResume}
+              onSecondaryAction={handleStartFresh}
+              colors={colors}
+            />
+          )}
+
+          {showContinueDraftCard && (
+            <StateCard
+              type="continueDraft"
+              duration={duration}
+              lastDraftTitle={lastDraftTitle}
+              lastDraftKeyword={lastDraftKeyword}
+              onPrimaryAction={handleContinueDraft}
+              onSecondaryAction={handleDiscardDraft}
+              colors={colors}
+            />
+          )}
+
+          {showRecordingReadyCard && (
+            <StateCard
+              type="recordingReady"
+              duration={duration}
+              onPrimaryAction={handleContinueToKeyword}
+              onSecondaryAction={handleDiscardRecording}
+              colors={colors}
+            />
+          )}
+
+          {/* Controls */}
+          <SlideIn direction="up" delay={150}>
             <View
-              style={styles.timerContainer}
-              accessibilityLabel={`Recording duration: ${Math.floor(duration / 60)} minutes ${duration % 60} seconds`}
+              style={[
+                styles.controls,
+                (showResumeCard ||
+                  showContinueDraftCard ||
+                  showRecordingReadyCard) &&
+                  styles.controlsHidden,
+              ]}
+              accessibilityLabel="Recording controls"
             >
-              <Timer
-                seconds={duration}
+              {/* Main Record/Pause Button - Premium with multi-layer glow */}
+              <PremiumRecordButton
                 isRecording={isRecording}
                 isPaused={isPaused}
+                onPress={handleRecordPress}
+                size={80}
               />
+
+              {/* Action Buttons */}
+              {isRecording && (
+                <FadeIn delay={100}>
+                  <View
+                    style={styles.actionButtons}
+                    accessibilityLabel="Recording action buttons"
+                  >
+                    {/* Reset Button */}
+                    <PressableScale
+                      onPress={handleReset}
+                      hapticStyle="medium"
+                      accessibilityLabel="Reset recording - Start over"
+                      style={[
+                        styles.resetButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="refresh" size={20} color={colors.text} />
+                      <ThemedText
+                        style={[styles.resetButtonText, { color: colors.text }]}
+                      >
+                        Reset
+                      </ThemedText>
+                    </PressableScale>
+
+                    {/* Done Button */}
+                    <PressableScale
+                      onPress={handleStop}
+                      hapticStyle="medium"
+                      accessibilityLabel="Done - Finish and save recording"
+                      style={[
+                        styles.doneButton,
+                        {
+                          backgroundColor: colors.success,
+                          ...Shadows.md,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="checkmark"
+                        size={22}
+                        color={colors.textInverse}
+                      />
+                      <ThemedText
+                        style={[
+                          styles.doneButtonText,
+                          { color: colors.textInverse },
+                        ]}
+                      >
+                        Done
+                      </ThemedText>
+                    </PressableScale>
+                  </View>
+                </FadeIn>
+              )}
             </View>
           </SlideIn>
-
-          {/* Tip - only show when no state card is visible */}
-          {!showResumeCard &&
-            !showContinueDraftCard &&
-            !showRecordingReadyCard && (
-              <FadeIn delay={300}>
-                <ThemedText
-                  style={[styles.tip, { color: colors.textSecondary }]}
-                  accessibilityLiveRegion="polite"
-                >
-                  {getTipText()}
-                </ThemedText>
-              </FadeIn>
-            )}
         </View>
-
-        {/* Unified State Card - adapts to current state */}
-        {showResumeCard && (
-          <StateCard
-            type="resume"
-            duration={duration}
-            onPrimaryAction={handleResume}
-            onSecondaryAction={handleStartFresh}
-            colors={colors}
-          />
-        )}
-
-        {showContinueDraftCard && (
-          <StateCard
-            type="continueDraft"
-            duration={duration}
-            lastDraftTitle={lastDraftTitle}
-            lastDraftKeyword={lastDraftKeyword}
-            onPrimaryAction={handleContinueDraft}
-            onSecondaryAction={handleDiscardDraft}
-            colors={colors}
-          />
-        )}
-
-        {showRecordingReadyCard && (
-          <StateCard
-            type="recordingReady"
-            duration={duration}
-            onPrimaryAction={handleContinueToKeyword}
-            onSecondaryAction={handleDiscardRecording}
-            colors={colors}
-          />
-        )}
-
-        {/* Controls */}
-        <SlideIn direction="up" delay={150}>
-          <View
-            style={[
-              styles.controls,
-              (showResumeCard ||
-                showContinueDraftCard ||
-                showRecordingReadyCard) &&
-                styles.controlsHidden,
-            ]}
-            accessibilityLabel="Recording controls"
-          >
-            {/* Main Record/Pause Button - Premium with multi-layer glow */}
-            <PremiumRecordButton
-              isRecording={isRecording}
-              isPaused={isPaused}
-              onPress={handleRecordPress}
-              size={80}
-            />
-
-            {/* Action Buttons */}
-            {isRecording && (
-              <FadeIn delay={100}>
-                <View
-                  style={styles.actionButtons}
-                  accessibilityLabel="Recording action buttons"
-                >
-                  {/* Reset Button */}
-                  <PressableScale
-                    onPress={handleReset}
-                    hapticStyle="medium"
-                    accessibilityLabel="Reset recording - Start over"
-                    style={[
-                      styles.resetButton,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                  >
-                    <Ionicons name="refresh" size={20} color={colors.text} />
-                    <ThemedText
-                      style={[styles.resetButtonText, { color: colors.text }]}
-                    >
-                      Reset
-                    </ThemedText>
-                  </PressableScale>
-
-                  {/* Done Button */}
-                  <PressableScale
-                    onPress={handleStop}
-                    hapticStyle="medium"
-                    accessibilityLabel="Done - Finish and save recording"
-                    style={[
-                      styles.doneButton,
-                      {
-                        backgroundColor: colors.success,
-                        ...Shadows.md,
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="checkmark"
-                      size={22}
-                      color={colors.textInverse}
-                    />
-                    <ThemedText style={styles.doneButtonText}>Done</ThemedText>
-                  </PressableScale>
-                </View>
-              </FadeIn>
-            )}
-          </View>
-        </SlideIn>
       </SafeAreaView>
     </ThemedView>
   );
@@ -1114,6 +1242,22 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
+  guestCounterBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    gap: Spacing[1],
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[1.5],
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing[4],
+  },
+  guestCounterText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    includeFontPadding: false,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+  },
   stateCardActions: {
     flexDirection: "row",
     gap: Spacing[4],
@@ -1141,7 +1285,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   stateCardPrimaryText: {
-    color: "white",
     fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.extrabold,
     includeFontPadding: false,
@@ -1181,7 +1324,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   doneButtonText: {
-    color: "white",
     fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.semibold,
     lineHeight: Typography.fontSize.md * Typography.lineHeight.relaxed,

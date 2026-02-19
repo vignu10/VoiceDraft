@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
 
 // Helper to verify post ownership (reused from parent route)
@@ -16,7 +16,7 @@ async function verifyOwnership(req: NextRequest, postId: string) {
     return null;
   }
 
-  const { data: post } = await supabase
+  const { data: post } = await supabaseAdmin
     .from('posts')
     .select('journal_id')
     .eq('id', postId)
@@ -26,7 +26,7 @@ async function verifyOwnership(req: NextRequest, postId: string) {
     return null;
   }
 
-  const { data: journal } = await supabase
+  const { data: journal } = await supabaseAdmin
     .from('journals')
     .select('auth_user_id')
     .eq('id', post.journal_id)
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Post not found or forbidden' }, { status: 404 });
     }
 
-    const { data: post, error } = await supabase
+    const { data: post, error } = await supabaseAdmin
       .from('posts')
       .update({
         status: 'draft',

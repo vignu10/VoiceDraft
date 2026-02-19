@@ -14,7 +14,7 @@ export function useRegenerateSection() {
     Error,
     { draftId: string; sectionIndex: number; instruction?: string }
   >({
-    mutationFn: ({ draftId, sectionIndex, instruction }) =>
+    mutationFn: ({ draftId, sectionIndex, instruction }: { draftId: string; sectionIndex: number; instruction?: string }) =>
       regenerateSection(draftId, sectionIndex, instruction),
   });
 }
