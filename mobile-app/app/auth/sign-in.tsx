@@ -1,0 +1,260 @@
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { router } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import {
+  AnimatedInput,
+  AnimatedButton,
+  AnimatedCard,
+  PressableScale,
+} from '@/components/ui/animated';
+import { OAuthButton } from '@/components/auth';
+import { useAuthStore } from '@/stores';
+import { Spacing, Typography } from '@/constants/design-system';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function SignInScreen() {
+  const { signInUser, isLoading, error, clearError } = useAuthStore();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const validateEmail = () => {
+    if (!email.trim()) {
+      setEmailError('Please enter your email');
+      return false;
+    }
+    if (!EMAIL_REGEX.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+
+  const validatePassword = () => {
+    if (!password) {
+      setPasswordError('Please enter your password');
+      return false;
+    }
+    setPasswordError('');
+    return true;
+  };
+
+  const handleSignIn = async () => {
+    clearError();
+
+    const isEmailValid = validateEmail();
+    const isPasswordValid = validatePassword();
+
+    if (!isEmailValid || !isPasswordValid) {
+      return;
+    }
+
+    try {
+      await signInUser(email.trim(), password);
+      // Navigation will be handled by the auth layout
+    } catch (err) {
+      Alert.alert('Sign In Failed', error || 'Invalid email or password');
+    }
+  };
+
+  const handleOAuthSignIn = async (provider: 'google' | 'linkedin') => {
+    clearError();
+
+    try {
+      await useAuthStore.getState().signInWithOAuth(provider);
+      // Navigation will be handled by the auth layout
+    } catch (err) {
+      Alert.alert('OAuth Failed', error || 'Failed to sign in with ' + provider);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Logo/Illustration area */}
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
+              <ThemedText style={styles.logoText}>V</ThemedText>
+            </View>
+            <ThemedText style={styles.title}>Welcome Back</ThemedText>
+            <ThemedText style={styles.subtitle}>Sign in to your account</ThemedText>
+          </View>
+        </Animated.View>
+
+        {/* Sign In Form */}
+        <AnimatedCard style={styles.formCard} delay={200}>
+          <AnimatedInput
+            label="Email"
+            leftIcon="mail-outline"
+            value={email}
+            onChangeText={setEmail}
+            onBlur={validateEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            error={emailError}
+          />
+
+          <AnimatedInput
+            label="Password"
+            leftIcon="lock-closed-outline"
+            value={password}
+            onChangeText={setPassword}
+            onBlur={validatePassword}
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
+            onRightIconPress={() => setShowPassword(!showPassword)}
+            autoComplete="password"
+            error={passwordError}
+          />
+
+          <PressableScale onPress={() => router.push('/auth/forgot-password')}>
+            <ThemedText style={styles.forgotPassword}>Forgot Password?</ThemedText>
+          </PressableScale>
+
+          <View style={styles.signInButton}>
+            <AnimatedButton
+              onPress={handleSignIn}
+              loading={isLoading}
+              fullWidth
+            >
+              Sign In
+            </AnimatedButton>
+          </View>
+        </AnimatedCard>
+
+        {/* OAuth Divider */}
+        <Animated.View
+          entering={FadeInDown.delay(400).springify()}
+          style={styles.dividerContainer}
+        >
+          <View style={styles.dividerLine} />
+          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <View style={styles.dividerLine} />
+        </Animated.View>
+
+        {/* OAuth Buttons */}
+        <Animated.View entering={FadeInDown.delay(500).springify()}>
+          <View style={styles.oauthButton}>
+            <OAuthButton
+              provider="google"
+              onPress={() => handleOAuthSignIn('google')}
+              isLoading={isLoading}
+            />
+          </View>
+          <View style={styles.oauthButton}>
+            <OAuthButton
+              provider="linkedin"
+              onPress={() => handleOAuthSignIn('linkedin')}
+              isLoading={isLoading}
+            />
+          </View>
+        </Animated.View>
+
+        {/* Sign Up Link */}
+        <Animated.View
+          entering={FadeInDown.delay(600).springify()}
+          style={styles.footer}
+        >
+          <ThemedText style={styles.footerText}>Don't have an account? </ThemedText>
+          <PressableScale onPress={() => router.push('/auth/sign-up')}>
+            <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
+          </PressableScale>
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: Spacing[5],
+    paddingTop: Spacing[10],
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing[8],
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing[4],
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  title: {
+    fontSize: Typography.fontSize['2xl'],
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing[2],
+  },
+  subtitle: {
+    fontSize: Typography.fontSize.base,
+    opacity: 0.7,
+  },
+  formCard: {
+    marginBottom: Spacing[5],
+  },
+  forgotPassword: {
+    fontSize: Typography.fontSize.sm,
+    color: '#6366f1',
+    textAlign: 'right',
+    marginBottom: Spacing[4],
+  },
+  signInButton: {
+    marginTop: Spacing[2],
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing[5],
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e5e7eb',
+  },
+  dividerText: {
+    fontSize: Typography.fontSize.sm,
+    color: '#6b7280',
+    marginHorizontal: Spacing[3],
+  },
+  oauthButton: {
+    marginBottom: Spacing[3],
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: Spacing[6],
+  },
+  footerText: {
+    fontSize: Typography.fontSize.base,
+  },
+  signUpLink: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    color: '#6366f1',
+  },
+});
