@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { router, Stack } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Controller } from 'react-hook-form';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,47 +15,29 @@ import {
   PressableScale,
 } from '@/components/ui/animated';
 import { resetPassword } from '@/services/api/auth';
+import { useAuthForm } from '@/hooks/use-auth-form';
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/validations';
 import { Spacing, Typography } from '@/constants/design-system';
 import { useThemeColors } from '@/hooks/use-theme-color';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordScreen() {
   const colors = useThemeColors();
 
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
-  const validateEmail = () => {
-    if (!email.trim()) {
-      setEmailError('Please enter your email');
-      return false;
-    }
-    if (!EMAIL_REGEX.test(email)) {
-      setEmailError('Please enter a valid email address');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
+  const form = useAuthForm(forgotPasswordSchema, {
+    email: '',
+  });
 
-  const handleResetPassword = async () => {
-    const isEmailValid = validateEmail();
-
-    if (!isEmailValid) {
-      return;
-    }
-
+  const handleResetPassword = async (data: ForgotPasswordFormValues) => {
     setIsLoading(true);
 
     try {
-      await resetPassword(email.trim());
+      await resetPassword(data.email.trim());
       setIsSuccess(true);
 
-      // Countdown and auto-navigate back
       let count = 3;
       setCountdown(count);
 
@@ -77,7 +60,6 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-  // Mask email for display
   const maskEmail = (email: string) => {
     const [username, domain] = email.split('@');
     if (username.length <= 2) {
@@ -89,11 +71,7 @@ export default function ForgotPasswordScreen() {
   if (isSuccess) {
     return (
       <SafeAreaView style={styles.container}>
-        <Stack.Screen
-          options={{
-            headerShown: false,
-          }}
-        />
+        <Stack.Screen options={{ headerShown: false }} />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -114,7 +92,9 @@ export default function ForgotPasswordScreen() {
             <AnimatedCard style={styles.emailCard} delay={200}>
               <View style={styles.emailContent}>
                 <Ionicons name="mail-outline" size={24} color={colors.success} />
-                <ThemedText style={styles.maskedEmail}>{maskEmail(email)}</ThemedText>
+                <ThemedText style={styles.maskedEmail}>
+                  {maskEmail(form.getValues().email)}
+                </ThemedText>
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} />
               </View>
             </AnimatedCard>
@@ -139,11 +119,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -168,24 +144,30 @@ export default function ForgotPasswordScreen() {
 
         {/* Reset Form */}
         <AnimatedCard style={styles.formCard} delay={200}>
-          <AnimatedInput
-            label="Email"
-            leftIcon="mail-outline"
-            value={email}
-            onChangeText={(text: string) => {
-              setEmail(text);
-              setEmailError('');
-            }}
-            onBlur={validateEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            error={emailError}
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AnimatedInput
+                label="Email"
+                leftIcon="mail-outline"
+                value={value}
+                onChangeText={(text: string) => {
+                  onChange(text);
+                  form.clearErrors('email');
+                }}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={form.errors.email?.message}
+              />
+            )}
           />
 
           <View style={styles.resetButton}>
             <AnimatedButton
-              onPress={handleResetPassword}
+              onPress={form.handleSubmit(handleResetPassword)}
               loading={isLoading}
               fullWidth
             >
