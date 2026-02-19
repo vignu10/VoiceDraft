@@ -41,7 +41,7 @@ export function DelightToast({
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
   const colors = useThemeColors();
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Cleanup any existing timer on unmount or when visibility changes
@@ -203,7 +203,7 @@ export function useDelightToast() {
     message: '',
     type: 'success',
   });
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     toastSetter = setToast;

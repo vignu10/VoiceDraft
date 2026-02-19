@@ -1,7 +1,7 @@
 import {
   AmbientRecordingBg,
   PremiumRecordButton,
-  PremiumWaveform,
+  SimulatedWaveform,
   Timer,
 } from "@/components/recording";
 import { ThemedText } from "@/components/themed-text";
@@ -13,6 +13,7 @@ import {
   WelcomeTooltip,
   useDelightToast,
 } from "@/components/ui/delight";
+import { LoadingOverlay } from "@/components/ui/loading";
 import { useDialog } from "@/components/ui/dialog";
 import {
   MAX_RECORDING_DURATION,
@@ -41,46 +42,6 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Custom hook for throttled metering levels
-function useThrottledMeteringLevels(isRecording: boolean, isPaused: boolean) {
-  const [levels, setLevels] = useState<number[]>([]);
-  const getMeteringLevels = useRecordingStore(
-    (state) => state.getMeteringLevels,
-  );
-  const lastUpdateRef = useRef(0);
-  const rafRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    if (!isRecording || isPaused) {
-      setLevels([]);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-      return;
-    }
-
-    const updateLevels = () => {
-      const now = Date.now();
-      // Throttle updates to ~10fps (100ms) instead of 60fps
-      if (now - lastUpdateRef.current >= 100) {
-        setLevels(getMeteringLevels());
-        lastUpdateRef.current = now;
-      }
-      rafRef.current = requestAnimationFrame(updateLevels);
-    };
-
-    rafRef.current = requestAnimationFrame(updateLevels);
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [isRecording, isPaused, getMeteringLevels]); // Removed getMeteringLevels - it's a stable function reference from zustand
-
-  return levels;
-}
 
 // Check if audio has meaningful sound levels
 function hasAudioActivity(levels: number[]): boolean {
@@ -248,7 +209,7 @@ function StateCard({
                 color={colors.textInverse}
               />
             )}
-            <ThemedText style={styles.stateCardPrimaryText}>
+            <ThemedText style={[styles.stateCardPrimaryText, { color: colors.textInverse }]}>
               {config.primaryLabel}
             </ThemedText>
             {type === "recordingReady" && (
@@ -288,8 +249,6 @@ export default function RecordingScreen() {
   } = useRecordingStore();
 
   // Use throttled metering levels for smooth waveform rendering
-  const meteringLevels = useThrottledMeteringLevels(isRecording, isPaused);
-
   const colors = useThemeColors();
   const { showDialog } = useDialog();
 
@@ -302,7 +261,7 @@ export default function RecordingScreen() {
   });
 
   // Track timers for cleanup
-  const celebrationTimerRef = useRef<number | null>(null);
+  const celebrationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Hero message state for empty ready state
   const [heroMessage, setHeroMessage] = useState("");
@@ -312,6 +271,11 @@ export default function RecordingScreen() {
 
   // Toast for micro-interactions
   const { showToast } = useDelightToast();
+
+  // Upload loading state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState('');
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -347,9 +311,20 @@ export default function RecordingScreen() {
 
   const processRecording = useCallback(async () => {
     try {
-      const result = await recordingService.stopRecording();
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadMessage('Preparing upload...');
 
-      setAudioUri(result.uri);
+      // Upload to S3 directly (new S3 + API-driven architecture)
+      const s3Result = await recordingService.stopRecordingAndUploadToS3(
+        (progress) => {
+          setUploadProgress(progress.percentage);
+          setUploadMessage(`Uploading audio... ${Math.round(progress.percentage)}%`);
+          console.log(`[Recording] Upload progress: ${progress.percentage}%`);
+        }
+      );
+
+      setIsUploading(false);
       setRecording(false);
       setPaused(false);
 
@@ -373,7 +348,7 @@ export default function RecordingScreen() {
       });
 
       // Track recording for achievements
-      recordRecording(result.duration);
+      recordRecording(s3Result.duration);
 
       // Navigate after celebration - track timer for cleanup
       if (celebrationTimerRef.current) {
@@ -383,10 +358,17 @@ export default function RecordingScreen() {
         setCelebration({ visible: false, message: "" });
         router.push({
           pathname: "/keyword",
-          params: { audioUri: result.uri, duration: result.duration },
+          params: {
+            audioFileUrl: s3Result.audioFileUrl,
+            audioS3Key: s3Result.audioS3Key,
+            duration: s3Result.duration.toString(),
+            fileSize: s3Result.fileSize?.toString() || "",
+            mimeType: s3Result.mimeType || "",
+          },
         });
       }, 1500);
     } catch (error) {
+      setIsUploading(false);
       console.error("Recording error:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
@@ -399,7 +381,7 @@ export default function RecordingScreen() {
         },
       ]);
     }
-  }, [setAudioUri, setRecording, setPaused, resetStore, recordRecording]);
+  }, [setRecording, setPaused, resetStore, recordRecording]);
 
   const handleStop = useCallback(async () => {
     // Validate minimum duration - use warm message
@@ -727,6 +709,13 @@ export default function RecordingScreen() {
         onComplete={() => setCelebration({ visible: false, message: "" })}
       />
 
+      {/* Upload loading overlay */}
+      <LoadingOverlay
+        visible={isUploading}
+        message={uploadMessage}
+        progress={uploadProgress}
+      />
+
       {/* Welcome tooltip for first-time users */}
       <WelcomeTooltip
         visible={
@@ -745,7 +734,9 @@ export default function RecordingScreen() {
       {/* Ambient background that appears during recording */}
       <AmbientRecordingBg isRecording={isRecording} isPaused={isPaused} />
 
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView mode="padding" edges={["top", "bottom"]} style={{ flex: 1 }}>
+        <View style={styles.safeArea}>
         {/* Header */}
         <FadeIn>
           <View
@@ -814,17 +805,18 @@ export default function RecordingScreen() {
               </FadeIn>
             )}
 
-          {/* Premium Waveform with gradient bars and glow */}
+          {/* Waveform with gradient bars and glow */}
           <SlideIn direction="up" delay={100}>
             <View
               style={styles.waveformContainer}
               accessibilityLabel={`Audio waveform ${isRecording && !isPaused ? "showing recording levels" : "ready to record"}`}
             >
-              <PremiumWaveform
-                levels={meteringLevels}
+              <SimulatedWaveform
                 isRecording={isRecording && !isPaused}
-                isPaused={isPaused}
                 height={120}
+                barCount={40}
+                barWidth={4}
+                barGap={2}
               />
             </View>
           </SlideIn>
@@ -957,13 +949,14 @@ export default function RecordingScreen() {
                       size={22}
                       color={colors.textInverse}
                     />
-                    <ThemedText style={styles.doneButtonText}>Done</ThemedText>
+                    <ThemedText style={[styles.doneButtonText, { color: colors.textInverse }]}>Done</ThemedText>
                   </PressableScale>
                 </View>
               </FadeIn>
             )}
           </View>
         </SlideIn>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -1141,7 +1134,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   stateCardPrimaryText: {
-    color: "white",
     fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.extrabold,
     includeFontPadding: false,
@@ -1181,7 +1173,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   doneButtonText: {
-    color: "white",
     fontSize: Typography.fontSize.md,
     fontWeight: Typography.fontWeight.semibold,
     lineHeight: Typography.fontSize.md * Typography.lineHeight.relaxed,

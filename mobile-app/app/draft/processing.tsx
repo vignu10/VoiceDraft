@@ -4,15 +4,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useTranscribe } from '@/hooks/use-transcribe';
+import { useTranscribe, useTranscribeS3 } from '@/hooks/use-transcribe';
 import { useGenerate } from '@/hooks/use-generate';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { generateId } from '@/utils/formatters';
 import { getSuccessMessage, getProcessingMessage } from '@/utils/delight-messages';
 import { useAchievementsStore, useRecordingStore } from '@/stores';
 import type { Tone, Length, Draft } from '@/types/draft';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { createPost, type CreatePostData } from '@/services/api/posts';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -27,9 +27,13 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { MIN_TRANSCRIPT_LENGTH, MIN_TRANSCRIPT_WORDS } from '@/constants/config';
-import { FadeIn, SlideIn, ScaleIn } from '@/components/ui/animated/animated-wrappers';
-import { AnimatedButton } from '@/components/ui/animated/animated-button';
-import { AnimatedCard } from '@/components/ui/animated/animated-card';
+import {
+  FadeIn,
+  SlideIn,
+  ScaleIn,
+  AnimatedButton,
+  AnimatedCard,
+} from '@/components/ui/animated';
 import { MiniCelebration } from '@/components/ui/delight';
 import { Spacing, Typography, BorderRadius, Shadows } from '@/constants/design-system';
 
@@ -220,11 +224,15 @@ function TwinklingIcon({ name, size = 56 }: TwinklingIconProps) {
 
 export default function ProcessingScreen() {
   const params = useLocalSearchParams<{
-    audioUri: string;
+    audioUri?: string;
+    audioFileUrl?: string;
+    audioS3Key?: string;
     duration: string;
     keyword?: string;
     tone: string;
     length: string;
+    fileSize?: string;
+    mimeType?: string;
   }>();
 
   const insets = useSafeAreaInsets();
@@ -244,7 +252,11 @@ export default function ProcessingScreen() {
   const { setLastDraft } = useRecordingStore();
 
   const transcribeMutation = useTranscribe();
+  const transcribeS3Mutation = useTranscribeS3();
   const generateMutation = useGenerate();
+
+  // Determine if we're using S3 (new) or local audio (legacy)
+  const isUsingS3 = !!params.audioFileUrl && !!params.audioS3Key;
 
   useEffect(() => {
     if (hasStarted.current) return;
@@ -258,7 +270,14 @@ export default function ProcessingScreen() {
     const processRecording = async () => {
       try {
         setStep('transcribing');
-        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+
+        // Use S3 transcription if S3 params are available, otherwise use legacy base64
+        const transcription = isUsingS3
+          ? await transcribeS3Mutation.mutateAsync({
+              audioUrl: params.audioFileUrl!,
+              audioKey: params.audioS3Key!,
+            })
+          : await transcribeMutation.mutateAsync(params.audioUri!);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);
@@ -274,11 +293,46 @@ export default function ProcessingScreen() {
           length: params.length as Length,
         });
 
-        const id = generateId();
+        // Use S3 URL if available, otherwise fall back to local URI
+        const audioFileUrl = params.audioFileUrl || params.audioUri;
+
+        // Derive audio format from mime type
+        const getAudioFormat = (mimeType?: string): 'm4a' | 'mp3' | 'wav' | 'webm' | undefined => {
+          if (!mimeType) return undefined;
+          if (mimeType.includes('m4a') || mimeType.includes('mp4')) return 'm4a';
+          if (mimeType.includes('mpeg')) return 'mp3';
+          if (mimeType.includes('wav')) return 'wav';
+          if (mimeType.includes('webm')) return 'webm';
+          return undefined;
+        };
+
+        // Create post via API with S3 fields
+        const createData: CreatePostData = {
+          title: blog.title,
+          content: blog.content,
+          meta_description: blog.metaDescription,
+          transcript: transcription.text,
+          target_keyword: params.keyword,
+          tone: params.tone as Tone,
+          length: params.length as Length,
+          audio_file_url: params.audioFileUrl,
+          audio_s3_key: params.audioS3Key,
+          audio_duration_seconds: parseInt(params.duration!, 10),
+          audio_file_size_bytes: params.fileSize ? parseInt(params.fileSize, 10) : undefined,
+          audio_mime_type: params.mimeType,
+          audio_format: getAudioFormat(params.mimeType),
+        };
+
+        const post = await createPost(createData);
+        const id = post.id;
+
+        // Create local draft reference only for Continue Draft feature (temporary cache)
         const draft: Draft = {
           id,
           status: 'ready',
-          audioUri: params.audioUri,
+          audioUri: audioFileUrl,
+          audioFileUrl: params.audioFileUrl,
+          audioS3Key: params.audioS3Key,
           audioDuration: parseInt(params.duration!, 10),
           transcript: transcription.text,
           targetKeyword: params.keyword,
@@ -293,6 +347,7 @@ export default function ProcessingScreen() {
           updatedAt: new Date().toISOString(),
         };
 
+        // Save to AsyncStorage only for Continue Draft feature (temporary cache)
         const existingDrafts = await AsyncStorage.getItem('drafts');
         const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
         const isFirstDraft = drafts.length === 0;
@@ -332,7 +387,7 @@ export default function ProcessingScreen() {
 
     processRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isUsingS3]);
 
   const handleRetry = () => {
     setError(null);
@@ -347,7 +402,14 @@ export default function ProcessingScreen() {
     const retryProcessing = async () => {
       try {
         setStep('transcribing');
-        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+
+        // Use S3 transcription if S3 params are available, otherwise use legacy base64
+        const transcription = isUsingS3
+          ? await transcribeS3Mutation.mutateAsync({
+              audioUrl: params.audioFileUrl!,
+              audioKey: params.audioS3Key!,
+            })
+          : await transcribeMutation.mutateAsync(params.audioUri!);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);
@@ -363,11 +425,46 @@ export default function ProcessingScreen() {
           length: params.length as Length,
         });
 
-        const id = generateId();
+        // Use S3 URL if available, otherwise fall back to local URI
+        const audioFileUrl = params.audioFileUrl || params.audioUri;
+
+        // Derive audio format from mime type
+        const getAudioFormat = (mimeType?: string): 'm4a' | 'mp3' | 'wav' | 'webm' | undefined => {
+          if (!mimeType) return undefined;
+          if (mimeType.includes('m4a') || mimeType.includes('mp4')) return 'm4a';
+          if (mimeType.includes('mpeg')) return 'mp3';
+          if (mimeType.includes('wav')) return 'wav';
+          if (mimeType.includes('webm')) return 'webm';
+          return undefined;
+        };
+
+        // Create post via API with S3 fields
+        const createData: CreatePostData = {
+          title: blog.title,
+          content: blog.content,
+          meta_description: blog.metaDescription,
+          transcript: transcription.text,
+          target_keyword: params.keyword,
+          tone: params.tone as Tone,
+          length: params.length as Length,
+          audio_file_url: params.audioFileUrl,
+          audio_s3_key: params.audioS3Key,
+          audio_duration_seconds: parseInt(params.duration!, 10),
+          audio_file_size_bytes: params.fileSize ? parseInt(params.fileSize, 10) : undefined,
+          audio_mime_type: params.mimeType,
+          audio_format: getAudioFormat(params.mimeType),
+        };
+
+        const post = await createPost(createData);
+        const id = post.id;
+
+        // Create local draft reference only for Continue Draft feature (temporary cache)
         const draft: Draft = {
           id,
           status: 'ready',
-          audioUri: params.audioUri,
+          audioUri: audioFileUrl,
+          audioFileUrl: params.audioFileUrl,
+          audioS3Key: params.audioS3Key,
           audioDuration: parseInt(params.duration!, 10),
           transcript: transcription.text,
           targetKeyword: params.keyword,
@@ -382,6 +479,7 @@ export default function ProcessingScreen() {
           updatedAt: new Date().toISOString(),
         };
 
+        // Save to AsyncStorage only for Continue Draft feature (temporary cache)
         const existingDrafts = await AsyncStorage.getItem('drafts');
         const drafts = existingDrafts ? JSON.parse(existingDrafts) : [];
         const isFirstDraft = drafts.length === 0;

@@ -1,9 +1,9 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Tabs } from "expo-router";
+import React from "react";
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CircularTabBar } from '@/components/navigation/circular-tab-bar';
+import { CircularTabBar } from "@/components/navigation/circular-tab-bar";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -14,7 +14,7 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           // Hide the default tab bar - we use our custom circular one
-          tabBarStyle: { display: 'none' },
+          tabBarStyle: { display: "none" },
         }}
       >
         <Tabs.Screen

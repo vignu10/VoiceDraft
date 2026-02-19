@@ -1,163 +1,183 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { router } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Controller } from 'react-hook-form';
+import { router } from "expo-router";
+import React from "react";
+import { Controller } from "react-hook-form";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
+import { OAuthButton } from "@/components/auth";
+import { ThemedText } from "@/components/themed-text";
 import {
-  AnimatedInput,
   AnimatedButton,
   AnimatedCard,
+  AnimatedInput,
   PressableScale,
-} from '@/components/ui/animated';
-import { OAuthButton } from '@/components/auth';
-import { useAuthStore } from '@/stores';
-import { useAuthForm } from '@/hooks/use-auth-form';
-import { signInSchema, type SignInFormValues } from '@/validations';
-import { Spacing, Typography } from '@/constants/design-system';
+} from "@/components/ui/animated";
+import {
+  BorderRadius,
+  Palette,
+  Spacing,
+  Typography,
+} from "@/constants/design-system";
+import { useAuthForm } from "@/hooks/use-auth-form";
+import { useAuthStore } from "@/stores";
+import { signInSchema } from "@/validations";
 
 export default function SignInScreen() {
   const { signInUser, isLoading, error, clearError } = useAuthStore();
 
   const form = useAuthForm(signInSchema, {
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const [showPassword, setShowPassword] = React.useState(false);
 
-  const handleSignIn = async (data: SignInFormValues) => {
+  const handleSignIn = async (data: { email: string; password: string }) => {
     clearError();
 
     try {
       await signInUser(data.email.trim(), data.password);
-    } catch (err) {
-      Alert.alert('Sign In Failed', error || 'Invalid email or password');
+    } catch {
+      Alert.alert("Sign In Failed", error || "Invalid email or password");
     }
   };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'linkedin') => {
+  const handleOAuthSignIn = async (provider: "google" | "linkedin") => {
     clearError();
 
     try {
       await useAuthStore.getState().signInWithOAuth(provider);
-    } catch (err) {
-      Alert.alert('OAuth Failed', error || 'Failed to sign in with ' + provider);
+    } catch {
+      Alert.alert(
+        "OAuth Failed",
+        error || "Failed to sign in with " + provider,
+      );
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo/Illustration area */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <ThemedText style={styles.logoText}>V</ThemedText>
+    // @ts-ignore - SafeAreaView needs flex: 1 to expand
+
+    <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo/Illustration area */}
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logo}>
+                <ThemedText style={styles.logoText}>V</ThemedText>
+              </View>
+              <ThemedText style={styles.title}>Welcome Back</ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Sign in to your account
+              </ThemedText>
             </View>
-            <ThemedText style={styles.title}>Welcome Back</ThemedText>
-            <ThemedText style={styles.subtitle}>Sign in to your account</ThemedText>
-          </View>
-        </Animated.View>
+          </Animated.View>
 
-        {/* Sign In Form */}
-        <AnimatedCard style={styles.formCard} delay={200}>
-          <Controller
-            control={form.control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AnimatedInput
-                label="Email"
-                leftIcon="mail-outline"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                error={form.errors.email?.message}
-              />
-            )}
-          />
+          {/* Sign In Form */}
+          <AnimatedCard style={styles.formCard} delay={200}>
+            <Controller
+              control={form.control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AnimatedInput
+                  label="Email"
+                  leftIcon="mail-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  error={form.errors.email?.message}
+                />
+              )}
+            />
 
-          <Controller
-            control={form.control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AnimatedInput
-                label="Password"
-                leftIcon="lock-closed-outline"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={!showPassword}
-                rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                onRightIconPress={() => setShowPassword(!showPassword)}
-                autoComplete="password"
-                error={form.errors.password?.message}
-              />
-            )}
-          />
+            <Controller
+              control={form.control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AnimatedInput
+                  label="Password"
+                  leftIcon="lock-closed-outline"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry={!showPassword}
+                  rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
+                  onRightIconPress={() => setShowPassword(!showPassword)}
+                  autoComplete="password"
+                  error={form.errors.password?.message}
+                />
+              )}
+            />
 
-          <PressableScale onPress={() => router.push('/auth/forgot-password')}>
-            <ThemedText style={styles.forgotPassword}>Forgot Password?</ThemedText>
-          </PressableScale>
-
-          <View style={styles.signInButton}>
-            <AnimatedButton
-              onPress={form.handleSubmit(handleSignIn)}
-              loading={isLoading}
-              fullWidth
+            <PressableScale
+              onPress={() => router.push("/auth/forgot-password")}
             >
-              Sign In
-            </AnimatedButton>
-          </View>
-        </AnimatedCard>
+              <ThemedText style={styles.forgotPassword}>
+                Forgot Password?
+              </ThemedText>
+            </PressableScale>
 
-        {/* OAuth Divider */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.dividerContainer}
-        >
-          <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>or</ThemedText>
-          <View style={styles.dividerLine} />
-        </Animated.View>
+            <View style={styles.signInButton}>
+              <AnimatedButton
+                onPress={form.handleSubmit(handleSignIn as any)}
+                loading={isLoading}
+                fullWidth
+              >
+                Sign In
+              </AnimatedButton>
+            </View>
+          </AnimatedCard>
 
-        {/* OAuth Buttons */}
-        <Animated.View entering={FadeInDown.delay(500).springify()}>
-          <View style={styles.oauthButton}>
-            <OAuthButton
-              provider="google"
-              onPress={() => handleOAuthSignIn('google')}
-              isLoading={isLoading}
-            />
-          </View>
-          <View style={styles.oauthButton}>
-            <OAuthButton
-              provider="linkedin"
-              onPress={() => handleOAuthSignIn('linkedin')}
-              isLoading={isLoading}
-            />
-          </View>
-        </Animated.View>
+          {/* OAuth Divider */}
+          <Animated.View
+            entering={FadeInDown.delay(400).springify()}
+            style={styles.dividerContainer}
+          >
+            <View style={styles.dividerLine} />
+            <ThemedText style={styles.dividerText}>or</ThemedText>
+            <View style={styles.dividerLine} />
+          </Animated.View>
 
-        {/* Sign Up Link */}
-        <Animated.View
-          entering={FadeInDown.delay(600).springify()}
-          style={styles.footer}
-        >
-          <ThemedText style={styles.footerText}>Don't have an account? </ThemedText>
-          <PressableScale onPress={() => router.push('/auth/sign-up')}>
-            <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
-          </PressableScale>
-        </Animated.View>
-      </ScrollView>
+          {/* OAuth Buttons */}
+          <Animated.View entering={FadeInDown.delay(500).springify()}>
+            <View style={styles.oauthButton}>
+              <OAuthButton
+                provider="google"
+                onPress={() => handleOAuthSignIn("google")}
+                isLoading={isLoading}
+              />
+            </View>
+            <View style={styles.oauthButton}>
+              <OAuthButton
+                provider="linkedin"
+                onPress={() => handleOAuthSignIn("linkedin")}
+                isLoading={isLoading}
+              />
+            </View>
+          </Animated.View>
+
+          {/* Sign Up Link */}
+          <Animated.View
+            entering={FadeInDown.delay(600).springify()}
+            style={styles.footer}
+          >
+            <ThemedText style={styles.footerText}>
+              Don&apos;t have an account?{" "}
+            </ThemedText>
+            <PressableScale onPress={() => router.push("/auth/sign-up")}>
+              <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
+            </PressableScale>
+          </Animated.View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -171,25 +191,25 @@ const styles = StyleSheet.create({
     paddingTop: Spacing[10],
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing[8],
   },
   logo: {
     width: 80,
     height: 80,
-    borderRadius: 24,
-    backgroundColor: '#6366f1',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: BorderRadius["3xl"],
+    backgroundColor: Palette.periwinkle[500],
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing[4],
   },
   logoText: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: Palette.white,
   },
   title: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     marginBottom: Spacing[2],
   },
@@ -202,34 +222,34 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     fontSize: Typography.fontSize.sm,
-    color: '#6366f1',
-    textAlign: 'right',
+    color: Palette.periwinkle[500],
+    textAlign: "right",
     marginBottom: Spacing[4],
   },
   signInButton: {
     marginTop: Spacing[2],
   },
   dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: Spacing[5],
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: Palette.neutral[200],
   },
   dividerText: {
     fontSize: Typography.fontSize.sm,
-    color: '#6b7280',
+    color: Palette.neutral[500],
     marginHorizontal: Spacing[3],
   },
   oauthButton: {
     marginBottom: Spacing[3],
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: Spacing[6],
   },
   footerText: {
@@ -238,6 +258,6 @@ const styles = StyleSheet.create({
   signUpLink: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
-    color: '#6366f1',
+    color: Palette.periwinkle[500],
   },
 });

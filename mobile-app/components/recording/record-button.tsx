@@ -53,8 +53,8 @@ export function RecordButton({
   const innerScale = useSharedValue(1);
 
   // Recording state animations - optimized to use only 2 animations
-  const pulseIntervalRef = useRef<number | null>(null);
-  const innerIntervalRef = useRef<number | null>(null);
+  const pulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const innerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Skip all animations if reduce motion is enabled

@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { QueryProvider } from '@/providers/query-provider';
@@ -49,11 +50,13 @@ export default function RootLayout() {
 
   // OPTIMIZATION: Remove blocking render - show app immediately with fallback fonts
   return (
-    <QueryProvider>
-      <DialogProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
+    <SafeAreaProvider>
+      <QueryProvider>
+        <DialogProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth" />
           <Stack.Screen
             name="recording"
             options={{
@@ -75,10 +78,19 @@ export default function RootLayout() {
               gestureEnabled: false,
             }}
           />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </DialogProvider>
-    </QueryProvider>
+          <Stack.Screen
+            name="profile/edit"
+            options={{
+              presentation: 'card',
+              headerShown: true,
+              title: 'Edit Profile',
+            }}
+          />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </DialogProvider>
+      </QueryProvider>
+    </SafeAreaProvider>
   );
 }

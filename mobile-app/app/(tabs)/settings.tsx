@@ -1,20 +1,24 @@
-import { StyleSheet, View, Alert, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useSettingsStore } from '@/stores';
-import { useThemeColors } from '@/hooks/use-theme-color';
-import type { Tone, Length } from '@/types/draft';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
 import {
-  FadeIn,
-  SlideIn,
-  PressableScale,
   AnimatedCard,
+  FadeIn,
+  PressableScale,
+  SlideIn,
 } from '@/components/ui/animated';
-import { Spacing, Typography, BorderRadius, withOpacity, Palette } from '@/constants/design-system';
 import { Duration } from '@/constants/animations';
+import { API_BASE_URL } from '@/constants/config';
+import { BorderRadius, Palette, Spacing, Typography, withOpacity } from '@/constants/design-system';
+import { useProfile } from '@/hooks/use-api';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { useSettingsStore } from '@/stores';
+import { useAuthStore } from '@/stores/auth-store';
+import type { Length, Tone } from '@/types/draft';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TONES: { value: Tone; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string; colorKey: 'primary' | 'accent' | 'teal' }[] = [
   { value: 'professional', icon: 'briefcase-outline', label: 'Professional', desc: 'Formal and authoritative', colorKey: 'primary' },
@@ -36,7 +40,41 @@ export default function SettingsTab() {
     setDefaultLength,
   } = useSettingsStore();
 
+  const { signOutUser, user, isAuthenticated } = useAuthStore();
+  const { data: profile } = useProfile();
   const colors = useThemeColors();
+  const router = useRouter();
+
+  // Construct full avatar URL if avatar_url is a relative path
+  const getAvatarUrl = (url: string | undefined) => {
+    if (!url) return undefined;
+    if (url.startsWith('http')) return url; // Already a full URL
+    // No token needed - UUID path provides security
+    return `${API_BASE_URL}${url}`;
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOutUser();
+              router.replace('/auth/sign-in');
+            } catch (error) {
+              console.error('Sign out error:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleClearData = () => {
     Alert.alert(
@@ -58,8 +96,11 @@ export default function SettingsTab() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+          <View style={styles.safeArea}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <FadeIn delay={0}>
             <View style={styles.header}>
@@ -69,6 +110,47 @@ export default function SettingsTab() {
               </ThemedText>
             </View>
           </FadeIn>
+
+          {/* Profile Section */}
+          <SlideIn direction="up" delay={Duration.fastest}>
+            <View style={styles.section}>
+              <PressableScale
+                onPress={() => isAuthenticated ? router.push('/profile/edit') : router.replace('/auth/sign-in')}
+                hapticStyle="light"
+              >
+                <View style={styles.profileCard}>
+                  {profile?.avatar_url ? (
+                    <Image
+                      source={{ uri: getAvatarUrl(profile.avatar_url) }}
+                      style={styles.profileAvatarImage}
+                      onError={(e: any) => {
+                        console.log('Avatar image error:', e.nativeEvent);
+                      }}
+                      onLoad={() => console.log('Avatar image loaded successfully')}
+                    />
+                  ) : (
+                    <View style={[styles.profileAvatar, { backgroundColor: colors.primaryLight }]}>
+                      <Ionicons name="person" size={28} color={colors.primary} />
+                    </View>
+                  )}
+                  <View style={styles.profileInfo}>
+                    <ThemedText style={[styles.profileName, { color: colors.text }]}>
+                      {profile?.full_name || user?.user_metadata?.full_name || 'Your Name'}
+                    </ThemedText>
+                    <ThemedText style={[styles.profileEmail, { color: colors.textMuted }]}>
+                      {user?.email || 'Sign in to your account'}
+                    </ThemedText>
+                    {profile?.bio && (
+                      <ThemedText style={[styles.profileBio, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {profile.bio}
+                      </ThemedText>
+                    )}
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </PressableScale>
+            </View>
+          </SlideIn>
 
           {/* Default Tone */}
           <SlideIn direction="up" delay={Duration.fast}>
@@ -168,6 +250,30 @@ export default function SettingsTab() {
               <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
                 DATA
               </ThemedText>
+
+              {/* Sign Out */}
+              <PressableScale
+                onPress={handleSignOut}
+                hapticStyle="medium"
+                accessibilityLabel="Sign out of your account"
+                style={[styles.dangerCard, { backgroundColor: colors.errorLight, marginBottom: Spacing[3] }]}
+              >
+                <View style={styles.dangerContent}>
+                  <View style={[styles.dangerIcon, { backgroundColor: withOpacity(colors.error, 0.12) }]}>
+                    <Ionicons name="log-out-outline" size={20} color={colors.error} />
+                  </View>
+                  <View style={styles.dangerText}>
+                    <ThemedText style={[styles.dangerTitle, { color: colors.error }]}>
+                      Sign Out
+                    </ThemedText>
+                    <ThemedText style={[styles.dangerDesc, { color: withOpacity(colors.error, 0.8) }]}>
+                      {user?.email || 'Sign out of your account'}
+                    </ThemedText>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.error} />
+              </PressableScale>
+
               <PressableScale
                 onPress={handleClearData}
                 hapticStyle="medium"
@@ -212,7 +318,8 @@ export default function SettingsTab() {
             </View>
           </SlideIn>
         </ScrollView>
-      </SafeAreaView>
+      </View>
+    </SafeAreaView>
     </ThemedView>
   );
 }
@@ -225,7 +332,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing[10],
+    paddingBottom: 120,
   },
   header: {
     paddingHorizontal: Spacing[6],
@@ -262,6 +369,43 @@ const styles = StyleSheet.create({
   card: {
     padding: 0,
     overflow: 'hidden',
+  },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+  },
+  profileAvatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.full,
+  },
+  profileAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing[4],
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    marginBottom: Spacing[0.5],
+    includeFontPadding: false,
+  },
+  profileEmail: {
+    fontSize: Typography.fontSize.sm,
+    marginBottom: Spacing[0.5],
+    includeFontPadding: false,
+  },
+  profileBio: {
+    fontSize: Typography.fontSize.sm,
+    includeFontPadding: false,
   },
   optionRow: {
     flexDirection: 'row',

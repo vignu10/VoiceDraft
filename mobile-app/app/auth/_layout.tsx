@@ -1,7 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack , useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
 import { Platform } from 'react-native';
 
 export default function AuthLayout() {

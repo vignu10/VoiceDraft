@@ -42,7 +42,7 @@ export function GlowEffect({
   };
 
   const config = getIntensityConfig();
-  const glowIntervalRef = useRef<number | null>(null);
+  const glowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (animated) {

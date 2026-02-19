@@ -45,8 +45,8 @@ export default function DraftEditorScreen() {
   }>({ visible: false });
   const [previousWordCount, setPreviousWordCount] = useState(0);
 
-  const celebrationTimerRef = useRef<number | null>(null);
-  const errorTimerRef = useRef<number | null>(null);
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -204,8 +204,10 @@ export default function DraftEditorScreen() {
         onComplete={() => setCelebration({ visible: false })}
       />
 
-      <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        <KeyboardAvoidingView
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+        <View style={styles.safeArea}>
+          <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
@@ -447,7 +449,8 @@ export default function DraftEditorScreen() {
               </ThemedText>
             </ScrollView>
           )}
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -488,8 +491,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     includeFontPadding: false,
-    lineHeight: 24,
-    letterSpacing: -0.3,
+    lineHeight: Typography.fontSize.lg * Typography.lineHeight.tight,
+    letterSpacing: Typography.letterSpacing.tight,
   },
   headerMeta: {
     flexDirection: "row",
@@ -500,7 +503,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
   errorText: {
     fontWeight: Typography.fontWeight.semibold,
@@ -533,12 +536,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
     includeFontPadding: false,
-    lineHeight: 18,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
   count: {
     fontSize: Typography.fontSize.xs,
     includeFontPadding: false,
-    lineHeight: 14,
+    lineHeight: Typography.fontSize.xs * Typography.lineHeight.relaxed,
   },
   input: {
     borderWidth: 1,
@@ -554,13 +557,13 @@ const styles = StyleSheet.create({
   },
   metaInput: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.4,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     minHeight: 72,
     includeFontPadding: false,
   },
   contentInput: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.5,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     minHeight: 200,
     includeFontPadding: false,
   },
@@ -580,7 +583,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginVertical: Spacing[4] },
   previewBody: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * 1.6,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     includeFontPadding: false,
   },
 });

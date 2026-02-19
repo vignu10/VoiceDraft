@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedText } from '@/components/themed-text';
@@ -47,6 +47,7 @@ export function PasswordStrengthMeter({
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.bar}
+          disableHardwareAcceleration={true}
         />
       </View>
       {showLabel && (

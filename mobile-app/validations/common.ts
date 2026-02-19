@@ -10,9 +10,7 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Zod schema for email validation
  */
 export const emailSchema = z
-  .string({
-    required_error: 'Please enter your email',
-  })
+  .string()
   .min(1, { message: 'Please enter your email' })
   .regex(EMAIL_REGEX, { message: 'Please enter a valid email address' })
   .trim();
@@ -22,9 +20,7 @@ export const emailSchema = z
  */
 export const nonEmptyString = (fieldName: string) =>
   z
-    .string({
-      required_error: `Please enter ${fieldName}`,
-    })
+    .string()
     .min(1, { message: `Please enter ${fieldName}` })
     .trim();
 
