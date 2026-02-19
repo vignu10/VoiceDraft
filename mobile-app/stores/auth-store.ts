@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signIn, signOut, signUp } from '@/services/api/auth';
 import { getProfile } from '@/services/api/profiles';
+import { apiClient } from '@/services/api/client';
 import type { AuthState, UserProfile, Journal } from '@/types/auth';
 
 interface AuthStateExtended extends AuthState {
@@ -34,7 +35,14 @@ export const useAuthStore = create<AuthStateExtended>()(
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
 
-      setToken: (accessToken) => set({ accessToken, isAuthenticated: !!accessToken }),
+      setToken: (accessToken) => {
+        if (accessToken) {
+          apiClient.setToken(accessToken);
+        } else {
+          apiClient.clearToken();
+        }
+        set({ accessToken, isAuthenticated: !!accessToken });
+      },
 
       setJournal: (journal) => set({ journal }),
 
@@ -97,6 +105,7 @@ export const useAuthStore = create<AuthStateExtended>()(
         set({ isLoading: true });
         try {
           await signOut();
+          apiClient.clearToken();
           set({ ...initialState, isLoading: false, error: null });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Sign out failed';

@@ -8,13 +8,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { QueryProvider } from '@/providers/query-provider';
 import { DialogProvider } from '@/components/ui/dialog';
+import { GuestSyncWrapper } from '@/components/ui/guest-sync-wrapper';
 import { useFonts } from '@expo-google-fonts/nunito/useFonts';
 import {
   Nunito_400Regular,
   Nunito_600SemiBold,
   Nunito_700Bold,
 } from '@expo-google-fonts/nunito';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { apiClient } from '@/services/api/client';
+import { useAuthStore } from '@/stores/auth-store';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,6 +27,19 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const initializedRef = useRef(false);
+
+  // CRITICAL: Initialize apiClient token from persisted auth store
+  // This ensures API requests have the Authorization header after app restart
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      if (accessToken) {
+        apiClient.setToken(accessToken);
+      }
+    }
+  }, [accessToken]);
 
   // OPTIMIZATION: Load only essential font variants (3 instead of 5)
   // This reduces initial bundle size and speeds up time-to-interactive
@@ -90,6 +106,7 @@ export default function RootLayout() {
             <StatusBar style="auto" />
           </ThemeProvider>
         </DialogProvider>
+        <GuestSyncWrapper />
       </QueryProvider>
     </SafeAreaProvider>
   );

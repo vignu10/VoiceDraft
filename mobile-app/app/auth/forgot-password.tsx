@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { router, Stack } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Controller } from 'react-hook-form';
+import { Ionicons } from "@expo/vector-icons";
+import { router, Stack } from "expo-router";
+import React, { useState } from "react";
+import { Controller } from "react-hook-form";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/themed-text';
+import { ThemedText } from "@/components/themed-text";
 import {
-  AnimatedInput,
   AnimatedButton,
   AnimatedCard,
+  AnimatedInput,
   PressableScale,
-} from '@/components/ui/animated';
-import { resetPassword } from '@/services/api/auth';
-import { useAuthForm } from '@/hooks/use-auth-form';
-import { forgotPasswordSchema } from '@/validations';
-import { Spacing, Typography, Palette } from '@/constants/design-system';
-import { useThemeColors } from '@/hooks/use-theme-color';
+} from "@/components/ui/animated";
+import { Palette, Spacing, Typography } from "@/constants/design-system";
+import { useAuthForm } from "@/hooks/use-auth-form";
+import { useThemeColors } from "@/hooks/use-theme-color";
+import { resetPassword } from "@/services/api/auth";
+import { forgotPasswordSchema } from "@/validations";
 
 export default function ForgotPasswordScreen() {
   const colors = useThemeColors();
@@ -27,7 +27,7 @@ export default function ForgotPasswordScreen() {
   const [countdown, setCountdown] = useState(3);
 
   const form = useAuthForm(forgotPasswordSchema, {
-    email: '',
+    email: "",
   });
 
   const handleResetPassword = async (data: { email: string }) => {
@@ -51,8 +51,8 @@ export default function ForgotPasswordScreen() {
       }, 1000);
     } catch (err) {
       Alert.alert(
-        'Reset Failed',
-        err instanceof Error ? err.message : 'Failed to send reset email'
+        "Reset Failed",
+        err instanceof Error ? err.message : "Failed to send reset email",
       );
     } finally {
       setIsLoading(false);
@@ -60,7 +60,7 @@ export default function ForgotPasswordScreen() {
   };
 
   const maskEmail = (email: string) => {
-    const [username, domain] = email.split('@');
+    const [username, domain] = email.split("@");
     if (username.length <= 2) {
       return `${username[0]}***@${domain}`;
     }
@@ -70,53 +70,68 @@ export default function ForgotPasswordScreen() {
   if (isSuccess) {
     return (
       <>
-      <Stack.Screen options={{ headerShown: false }} />
-      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
-      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
-          <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Animated.View
-            entering={FadeInDown.springify()}
-            style={styles.successContainer}
+        <Stack.Screen options={{ headerShown: false }} />
+        {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <View style={[styles.successIcon, { backgroundColor: colors.success + '20' }]}>
-              <Ionicons name="checkmark-circle" size={64} color={colors.success} />
-            </View>
-
-            <ThemedText style={styles.successTitle}>Check Your Email!</ThemedText>
-            <ThemedText style={styles.successMessage}>
-              We&apos;ve sent a password reset link to your email address
-            </ThemedText>
-
-            <AnimatedCard style={styles.emailCard} delay={200}>
-              <View style={styles.emailContent}>
-                <Ionicons name="mail-outline" size={24} color={colors.success} />
-                <ThemedText style={styles.maskedEmail}>
-                  {maskEmail(form.getValues().email)}
-                </ThemedText>
-                <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-              </View>
-            </AnimatedCard>
-
-            <ThemedText style={styles.resendText}>
-              Didn&apos;t receive the email?{'\n'}Check spam or try again later
-            </ThemedText>
-
-            <View style={styles.backButton}>
-              <AnimatedButton
-                onPress={() => router.back()}
-                fullWidth
+            <Animated.View
+              entering={FadeInDown.springify()}
+              style={styles.successContainer}
+            >
+              <View
+                style={[
+                  styles.successIcon,
+                  { backgroundColor: colors.success + "20" },
+                ]}
               >
-                Back to Sign In {countdown > 0 && `(${countdown})`}
-              </AnimatedButton>
-            </View>
-          </Animated.View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={64}
+                  color={colors.success}
+                />
+              </View>
+
+              <ThemedText style={styles.successTitle}>
+                Check Your Email!
+              </ThemedText>
+              <ThemedText style={styles.successMessage}>
+                We&apos;ve sent a password reset link to your email address
+              </ThemedText>
+
+              <AnimatedCard style={styles.emailCard} delay={200}>
+                <View style={styles.emailContent}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={24}
+                    color={colors.success}
+                  />
+                  <ThemedText style={styles.maskedEmail}>
+                    {maskEmail(form.getValues().email)}
+                  </ThemedText>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={colors.success}
+                  />
+                </View>
+              </AnimatedCard>
+
+              <ThemedText style={styles.resendText}>
+                Didn&apos;t receive the email?{"\n"}Check spam or try again
+                later
+              </ThemedText>
+
+              <View style={styles.backButton}>
+                <AnimatedButton onPress={() => router.back()} fullWidth>
+                  Back to Sign In {countdown > 0 && `(${countdown})`}
+                </AnimatedButton>
+              </View>
+            </Animated.View>
+          </ScrollView>
+        </SafeAreaView>
       </>
     );
   }
@@ -125,84 +140,92 @@ export default function ForgotPasswordScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
-      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
-        <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Back Button */}
-        <PressableScale onPress={() => router.back()} style={styles.backButtonContainer}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </PressableScale>
-
-        {/* Illustration area */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <View style={styles.iconContainer}>
-            <View style={[styles.lockIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="lock-closed" size={48} color={colors.primary} />
-            </View>
-            <ThemedText style={styles.title}>Forgot Password?</ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Enter your email and we&apos;ll send you a reset link
-            </ThemedText>
-          </View>
-        </Animated.View>
-
-        {/* Reset Form */}
-        <AnimatedCard style={styles.formCard} delay={200}>
-          <Controller
-            control={form.control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <AnimatedInput
-                label="Email"
-                leftIcon="mail-outline"
-                value={value}
-                onChangeText={(text: string) => {
-                  onChange(text);
-                  form.clearErrors('email');
-                }}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                error={form.errors.email?.message}
-              />
-            )}
-          />
-
-          <View style={styles.resetButton}>
-            <AnimatedButton
-              onPress={form.handleSubmit(handleResetPassword as any)}
-              loading={isLoading}
-              fullWidth
-            >
-              Send Reset Link
-            </AnimatedButton>
-          </View>
-        </AnimatedCard>
-
-        {/* Sign In Link */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          style={styles.footer}
+      <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <ThemedText style={styles.footerText}>Remember your password? </ThemedText>
-          <PressableScale onPress={() => router.back()}>
-            <ThemedText style={styles.signInLink}>Sign In</ThemedText>
+          {/* Back Button */}
+          <PressableScale
+            onPress={() => router.back()}
+            style={styles.backButtonContainer}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </PressableScale>
-        </Animated.View>
-      </ScrollView>
-      </View>
-    </SafeAreaView>
+
+          {/* Illustration area */}
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <View style={styles.iconContainer}>
+              <View
+                style={[
+                  styles.lockIcon,
+                  { backgroundColor: colors.primary + "20" },
+                ]}
+              >
+                <Ionicons name="lock-closed" size={48} color={colors.primary} />
+              </View>
+              <ThemedText style={styles.title}>Forgot Password?</ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Enter your email and we&apos;ll send you a reset link
+              </ThemedText>
+            </View>
+          </Animated.View>
+
+          {/* Reset Form */}
+          <AnimatedCard style={styles.formCard} delay={200}>
+            <Controller
+              control={form.control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AnimatedInput
+                  label="Email"
+                  leftIcon="mail-outline"
+                  value={value}
+                  onChangeText={(text: string) => {
+                    onChange(text);
+                    form.clearErrors("email");
+                  }}
+                  onBlur={onBlur}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  error={form.errors.email?.message}
+                />
+              )}
+            />
+
+            <View style={styles.resetButton}>
+              <AnimatedButton
+                onPress={form.handleSubmit(handleResetPassword as any)}
+                loading={isLoading}
+                fullWidth
+              >
+                Send Reset Link
+              </AnimatedButton>
+            </View>
+          </AnimatedCard>
+
+          {/* Sign In Link */}
+          <Animated.View
+            entering={FadeInDown.delay(400).springify()}
+            style={styles.footer}
+          >
+            <ThemedText style={styles.footerText}>
+              Remember your password?{" "}
+            </ThemedText>
+            <PressableScale onPress={() => router.back()}>
+              <ThemedText style={styles.signInLink}>Sign In</ThemedText>
+            </PressableScale>
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1 removed - outer View wrapper provides flex behavior
   },
   scrollContent: {
     padding: Spacing[5],
@@ -212,31 +235,31 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing[4],
   },
   iconContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing[8],
   },
   lockIcon: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing[4],
   },
   title: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     marginBottom: Spacing[2],
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
     opacity: 0.7,
-    textAlign: 'center',
+    textAlign: "center",
   },
   formCard: {
     marginBottom: Spacing[5],
@@ -245,8 +268,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing[2],
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: Spacing[6],
   },
   footerText: {
@@ -259,36 +282,36 @@ const styles = StyleSheet.create({
   },
   // Success screen styles
   successContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: Spacing[10],
   },
   successIcon: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing[6],
   },
   successTitle: {
-    fontSize: Typography.fontSize['2xl'],
+    fontSize: Typography.fontSize["2xl"],
     fontWeight: Typography.fontWeight.bold,
     marginBottom: Spacing[3],
   },
   successMessage: {
     fontSize: Typography.fontSize.base,
     opacity: 0.7,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing[6],
   },
   emailCard: {
-    width: '100%',
+    width: "100%",
     marginBottom: Spacing[6],
   },
   emailContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing[3],
   },
   maskedEmail: {
@@ -298,7 +321,7 @@ const styles = StyleSheet.create({
   resendText: {
     fontSize: Typography.fontSize.sm,
     opacity: 0.6,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing[6],
   },
   backButton: {

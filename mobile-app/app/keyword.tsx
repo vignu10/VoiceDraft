@@ -15,11 +15,11 @@ import {
   withOpacity,
 } from "@/constants/design-system";
 import { useThemeColors } from "@/hooks/use-theme-color";
-import { useSettingsStore, useRecordingStore } from "@/stores";
+import { useRecordingStore, useSettingsStore } from "@/stores";
 import type { Length, Tone } from "@/types/draft";
 import { getKeywordTip, keywordEncouragement } from "@/utils/delight-messages";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BackHandler,
@@ -294,6 +294,7 @@ export default function KeywordScreen() {
     duration: string;
     fileSize?: string;
     mimeType?: string;
+    isGuestFlow?: string;
   }>();
   const { defaultTone, defaultLength } = useSettingsStore();
   const colors = useThemeColors();
@@ -362,6 +363,8 @@ export default function KeywordScreen() {
         keyword: keyword || undefined,
         tone,
         length,
+        // Pass guest flow flag through
+        ...(params.isGuestFlow === 'true' && { isGuestFlow: 'true' }),
       },
     });
   };
@@ -384,6 +387,8 @@ export default function KeywordScreen() {
         duration: params.duration,
         tone,
         length,
+        // Pass guest flow flag through
+        ...(params.isGuestFlow === 'true' && { isGuestFlow: 'true' }),
       },
     });
   };

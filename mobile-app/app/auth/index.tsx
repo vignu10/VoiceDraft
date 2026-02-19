@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { View } from 'react-native';
+import { ThemedText } from '@/components/themed-text';
 
 /**
  * Auth index screen - redirects to sign-in
@@ -13,5 +15,10 @@ export default function AuthIndex() {
     router.replace('/auth/sign-in');
   }, [router]);
 
-  return null;
+  // Show a minimal loading state instead of blank screen
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <ThemedText>Loading...</ThemedText>
+    </View>
+  );
 }

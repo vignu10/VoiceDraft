@@ -58,133 +58,128 @@ export default function SignInScreen() {
 
   return (
     // @ts-ignore - SafeAreaView needs flex: 1 to expand
-
     <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo/Illustration area */}
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logo}>
-                <ThemedText style={styles.logoText}>V</ThemedText>
-              </View>
-              <ThemedText style={styles.title}>Welcome Back</ThemedText>
-              <ThemedText style={styles.subtitle}>
-                Sign in to your account
-              </ThemedText>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Logo/Illustration area */}
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
+              <ThemedText style={styles.logoText}>V</ThemedText>
             </View>
-          </Animated.View>
-
-          {/* Sign In Form */}
-          <AnimatedCard style={styles.formCard} delay={200}>
-            <Controller
-              control={form.control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AnimatedInput
-                  label="Email"
-                  leftIcon="mail-outline"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  error={form.errors.email?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={form.control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AnimatedInput
-                  label="Password"
-                  leftIcon="lock-closed-outline"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  secureTextEntry={!showPassword}
-                  rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
-                  onRightIconPress={() => setShowPassword(!showPassword)}
-                  autoComplete="password"
-                  error={form.errors.password?.message}
-                />
-              )}
-            />
-
-            <PressableScale
-              onPress={() => router.push("/auth/forgot-password")}
-            >
-              <ThemedText style={styles.forgotPassword}>
-                Forgot Password?
-              </ThemedText>
-            </PressableScale>
-
-            <View style={styles.signInButton}>
-              <AnimatedButton
-                onPress={form.handleSubmit(handleSignIn as any)}
-                loading={isLoading}
-                fullWidth
-              >
-                Sign In
-              </AnimatedButton>
-            </View>
-          </AnimatedCard>
-
-          {/* OAuth Divider */}
-          <Animated.View
-            entering={FadeInDown.delay(400).springify()}
-            style={styles.dividerContainer}
-          >
-            <View style={styles.dividerLine} />
-            <ThemedText style={styles.dividerText}>or</ThemedText>
-            <View style={styles.dividerLine} />
-          </Animated.View>
-
-          {/* OAuth Buttons */}
-          <Animated.View entering={FadeInDown.delay(500).springify()}>
-            <View style={styles.oauthButton}>
-              <OAuthButton
-                provider="google"
-                onPress={() => handleOAuthSignIn("google")}
-                isLoading={isLoading}
-              />
-            </View>
-            <View style={styles.oauthButton}>
-              <OAuthButton
-                provider="linkedin"
-                onPress={() => handleOAuthSignIn("linkedin")}
-                isLoading={isLoading}
-              />
-            </View>
-          </Animated.View>
-
-          {/* Sign Up Link */}
-          <Animated.View
-            entering={FadeInDown.delay(600).springify()}
-            style={styles.footer}
-          >
-            <ThemedText style={styles.footerText}>
-              Don&apos;t have an account?{" "}
+            <ThemedText style={styles.title}>Welcome Back</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Sign in to your account
             </ThemedText>
-            <PressableScale onPress={() => router.push("/auth/sign-up")}>
-              <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
-            </PressableScale>
-          </Animated.View>
-        </ScrollView>
-      </View>
+          </View>
+        </Animated.View>
+
+        {/* Sign In Form */}
+        <AnimatedCard style={styles.formCard} delay={200}>
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AnimatedInput
+                label="Email"
+                leftIcon="mail-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={form.errors.email?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={form.control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AnimatedInput
+                label="Password"
+                leftIcon="lock-closed-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry={!showPassword}
+                rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+                autoComplete="password"
+                error={form.errors.password?.message}
+              />
+            )}
+          />
+
+          <PressableScale onPress={() => router.push("/auth/forgot-password")}>
+            <ThemedText style={styles.forgotPassword}>
+              Forgot Password?
+            </ThemedText>
+          </PressableScale>
+
+          <View style={styles.signInButton}>
+            <AnimatedButton
+              onPress={form.handleSubmit(handleSignIn as any)}
+              loading={isLoading}
+              fullWidth
+            >
+              Sign In
+            </AnimatedButton>
+          </View>
+        </AnimatedCard>
+
+        {/* OAuth Divider */}
+        <Animated.View
+          entering={FadeInDown.delay(400).springify()}
+          style={styles.dividerContainer}
+        >
+          <View style={styles.dividerLine} />
+          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <View style={styles.dividerLine} />
+        </Animated.View>
+
+        {/* OAuth Buttons */}
+        <Animated.View entering={FadeInDown.delay(500).springify()}>
+          <View style={styles.oauthButton}>
+            <OAuthButton
+              provider="google"
+              onPress={() => handleOAuthSignIn("google")}
+              isLoading={isLoading}
+            />
+          </View>
+          <View style={styles.oauthButton}>
+            <OAuthButton
+              provider="linkedin"
+              onPress={() => handleOAuthSignIn("linkedin")}
+              isLoading={isLoading}
+            />
+          </View>
+        </Animated.View>
+
+        {/* Sign Up Link */}
+        <Animated.View
+          entering={FadeInDown.delay(600).springify()}
+          style={styles.footer}
+        >
+          <ThemedText style={styles.footerText}>
+            Don&apos;t have an account?{" "}
+          </ThemedText>
+          <PressableScale onPress={() => router.push("/auth/sign-up")}>
+            <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
+          </PressableScale>
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1 removed - outer View wrapper provides flex behavior
   },
   scrollContent: {
     padding: Spacing[5],

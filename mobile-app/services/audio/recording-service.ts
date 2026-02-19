@@ -298,6 +298,80 @@ class RecordingService {
   }
 
   /**
+   * Stop recording locally and return the local file URI WITHOUT uploading to S3.
+   * Used for the guest flow where no auth token is available.
+   */
+  async stopRecordingLocally(): Promise<{ uri: string }> {
+    if (!this.recording) {
+      throw new Error('No recording to stop');
+    }
+
+    const recordingToStop = this.recording;
+    let uri: string | null = null;
+
+    try {
+      // Get URI before stopping (recording must be loaded)
+      uri = recordingToStop.getURI();
+
+      if (this.isPausedState) {
+        try {
+          await recordingToStop.startAsync();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch {
+          // Silently handle resume error
+        }
+      }
+
+      // Stop the recording (handle already unloaded case gracefully)
+      try {
+        await recordingToStop.stopAndUnloadAsync();
+      } catch (e: any) {
+        // If recording was already unloaded, that's okay
+        if (!e?.message?.includes('already been unloaded')) {
+          throw e;
+        }
+      }
+
+      await this.cleanup();
+
+      if (uri) {
+        const recordingsDir = `${documentDirectory}recordings/`;
+
+        try {
+          const dirInfo = await getInfoAsync(recordingsDir);
+          if (!dirInfo.exists) {
+            await makeDirectoryAsync(recordingsDir, {
+              intermediates: true,
+            });
+          }
+
+          const fileName = `recording_${Date.now()}${AUDIO_CONFIG.extension}`;
+          const destUri = `${recordingsDir}${fileName}`;
+          await moveAsync({ from: uri, to: destUri });
+
+          return { uri: destUri };
+        } catch (error) {
+          console.error(
+            '[RecordingService] Error saving recording file locally:',
+            error,
+          );
+          // Fall back to original URI if move fails
+          return { uri };
+        }
+      }
+
+      throw new Error('No recording URI found');
+    } catch (error) {
+      console.error(
+        '[RecordingService] Error in stopRecordingLocally:',
+        error,
+      );
+      await this.cleanup();
+      throw error;
+    }
+  }
+
+  /**
    * Stop recording and upload directly to S3
    * This is the preferred method for the new S3 + API-driven architecture
    */
