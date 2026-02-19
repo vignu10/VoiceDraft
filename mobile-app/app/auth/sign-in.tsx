@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Controller } from 'react-hook-form';
 
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -13,54 +14,25 @@ import {
 } from '@/components/ui/animated';
 import { OAuthButton } from '@/components/auth';
 import { useAuthStore } from '@/stores';
+import { useAuthForm } from '@/hooks/use-auth-form';
+import { signInSchema, type SignInFormValues } from '@/validations';
 import { Spacing, Typography } from '@/constants/design-system';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignInScreen() {
   const { signInUser, isLoading, error, clearError } = useAuthStore();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const form = useAuthForm(signInSchema, {
+    email: '',
+    password: '',
+  });
 
-  const validateEmail = () => {
-    if (!email.trim()) {
-      setEmailError('Please enter your email');
-      return false;
-    }
-    if (!EMAIL_REGEX.test(email)) {
-      setEmailError('Please enter a valid email address');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
+  const [showPassword, setShowPassword] = React.useState(false);
 
-  const validatePassword = () => {
-    if (!password) {
-      setPasswordError('Please enter your password');
-      return false;
-    }
-    setPasswordError('');
-    return true;
-  };
-
-  const handleSignIn = async () => {
+  const handleSignIn = async (data: SignInFormValues) => {
     clearError();
 
-    const isEmailValid = validateEmail();
-    const isPasswordValid = validatePassword();
-
-    if (!isEmailValid || !isPasswordValid) {
-      return;
-    }
-
     try {
-      await signInUser(email.trim(), password);
-      // Navigation will be handled by the auth layout
+      await signInUser(data.email.trim(), data.password);
     } catch (err) {
       Alert.alert('Sign In Failed', error || 'Invalid email or password');
     }
@@ -71,7 +43,6 @@ export default function SignInScreen() {
 
     try {
       await useAuthStore.getState().signInWithOAuth(provider);
-      // Navigation will be handled by the auth layout
     } catch (err) {
       Alert.alert('OAuth Failed', error || 'Failed to sign in with ' + provider);
     }
@@ -96,29 +67,41 @@ export default function SignInScreen() {
 
         {/* Sign In Form */}
         <AnimatedCard style={styles.formCard} delay={200}>
-          <AnimatedInput
-            label="Email"
-            leftIcon="mail-outline"
-            value={email}
-            onChangeText={setEmail}
-            onBlur={validateEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            error={emailError}
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AnimatedInput
+                label="Email"
+                leftIcon="mail-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                error={form.errors.email?.message}
+              />
+            )}
           />
 
-          <AnimatedInput
-            label="Password"
-            leftIcon="lock-closed-outline"
-            value={password}
-            onChangeText={setPassword}
-            onBlur={validatePassword}
-            secureTextEntry={!showPassword}
-            rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
-            onRightIconPress={() => setShowPassword(!showPassword)}
-            autoComplete="password"
-            error={passwordError}
+          <Controller
+            control={form.control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AnimatedInput
+                label="Password"
+                leftIcon="lock-closed-outline"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry={!showPassword}
+                rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+                autoComplete="password"
+                error={form.errors.password?.message}
+              />
+            )}
           />
 
           <PressableScale onPress={() => router.push('/auth/forgot-password')}>
@@ -127,7 +110,7 @@ export default function SignInScreen() {
 
           <View style={styles.signInButton}>
             <AnimatedButton
-              onPress={handleSignIn}
+              onPress={form.handleSubmit(handleSignIn)}
               loading={isLoading}
               fullWidth
             >
