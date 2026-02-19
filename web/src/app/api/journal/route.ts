@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
 import type { Journal, UpdateJournalRequest } from '@/lib/types';
 
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const { data: journal, error } = await supabase
+    const { data: journal, error } = await supabaseAdmin
       .from('journals')
       .select('*')
       .eq('auth_user_id', user.id)
@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest) {
     const body: UpdateJournalRequest = await req.json();
 
     // Check if journal exists
-    const { data: existingJournal } = await supabase
+    const { data: existingJournal } = await supabaseAdmin
       .from('journals')
       .select('id')
       .eq('auth_user_id', user.id)
@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest) {
 
     if (existingJournal) {
       // Update existing
-      const { data: journal, error } = await supabase
+      const { data: journal, error } = await supabaseAdmin
         .from('journals')
         .update({
           ...body,
@@ -102,7 +102,7 @@ export async function PUT(req: NextRequest) {
         },
       ];
 
-      const { data: journal, error } = await supabase
+      const { data: journal, error } = await supabaseAdmin
         .from('journals')
         .insert({
           auth_user_id: user.id,

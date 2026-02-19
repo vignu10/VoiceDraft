@@ -15,16 +15,12 @@ export async function transcribeAudio(
     type: mimeType,
   });
 
-  console.log('🎤 Calling OpenAI Whisper API...');
-
   const transcription = await openai.audio.transcriptions.create({
     file,
     model: 'whisper-1',
     language: 'en',
     response_format: 'verbose_json',
   });
-
-  console.log('✅ Transcription successful');
 
   return {
     text: transcription.text,
@@ -57,8 +53,6 @@ export async function generateBlogPost(options: {
   if (wordCount < 5) {
     throw new Error('Not enough words detected. Please speak more content.');
   }
-
-  console.log(`📊 Transcript stats: ${wordCount} words, ${trimmedTranscript.length} characters`);
 
   const systemPrompt = `You are an expert SEO blog writer and content strategist. Your task is to transform a voice transcript into a polished, engaging, SEO-optimized blog post.
 
@@ -104,8 +98,6 @@ Return your response as valid JSON with this exact structure:
   "wordCount": 1234
 }`;
 
-  console.log('🤖 Calling OpenAI GPT-4o...');
-
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
@@ -117,8 +109,6 @@ Return your response as valid JSON with this exact structure:
   });
 
   const result = JSON.parse(completion.choices[0].message.content ?? '{}');
-  console.log('✅ Blog generation successful');
-  console.log(`📄 Title: ${result.title}`);
 
   return {
     title: result.title,
@@ -155,7 +145,6 @@ Return your response as JSON with this structure:
   });
 
   const result = JSON.parse(completion.choices[0].message.content ?? '{}');
-  console.log('✅ Section regeneration successful');
 
   return result;
 }

@@ -71,14 +71,19 @@ export interface ApiResponse<T = any> {
 // Types for requests
 export interface CreatePostRequest {
   title: string;
-  slug: string;
-  content: string;
+  slug?: string;
+  content?: string;
   meta_description?: string;
   target_keyword?: string;
   transcript?: string;
+  // S3 audio fields
   audio_file_url?: string;
+  audio_s3_key?: string;
+  audio_file_size_bytes?: number;
+  audio_mime_type?: string;
   audio_duration_seconds?: number;
-  style_used: 0 | 1 | 2;
+  audio_format?: 'm4a' | 'mp3' | 'wav' | 'webm';
+  style_used?: 0 | 1 | 2;
   word_count?: number;
 }
 
