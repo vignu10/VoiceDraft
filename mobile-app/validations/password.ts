@@ -110,9 +110,7 @@ export function getStrengthLabel(level: PasswordStrength): string {
  * Zod schema for password validation
  */
 export const passwordSchema = z
-  .string({
-    required_error: 'Please enter a password',
-  })
+  .string()
   .min(passwordRequirements.minLength, {
     message: `Password must be at least ${passwordRequirements.minLength} characters`,
   });
@@ -122,10 +120,5 @@ export const passwordSchema = z
  */
 export const confirmPasswordSchema = (passwordField: string = 'password') =>
   z
-    .string({
-      required_error: 'Please confirm your password',
-    })
-    .min(1, { message: 'Please confirm your password' })
-    .refine((val, ctx) => val === ctx.parent[passwordField as keyof typeof ctx.parent], {
-      message: 'Passwords do not match',
-    });
+    .string()
+    .min(1, { message: 'Please confirm your password' });

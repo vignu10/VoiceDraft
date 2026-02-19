@@ -9,12 +9,12 @@ import type { z } from 'zod';
  * @param defaultValues - Default form values
  * @returns Form control, handlers, and state
  */
-export function useAuthForm<T extends z.ZodType>(
+export function useAuthForm<T extends z.ZodType<any, any, any>>(
   schema: T,
   defaultValues: z.infer<T>
 ) {
   const form = useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any), // Type assertion for compatibility
     defaultValues,
     mode: 'onBlur', // Validate on field blur
     reValidateMode: 'onBlur',

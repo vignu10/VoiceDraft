@@ -53,7 +53,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
       throw new Error(errorText || 'Sign up failed');
     }
 
-    const result = await response.json();
+    await response.json();
 
     // Sign in immediately to get token
     const signInResult = await signIn({ email: data.email, password: data.password });
@@ -85,8 +85,11 @@ export async function signIn(data: SignInData): Promise<AuthResponse> {
 
     const result = await response.json();
 
-    // Store token securely
+    // Store tokens securely
     await AsyncStorage.setItem('access_token', result.access_token);
+    if (result.refresh_token) {
+      await AsyncStorage.setItem('refresh_token', result.refresh_token);
+    }
 
     // Update API client with token
     apiClient.setToken(result.access_token);
@@ -100,6 +103,7 @@ export async function signIn(data: SignInData): Promise<AuthResponse> {
 export async function signOut(): Promise<void> {
   try {
     await AsyncStorage.removeItem('access_token');
+    await AsyncStorage.removeItem('refresh_token');
     apiClient.clearToken();
   } catch (error) {
     throw error;
@@ -110,7 +114,7 @@ export async function getStoredToken(): Promise<string | null> {
   try {
     const token = await AsyncStorage.getItem('access_token');
     return token;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -121,7 +125,99 @@ export async function initializeAuth(): Promise<void> {
     if (token) {
       apiClient.setToken(token);
     }
+
+    // Register the refresh callback with the API client
+    // This enables automatic token refresh on 401 errors
+    apiClient.setRefreshTokenCallback(refreshAccessToken);
+
+    console.log('[Auth] Initialized successfully with token refresh callback');
   } catch (error) {
     console.error('Failed to initialize auth:', error);
+  }
+}
+
+/**
+ * Refresh the access token using the stored refresh token
+ * Returns true if refresh was successful, false otherwise
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const refreshToken = await AsyncStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      console.log('[Auth] No refresh token available');
+      return false;
+    }
+
+    const response = await fetch(`${SUPABASE_AUTH_URL}/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Auth] Token refresh failed:', errorText);
+      return false;
+    }
+
+    const result = await response.json();
+
+    // Store new tokens
+    await AsyncStorage.setItem('access_token', result.access_token);
+    if (result.refresh_token) {
+      await AsyncStorage.setItem('refresh_token', result.refresh_token);
+    }
+
+    // Update API client with new token
+    apiClient.setToken(result.access_token);
+
+    console.log('[Auth] Token refreshed successfully');
+    return true;
+  } catch (error) {
+    console.error('[Auth] Token refresh error:', error);
+    return false;
+  }
+}
+
+/**
+ * Get the stored refresh token
+ */
+export async function getStoredRefreshToken(): Promise<string | null> {
+  try {
+    const token = await AsyncStorage.getItem('refresh_token');
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Send a password reset email to the user
+ * @param email - The email address to send the reset link to
+ */
+export async function resetPassword(email: string): Promise<void> {
+  try {
+    const response = await fetch(`${SUPABASE_AUTH_URL}/recover`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to send reset email');
+    }
+  } catch (error) {
+    throw error;
   }
 }

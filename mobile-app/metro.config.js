@@ -19,6 +19,7 @@ config.resolver = {
   alias: {
     '@': path.resolve(__dirname),
   },
+  assetExts: [...config.resolver.assetExts, 'svg'],
 };
 
 module.exports = config;

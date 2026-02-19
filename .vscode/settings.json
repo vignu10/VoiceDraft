@@ -3,5 +3,21 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
+  },
+  "typescript.preferences.enablePromptUseWorkspaceTsdk": true,
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": ["**/node_modules", "**/dist"]
+  },
+  "eslint.workingDirectories": [
+    { "directory": "mobile-app", "changeProcessCWD": true },
+    { "directory": "web", "changeProcessCWD": true }
+  ],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": false,
+    "**/dist": true,
+    "**/.next": true,
+    "**/expo-shared-assets": true
   }
 }

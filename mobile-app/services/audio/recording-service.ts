@@ -1,16 +1,36 @@
-import { Audio } from 'expo-av';
+/**
+ * Refactored Recording Service
+ * Improved audio recording with proper metering and no artificial minimums
+ * Uses expo-av with optimized callback-based metering
+ */
+
+import { AUDIO_CONFIG } from "@/constants/config";
 import {
+  generateS3Filename,
+  getMimeType,
+  uploadAudioToS3,
+  type UploadProgress,
+} from "@/services/api/s3-upload";
+import { Audio } from "expo-av";
+import {
+  deleteAsync,
   documentDirectory,
   getInfoAsync,
   makeDirectoryAsync,
   moveAsync,
-  deleteAsync,
-} from 'expo-file-system/legacy';
-import { AUDIO_CONFIG } from '@/constants/config';
+} from "expo-file-system/legacy";
 
 export interface RecordingResult {
   uri: string;
   duration: number;
+}
+
+export interface S3UploadResult {
+  audioFileUrl: string;
+  audioS3Key: string;
+  duration: number;
+  fileSize?: number;
+  mimeType?: string;
 }
 
 type MeteringCallback = (level: number) => void;
@@ -38,27 +58,25 @@ class RecordingService {
 
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) {
-        throw new Error('Microphone permission is required to record audio');
+        throw new Error("Microphone permission is required to record audio");
       }
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('Error initializing audio:', error);
+      console.error("[RecordingService] Error initializing audio:", error);
       throw error;
     }
   }
 
   async startRecording(
     onMetering: MeteringCallback,
-    onDuration: DurationCallback
+    onDuration: DurationCallback,
   ): Promise<void> {
     if (this.isPreparing) {
-      console.log('Recording is already being prepared, please wait...');
       return;
     }
 
     if (this.isRecordingActive && !this.isPausedState) {
-      console.log('Recording is already active');
       return;
     }
 
@@ -71,7 +89,10 @@ class RecordingService {
         try {
           await this.recording.stopAndUnloadAsync();
         } catch (e) {
-          console.error('Error stopping previous recording:', e);
+          console.error(
+            "[RecordingService] Error stopping previous recording:",
+            e,
+          );
         }
         this.recording = null;
       }
@@ -105,31 +126,43 @@ class RecordingService {
           linearPCMIsFloat: false,
         },
         web: {
-          mimeType: 'audio/webm',
+          mimeType: "audio/webm",
           bitsPerSecond: AUDIO_CONFIG.bitRate,
         },
       });
 
-      this.recording.setOnRecordingStatusUpdate((status) => {
-        if (status.isRecording && !this.isPausedState) {
-          this.isRecordingActive = true;
-          const seconds = Math.floor(status.durationMillis / 1000);
-          this.recordedDuration = seconds;
-          this.onDurationUpdate?.(seconds);
+      // Set up status callback BEFORE starting recording
+      this.recording.setOnRecordingStatusUpdate(
+        (status: Audio.RecordingStatus) => {
+          // Process metering whenever recording is active
+          if (this.isRecordingActive) {
+            // Update duration
+            const seconds = Math.floor(status.durationMillis / 1000);
+            if (seconds !== this.recordedDuration) {
+              this.recordedDuration = seconds;
+              this.onDurationUpdate?.(seconds);
+            }
 
-          if (status.metering !== undefined) {
-            const normalized = Math.max(0, Math.min(1, (status.metering + 60) / 60));
-            this.onMeteringUpdate?.(normalized);
+            // Process metering - NO MINIMUM FLOOR (allows true silence)
+            if (status.metering !== undefined && this.onMeteringUpdate) {
+              const normalizedLevel = this.normalizeMetering(status.metering);
+              this.onMeteringUpdate(normalizedLevel);
+            }
           }
-        }
-      });
+        },
+      );
 
-      this.recording.setProgressUpdateInterval(100);
+      // Fast update interval for smooth waveform (20fps)
+      this.recording.setProgressUpdateInterval(50);
+
+      console.log("[RecordingService] Starting recording...");
       await this.recording.startAsync();
 
+      // Set the recording as active AFTER starting
       this.isRecordingActive = true;
+      console.log("[RecordingService] Recording started successfully");
     } catch (error) {
-      console.error('Error starting recording:', error);
+      console.error("[RecordingService] Error starting recording:", error);
       await this.cleanup();
       throw error;
     } finally {
@@ -137,13 +170,34 @@ class RecordingService {
     }
   }
 
+  /**
+   * Normalize metering value to 0-1 range WITHOUT artificial minimum
+   * This allows true silence (0) to be represented
+   */
+  private normalizeMetering(metering: number): number {
+    // Clamp metering to valid range first (-60 to 0, or anything above -100)
+    // Values below -60 are treated as -60 (silence)
+    const clampedMetering = Math.max(-60, Math.min(0, metering));
+
+    // Convert to 0-1 range
+    let normalized = (clampedMetering + 60) / 60;
+
+    // Apply logarithmic scaling for better voice sensitivity
+    normalized = Math.pow(normalized, 0.5);
+
+    // Clamp to valid range
+    normalized = Math.max(0, Math.min(1, normalized));
+
+    return normalized;
+  }
+
   async pauseRecording(): Promise<void> {
     if (!this.recording) {
-      throw new Error('No recording in progress');
+      throw new Error("No recording in progress");
     }
 
     if (!this.isRecordingActive) {
-      throw new Error('Recording is not active');
+      throw new Error("Recording is not active");
     }
 
     if (this.isPausedState) {
@@ -154,18 +208,18 @@ class RecordingService {
       await this.recording.pauseAsync();
       this.isPausedState = true;
     } catch (error) {
-      console.error('Error pausing recording:', error);
+      console.error("[RecordingService] Error pausing recording:", error);
       throw error;
     }
   }
 
   async resumeRecording(): Promise<void> {
     if (!this.recording) {
-      throw new Error('No recording in progress');
+      throw new Error("No recording in progress");
     }
 
     if (!this.isRecordingActive) {
-      throw new Error('Recording is not active');
+      throw new Error("Recording is not active");
     }
 
     if (!this.isPausedState) {
@@ -176,14 +230,14 @@ class RecordingService {
       await this.recording.startAsync();
       this.isPausedState = false;
     } catch (error) {
-      console.error('Error resuming recording:', error);
+      console.error("[RecordingService] Error resuming recording:", error);
       throw error;
     }
   }
 
   async stopRecording(): Promise<RecordingResult> {
     if (!this.recording) {
-      throw new Error('No recording to stop');
+      throw new Error("No recording to stop");
     }
 
     const recordingToStop = this.recording;
@@ -195,9 +249,9 @@ class RecordingService {
       if (this.isPausedState) {
         try {
           await recordingToStop.startAsync();
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (e) {
-          console.warn('Could not resume before stop:', e);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch {
+          // Silently handle resume error
         }
       }
 
@@ -227,14 +281,100 @@ class RecordingService {
             duration,
           };
         } catch (error) {
-          console.error('Error saving recording file:', error);
-          throw new Error('Failed to save recording file');
+          console.error(
+            "[RecordingService] Error saving recording file:",
+            error,
+          );
+          throw new Error("Failed to save recording file");
         }
       }
 
-      throw new Error('No recording URI found');
+      throw new Error("No recording URI found");
     } catch (error) {
-      console.error('Error stopping recording:', error);
+      console.error("[RecordingService] Error stopping recording:", error);
+      await this.cleanup();
+      throw error;
+    }
+  }
+
+  /**
+   * Stop recording and upload directly to S3
+   * This is the preferred method for the new S3 + API-driven architecture
+   */
+  async stopRecordingAndUploadToS3(
+    onProgress?: (progress: UploadProgress) => void,
+  ): Promise<S3UploadResult> {
+    if (!this.recording) {
+      throw new Error("No recording to stop");
+    }
+
+    const recordingToStop = this.recording;
+    let uri: string | null = null;
+
+    try {
+      // Get URI before stopping (recording must be loaded)
+      uri = recordingToStop.getURI();
+
+      if (this.isPausedState) {
+        try {
+          await recordingToStop.startAsync();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch {
+          // Silently handle resume error
+        }
+      }
+
+      // Stop the recording (handle already unloaded case gracefully)
+      try {
+        await recordingToStop.stopAndUnloadAsync();
+      } catch (e: any) {
+        // If recording was already unloaded, that's okay
+        if (!e?.message?.includes("already been unloaded")) {
+          throw e;
+        }
+      }
+
+      const duration = this.recordedDuration;
+
+      // Get file info for size
+      const fileInfo = uri ? await getInfoAsync(uri) : null;
+      const fileSize = fileInfo?.exists ? fileInfo.size || 0 : 0;
+      const mimeType = getMimeType(uri || "");
+
+      // Generate S3 filename
+      const filename = generateS3Filename("recording");
+
+      // Upload to S3 with progress tracking
+      const s3Result = await uploadAudioToS3(
+        uri || "",
+        filename,
+        mimeType,
+        onProgress,
+      );
+
+      // Clean up local file after successful upload
+      if (uri) {
+        try {
+          await deleteAsync(uri);
+        } catch {
+          // Silently handle cleanup error
+        }
+      }
+
+      await this.cleanup();
+
+      return {
+        audioFileUrl: s3Result.publicUrl,
+        audioS3Key: s3Result.key,
+        duration,
+        fileSize,
+        mimeType,
+      };
+    } catch (error) {
+      console.error(
+        "[RecordingService] Error in stopRecordingAndUploadToS3:",
+        error,
+      );
       await this.cleanup();
       throw error;
     }
@@ -250,13 +390,13 @@ class RecordingService {
         await recordingToCancel.stopAndUnloadAsync();
       }
     } catch (error) {
-      console.error('Error canceling recording:', error);
+      console.error("[RecordingService] Error canceling recording:", error);
     } finally {
       if (uri) {
         try {
           await deleteAsync(uri);
-        } catch (e) {
-          console.error('Error deleting temp file:', e);
+        } catch {
+          // Silently handle cleanup error
         }
       }
 
@@ -269,8 +409,8 @@ class RecordingService {
       try {
         // The recording is already unloaded after stopAndUnloadAsync
         // Just clear the reference
-      } catch (e) {
-        console.error('Error during cleanup:', e);
+      } catch {
+        // Silently handle cleanup error
       }
       this.recording = null;
     }
@@ -291,7 +431,7 @@ class RecordingService {
         await deleteAsync(uri);
       }
     } catch (error) {
-      console.error('Error deleting recording:', error);
+      console.error("[RecordingService] Error deleting recording:", error);
     }
   }
 

@@ -90,8 +90,8 @@ const initialState = {
   lastDraftContent: null,
 };
 
-// Create circular buffer instance for metering levels
-const meteringBuffer = new MeteringBuffer(50);
+// Create circular buffer instance for metering levels (increased capacity for smoother waveform)
+const meteringBuffer = new MeteringBuffer(100);
 
 export const useRecordingStore = create<RecordingState>((set, get) => ({
   ...initialState,

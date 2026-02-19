@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { ensureJournalExists } from './journal';
 import type { Post } from '@/types/draft';
 
 export interface ListPostsOptions {
@@ -8,10 +9,18 @@ export interface ListPostsOptions {
 export interface CreatePostData {
   title: string;
   content?: string;
+  meta_description?: string;
   transcript?: string;
   target_keyword?: string;
   tone?: 'professional' | 'casual' | 'conversational';
   length?: 'short' | 'medium' | 'long';
+  // S3 audio fields
+  audio_file_url?: string;  // S3 public URL
+  audio_s3_key?: string;    // S3 key
+  audio_file_size_bytes?: number;
+  audio_mime_type?: string;
+  audio_duration_seconds?: number;
+  audio_format?: 'm4a' | 'mp3' | 'wav' | 'webm';
 }
 
 export interface UpdatePostData {
@@ -44,15 +53,26 @@ export async function getPost(id: string): Promise<Post> {
 }
 
 export async function createPost(data: CreatePostData): Promise<Post> {
+  // Ensure a journal exists before creating a post
+  await ensureJournalExists();
+
   // Map tone and length to style_used index
   const styleUsed = getStyleIndex(data.tone || 'professional', data.length || 'medium');
 
   const response = await apiClient.post<Post>('/api/posts', {
     title: data.title,
     content: data.content || '',
+    meta_description: data.meta_description,
     transcript: data.transcript,
     target_keyword: data.target_keyword,
+    audio_file_url: data.audio_file_url,
+    audio_s3_key: data.audio_s3_key,
+    audio_file_size_bytes: data.audio_file_size_bytes,
+    audio_mime_type: data.audio_mime_type,
+    audio_duration_seconds: data.audio_duration_seconds,
+    audio_format: data.audio_format,
     style_used: styleUsed,
+    word_count: undefined, // Let backend calculate
   });
 
   if (!response.success || !response.data) {

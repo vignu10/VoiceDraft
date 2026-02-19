@@ -6,13 +6,16 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+type RefreshTokenCallback = () => Promise<boolean>;
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
+  private refreshTokenCallback: RefreshTokenCallback | null = null;
+  private isRefreshing: boolean = false;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    console.log('[API] Base URL:', baseUrl);
   }
 
   setToken(token: string) {
@@ -21,6 +24,34 @@ class ApiClient {
 
   clearToken() {
     this.token = null;
+  }
+
+  /**
+   * Register a callback to refresh the access token
+   * This should be called during app initialization
+   */
+  setRefreshTokenCallback(callback: RefreshTokenCallback) {
+    this.refreshTokenCallback = callback;
+  }
+
+  /**
+   * Attempt to refresh the token and return true if successful
+   */
+  private async tryRefreshToken(): Promise<boolean> {
+    if (this.isRefreshing || !this.refreshTokenCallback) {
+      return false;
+    }
+
+    this.isRefreshing = true;
+    try {
+      const refreshed = await this.refreshTokenCallback();
+      return refreshed;
+    } catch (error) {
+      console.error('[API] Token refresh failed:', error);
+      return false;
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   private getHeaders(): HeadersInit {
@@ -39,18 +70,13 @@ class ApiClient {
     endpoint: string,
     data: FormData | object
   ): Promise<ApiResponse<T>> {
-    try {
+    const makeRequest = async (): Promise<Response> => {
       const isFormData = data instanceof FormData;
       const url = `${this.baseUrl}${endpoint}`;
-
-      console.log('[API] POST:', url);
-      console.log('[API] Data type:', isFormData ? 'FormData' : 'JSON');
 
       const headers: HeadersInit = isFormData
         ? { ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {}) }
         : this.getHeaders();
-
-      console.log('[API] Headers:', JSON.stringify(headers));
 
       const response = await fetch(url, {
         method: 'POST',
@@ -58,7 +84,20 @@ class ApiClient {
         body: isFormData ? data : JSON.stringify(data),
       });
 
-      console.log('[API] Response status:', response.status);
+      return response;
+    };
+
+    try {
+      let response = await makeRequest();
+
+      // If 401 Unauthorized, try to refresh token and retry
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+
+        if (refreshed) {
+          response = await makeRequest();
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -67,7 +106,6 @@ class ApiClient {
       }
 
       const result = await response.json();
-      console.log('[API] Success');
       return { success: true, data: result };
     } catch (error) {
       console.error('[API] Request failed:', error);
