@@ -57,3 +57,6 @@ android/
 
 # personal folders
 MD's/
+
+# Claude settings
+.claude/settings.json
