@@ -1,11 +1,14 @@
+import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ScrollTriggeredPrompt } from '@/components/ui/scroll-triggered-prompt';
-import { useScrollGate } from '@/hooks/use-scroll-gate';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { useScrollGate } from '@/hooks/use-scroll-gate';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
 import { useRef, useState } from 'react';
+import { Spacing, BorderRadius } from '@/constants/design-system';
 
 const AnimatedScrollView = Animated.ScrollView;
 
