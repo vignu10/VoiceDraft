@@ -24,6 +24,7 @@ interface ContentGateProps {
   onSignIn: () => void;
   onSignUp: () => void;
   scrollPercentage?: number;
+  immediate?: boolean; // true if gate is shown immediately (not from scroll)
 }
 
 export function ContentGate({
@@ -31,6 +32,7 @@ export function ContentGate({
   onSignIn,
   onSignUp,
   scrollPercentage = 30,
+  immediate = false,
 }: ContentGateProps) {
   const colors = useThemeColors();
 
@@ -122,7 +124,9 @@ export function ContentGate({
           <ThemedText
             style={[styles.description, { color: colors.textSecondary }]}
           >
-            {`You've viewed ${scrollPercentage}% of this post. Create a free account to unlock unlimited voice-to-blog posts and access all your drafts from any device.`}
+            {immediate
+              ? "You've created a draft during your free trial. Create a free account to unlock unlimited voice-to-blog posts, access all your drafts from any device, and keep your content forever."
+              : `You've viewed ${scrollPercentage}% of this post. Create a free account to unlock unlimited voice-to-blog posts and access all your drafts from any device.`}
           </ThemedText>
 
           {/* Benefits list */}
@@ -229,8 +233,9 @@ const styles = StyleSheet.create({
   gateContainer: {
     width: "100%",
     paddingHorizontal: Spacing[4],
-    paddingBottom: Spacing[8],
+    paddingBottom: Spacing[12],
     paddingTop: Spacing[4],
+    justifyContent: "flex-end",
   },
   gateCard: {
     width: "100%",
@@ -240,12 +245,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   iconContainer: {
-    width: 80,
-    height: 80,
+    width: 64,
+    height: 64,
     borderRadius: BorderRadius.full,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[3],
   },
   title: {
     fontSize: Typography.fontSize.xl,

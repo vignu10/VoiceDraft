@@ -8,7 +8,9 @@ import { GuestDraftGate } from "@/components/ui/guest-draft-gate";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
-import { useAchievementsStore, useGuestDraftStore } from "@/stores";
+import { useAchievementsStore, useAuthStore, useGuestDraftStore } from "@/stores";
+import { getPost } from "@/services/api/posts";
+import { mapPostToDraft } from "@/services/mappers/post-to-draft.mapper";
 import type { Draft } from "@/types/draft";
 import { getWordCountMilestone } from "@/utils/delight-messages";
 import { countWords } from "@/utils/formatters";
@@ -18,6 +20,7 @@ import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -44,6 +47,7 @@ export default function DraftEditorScreen() {
   const isGuestFlow = isGuestFlowParam === "true";
   const colors = useThemeColors();
   const { isAuthenticated, trialCompletedSuccessfully } = useGuestTrial();
+  const authStore = useAuthStore();
 
   // Guest draft store
   const guestDraft = useGuestDraftStore((state) => state.draft);
@@ -54,6 +58,8 @@ export default function DraftEditorScreen() {
   const [title, setTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
   const [content, setContent] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [celebration, setCelebration] = useState<{
@@ -78,18 +84,24 @@ export default function DraftEditorScreen() {
   // Handle scroll position for content gating
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
+      'worklet';
       scrollY.value = event.contentOffset.y;
       contentHeight.value = event.contentSize.height;
       layoutHeight.value = event.layoutMeasurement.height;
 
-      // Calculate scroll percentage
-      const maxScroll = event.contentSize.height - event.layoutMeasurement.height;
+      // Calculate scroll percentage with safety checks
+      const contentSizeHeight = event.contentSize.height || 0;
+      const layoutMeasurementHeight = event.layoutMeasurement.height || 1;
+      const maxScroll = contentSizeHeight - layoutMeasurementHeight;
+
+      // Only calculate percentage if content is scrollable
       if (maxScroll > 0) {
-        const percentage = event.contentOffset.y / maxScroll;
-        
-        // Only trigger gate for guest users who have used their trial
+        // Clamp percentage between 0 and 1 to handle overscroll
+        let percentage = event.contentOffset.y / maxScroll;
+        percentage = Math.max(0, Math.min(1, percentage));
+
         runOnJS(setScrollPercentage)(Math.round(percentage * 100));
-        
+
         // Show gate when scroll exceeds threshold
         if (percentage > SCROLL_THRESHOLD) {
           runOnJS(triggerContentGate)();
@@ -105,10 +117,13 @@ export default function DraftEditorScreen() {
     // 2. User has completed a draft (trial completed successfully)
     // 3. Gate is not already showing
     // 4. This is NOT a guest flow (guest flow uses GuestDraftGate instead)
-    if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow) {
+    // 5. This is NOT a guest draft (id doesn't start with "guest-")
+    const isGuestDraftId = id?.startsWith("guest-") || id === "guest";
+
+    if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow && !isGuestDraftId) {
       setShowContentGate(true);
     }
-  }, [isAuthenticated, trialCompletedSuccessfully, showContentGate, isGuestFlow]);
+  }, [isAuthenticated, trialCompletedSuccessfully, showContentGate, isGuestFlow, id]);
 
   // Navigation handlers for content gate
   const handleSignIn = useCallback(() => {
@@ -135,41 +150,41 @@ export default function DraftEditorScreen() {
   const { showToast } = useDelightToast();
 
   const loadDraft = useCallback(async () => {
-    // DEBUG: Log guest draft loading
-    console.log('[DEBUG] loadDraft called with:', { id, isGuestFlow, isGuestFlowParam, guestDraftFromStore: !!guestDraft });
-    
+    setIsLoading(true);
+    setLoadError(null);
+
     // Guest flow: load from in-memory store instead of AsyncStorage
     // Also detect guest draft automatically if id is "guest" or if guest draft exists
     let guestDraftToLoad = guestDraft;
 
     // If we're trying to load a guest draft but the store doesn't have it yet,
     // try to load it directly from AsyncStorage (handles case where Zustand hasn't hydrated yet)
-    if (id === "guest" && !guestDraftToLoad) {
-      console.log('[DEBUG] id is "guest" but no store draft, trying AsyncStorage fallback');
+    if ((id === "guest" || id?.startsWith("guest-")) && !guestDraftToLoad) {
       try {
         const stored = await AsyncStorage.getItem('guest-draft-storage');
-        console.log('[DEBUG] AsyncStorage raw data:', stored ? 'exists' : 'null');
         if (stored) {
           const parsed = JSON.parse(stored);
-          console.log('[DEBUG] Parsed storage:', JSON.stringify(parsed, null, 2));
           if (parsed.state?.draft) {
             guestDraftToLoad = parsed.state.draft;
-            console.log('[DEBUG] Found draft in AsyncStorage:', !!guestDraftToLoad);
           }
         }
-      } catch (error) {
-        console.error('[DEBUG] Error loading guest draft from AsyncStorage:', error);
+      } catch {
       }
     }
 
-    const isGuestDraft = (isGuestFlow && id === "guest") || (id === "guest" && guestDraftToLoad);
-    console.log('[DEBUG] isGuestDraft:', isGuestDraft, { isGuestFlow, id, hasGuestDraftToLoad: !!guestDraftToLoad });
+    // Check if this is a guest draft:
+    // 1. id is exactly "guest" (direct navigation from creation)
+    // 2. id starts with "guest-" (loaded from library with timestamp-based id)
+    // 3. There's a guestDraft in the store
+    const isGuestDraft = (isGuestFlow && id === "guest") ||
+                         (id === "guest" && guestDraftToLoad) ||
+                         (id?.startsWith("guest-") && guestDraftToLoad);
 
     if (isGuestDraft && guestDraftToLoad) {
       const wordCount = countWords(guestDraftToLoad.content);
       // Map GuestDraft → Draft shape expected by the editor
       const mapped: Draft = {
-        id: guestDraftToLoad.id,
+        id: id, // Use the URL id (e.g., "guest-1234567890") instead of store id ("guest-draft")
         title: guestDraftToLoad.title,
         content: guestDraftToLoad.content,
         metaDescription: "",
@@ -188,6 +203,7 @@ export default function DraftEditorScreen() {
       setMetaDescription("");
       setContent(guestDraftToLoad.content || "");
       setPreviousWordCount(wordCount);
+      setIsLoading(false);
 
       // Auto-set guest flow mode when guest draft is loaded
       if (!isGuestFlow) {
@@ -197,8 +213,18 @@ export default function DraftEditorScreen() {
       return;
     }
 
+    // Try loading from AsyncStorage first (for local drafts)
     try {
-      const data = await AsyncStorage.getItem("drafts");
+      // For non-authenticated users, check 'guest-drafts' key first
+      // Then fall back to 'drafts' key for backwards compatibility
+      let data = await AsyncStorage.getItem("drafts");
+      if (!authStore.isAuthenticated) {
+        const guestDraftsData = await AsyncStorage.getItem("guest-drafts");
+        if (guestDraftsData) {
+          data = guestDraftsData;
+        }
+      }
+
       if (data) {
         const drafts: Draft[] = JSON.parse(data);
         const found = drafts.find((d) => d.id === id);
@@ -208,12 +234,36 @@ export default function DraftEditorScreen() {
           setMetaDescription(found.metaDescription || "");
           setContent(found.content || "");
           setPreviousWordCount(found.wordCount || 0);
+          setIsLoading(false);
+          return;
         }
       }
     } catch (error) {
-      console.error("Error loading draft:", error);
+      console.error("Error loading draft from AsyncStorage:", error);
     }
-  }, [id, isGuestFlow, guestDraft]);
+
+    // If not found locally and user is authenticated, try fetching from API
+    if (authStore.isAuthenticated) {
+      try {
+        const post = await getPost(id);
+        const mappedDraft = mapPostToDraft(post);
+        setDraft(mappedDraft);
+        setTitle(mappedDraft.title || "");
+        setMetaDescription(mappedDraft.metaDescription || "");
+        setContent(mappedDraft.content || "");
+        setPreviousWordCount(mappedDraft.wordCount || 0);
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error("Error loading draft from API:", error);
+        setLoadError("Failed to load draft. Please try again.");
+      }
+    } else {
+      setLoadError("Draft not found. It may have been deleted.");
+    }
+
+    setIsLoading(false);
+  }, [id, isGuestFlow, guestDraft, authStore.isAuthenticated]);
 
   useEffect(() => {
     loadDraft();
@@ -336,12 +386,52 @@ export default function DraftEditorScreen() {
   const wordCount = countWords(content);
   const isOverLimit = (val: number, max: number) => val > max;
 
+  // Show loading state
+  if (isLoading)
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={[styles.loadingText, { color: colors.textSecondary }]}>
+          Loading draft...
+        </ThemedText>
+      </ThemedView>
+    );
+
+  // Show error state
+  if (loadError)
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+        <ThemedText style={[styles.loadingText, { color: colors.text }]}>
+          {loadError}
+        </ThemedText>
+        <PressableScale
+          onPress={() => router.back()}
+          style={[styles.errorButton, { backgroundColor: colors.primary }]}
+        >
+          <ThemedText style={[styles.errorButtonText, { color: colors.textInverse }]}>
+            Go Back
+          </ThemedText>
+        </PressableScale>
+      </ThemedView>
+    );
+
+  // Show empty state if no draft
   if (!draft)
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ThemedText style={{ color: colors.textSecondary }}>
-          Loading...
+        <Ionicons name="document-outline" size={48} color={colors.textMuted} />
+        <ThemedText style={[styles.loadingText, { color: colors.text }]}>
+          Draft not found
         </ThemedText>
+        <PressableScale
+          onPress={() => router.back()}
+          style={[styles.errorButton, { backgroundColor: colors.primary }]}
+        >
+          <ThemedText style={[styles.errorButtonText, { color: colors.textInverse }]}>
+            Go Back
+          </ThemedText>
+        </PressableScale>
       </ThemedView>
     );
 
@@ -369,6 +459,9 @@ export default function DraftEditorScreen() {
                 <PressableScale
                   onPress={() => router.push(isGuestFlow ? "/(tabs)" : "/(tabs)/library")}
                   style={styles.iconOnlyBtn}
+                  accessibilityLabel="Go back"
+                  accessibilityRole="button"
+                  hapticStyle="light"
                 >
                   <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </PressableScale>
@@ -425,6 +518,7 @@ export default function DraftEditorScreen() {
                       },
                     ]}
                     accessibilityLabel={`Switch to ${activeTab === "edit" ? "preview" : "edit"} mode`}
+                    hapticStyle="light"
                   >
                     <Ionicons
                       name={
@@ -498,6 +592,8 @@ export default function DraftEditorScreen() {
                   maxLength={60}
                   autoCorrect
                   autoCapitalize="sentences"
+                  accessibilityLabel="Draft title"
+                  accessibilityHint="Enter a title for your draft, maximum 60 characters"
                 />
               </View>
 
@@ -541,6 +637,8 @@ export default function DraftEditorScreen() {
                   maxLength={160}
                   autoCorrect
                   autoCapitalize="sentences"
+                  accessibilityLabel="Meta description"
+                  accessibilityHint="Enter an SEO description for search engines, maximum 160 characters"
                 />
               </View>
 
@@ -574,6 +672,8 @@ export default function DraftEditorScreen() {
                   textAlignVertical="top"
                   autoCorrect
                   autoCapitalize="sentences"
+                  accessibilityLabel="Post content"
+                  accessibilityHint="Write the main content of your post"
                 />
               </View>
             </ScrollView>
@@ -584,8 +684,9 @@ export default function DraftEditorScreen() {
                 styles.previewContent,
                 { backgroundColor: colors.surface },
               ]}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
+              // Only attach scroll handler if NOT a guest draft (guest drafts use GuestDraftGate instead)
+              onScroll={(isGuestFlow || id?.startsWith("guest-") || id === "guest") ? undefined : handleScroll}
+              scrollEventThrottle={(isGuestFlow || id?.startsWith("guest-") || id === "guest") ? undefined : 16}
             >
               <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
                 {title || "Untitled"}
@@ -615,7 +716,8 @@ export default function DraftEditorScreen() {
           />
 
           {/* GuestDraftGate - blurs half content and shows sign-up prompt for guest flow */}
-          {isGuestFlow && (
+          {/* Show gate when isGuestFlow is true OR when id starts with "guest-" (from library) */}
+          {(isGuestFlow || id?.startsWith("guest-")) && (
             <GuestDraftGate onSignUp={handleGuestSignUp} />
           )}
           </KeyboardAvoidingView>
@@ -627,7 +729,24 @@ export default function DraftEditorScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", gap: Spacing[3] },
+  loadingText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.medium,
+    textAlign: "center",
+    paddingHorizontal: Spacing[5],
+  },
+  errorButton: {
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[3],
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing[4],
+  },
+  errorButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    includeFontPadding: false,
+  },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   // Header - Clean, single-row layout
@@ -647,8 +766,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing[3],
   },
   iconOnlyBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing[3],

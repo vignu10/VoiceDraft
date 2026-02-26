@@ -52,8 +52,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("📝 Received blog generation request");
-
     const result = await generateBlogPost({
       transcript,
       target_keyword: target_keyword,

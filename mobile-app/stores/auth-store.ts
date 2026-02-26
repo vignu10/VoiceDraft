@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signIn, signOut, signUp } from '@/services/api/auth';
 import { getProfile } from '@/services/api/profiles';
 import { apiClient } from '@/services/api/client';
+import { syncGuestDrafts } from '@/utils/guest-sync';
 import type { AuthState, UserProfile, Journal } from '@/types/auth';
 
 interface AuthStateExtended extends AuthState {
@@ -61,6 +62,8 @@ export const useAuthStore = create<AuthStateExtended>()(
             isLoading: false,
             error: null,
           });
+          // Sync guest drafts from AsyncStorage to server
+          await syncGuestDrafts();
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
           set({ isLoading: false, error: errorMessage });
@@ -81,6 +84,8 @@ export const useAuthStore = create<AuthStateExtended>()(
             isLoading: false,
             error: null,
           });
+          // Sync guest drafts from AsyncStorage to server
+          await syncGuestDrafts();
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
           set({ isLoading: false, error: errorMessage });
@@ -94,6 +99,8 @@ export const useAuthStore = create<AuthStateExtended>()(
           // TODO: Implement OAuth flow
           // For now, this is a placeholder
           throw new Error(`${provider} sign-in not yet implemented`);
+          // After implementing OAuth, add:
+          // await syncGuestDrafts();
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'OAuth failed';
           set({ isLoading: false, error: errorMessage });

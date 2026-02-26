@@ -67,8 +67,6 @@ export async function POST(req: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(fileBuffer);
 
-    console.log('Uploading to S3:', { bucket, key, size: buffer.length, contentType: file.type });
-
     // Upload to S3 (private, no ACL)
     const command = new PutObjectCommand({
       Bucket: bucket,
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
     try {
       await s3Client.send(command);
     } catch (s3Error: any) {
-      console.error('S3 upload error:', s3Error);
       return NextResponse.json(
         { error: `S3 upload failed: ${s3Error.message || 'Unknown error'}` },
         { status: 500 }
@@ -95,7 +92,6 @@ export async function POST(req: NextRequest) {
       key: key,
     });
   } catch (error) {
-    console.error('Avatar upload error:', error);
     return handleError(error, 'Avatar upload failed');
   }
 }

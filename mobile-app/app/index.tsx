@@ -37,7 +37,7 @@ export default function Index() {
           }
         }
       } catch (error) {
-        console.error('Error checking guest draft:', error);
+        // Silently handle guest draft check errors
       }
       setHasCheckedGuestDraft(true);
     };

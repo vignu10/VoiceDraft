@@ -57,7 +57,7 @@ function loadGuestState(): GuestState {
       return { ...initialState, ...JSON.parse(stored) };
     }
   } catch (error) {
-    console.error('[GuestStore] Error loading state:', error);
+    // Silently fail on storage errors
   }
   return initialState;
 }
@@ -71,7 +71,7 @@ function saveGuestState(state: GuestState) {
   try {
     localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('[GuestStore] Error saving state:', error);
+    // Silently fail on storage errors
   }
 }
 
@@ -145,7 +145,7 @@ class GuestStore {
         return JSON.parse(stored);
       }
     } catch (error) {
-      console.error('[GuestStore] Error loading draft:', error);
+      // Silently fail on storage errors
     }
     return null;
   }
@@ -156,7 +156,7 @@ class GuestStore {
     try {
       localStorage.setItem(GUEST_DRAFT_STORAGE_KEY, JSON.stringify(draft));
     } catch (error) {
-      console.error('[GuestStore] Error saving draft:', error);
+      // Silently fail on storage errors
     }
   }
 
@@ -166,7 +166,7 @@ class GuestStore {
     try {
       localStorage.removeItem(GUEST_DRAFT_STORAGE_KEY);
     } catch (error) {
-      console.error('[GuestStore] Error clearing draft:', error);
+      // Silently fail on storage errors
     }
   }
 

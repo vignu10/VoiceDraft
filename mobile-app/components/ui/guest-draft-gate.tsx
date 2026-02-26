@@ -11,7 +11,7 @@ import {
 import { useThemeColors } from "@/hooks/use-theme-color";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -19,6 +19,23 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+
+// Helper to convert hex to rgba for expo-linear-gradient
+function hexToRgba(hex: string, alpha: number): string {
+  if (!hex || typeof hex !== 'string') {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+  // Remove hash if present
+  const hexValue = hex.replace('#', '');
+  // Validate hex format
+  if (!/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+  const r = parseInt(hexValue.substring(0, 2), 16);
+  const g = parseInt(hexValue.substring(2, 4), 16);
+  const b = parseInt(hexValue.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -32,6 +49,20 @@ export function GuestDraftGate({ onSignUp }: GuestDraftGateProps) {
   // Entrance animation — fade in
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(30);
+
+  // Prepare gradient colors with proper rgba format for expo-linear-gradient
+  const gradientColors = useMemo(() => {
+    if (!colors.background) {
+      return ["transparent", "rgba(0,0,0,0.1)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.5)", "#000000"];
+    }
+    return [
+      "transparent",
+      hexToRgba(colors.background, 0.25),
+      hexToRgba(colors.background, 0.5),
+      hexToRgba(colors.background, 0.8),
+      colors.background,
+    ];
+  }, [colors.background]);
 
   useEffect(() => {
     // Delay to let content render first
@@ -52,13 +83,7 @@ export function GuestDraftGate({ onSignUp }: GuestDraftGateProps) {
     <View style={styles.container} pointerEvents="box-none">
       {/* Blur gradient overlay - covers bottom half */}
       <LinearGradient
-        colors={[
-          "transparent",
-          `${colors.background}40`,
-          `${colors.background}80`,
-          `${colors.background}CC`,
-          colors.background,
-        ]}
+        colors={gradientColors}
         locations={[0, 0.15, 0.35, 0.6, 0.85]}
         style={styles.gradient}
       />

@@ -109,7 +109,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('S3 transcription error:', error);
     return handleError(error, 'Transcription from S3 failed');
   }
 }

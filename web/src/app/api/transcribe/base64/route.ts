@@ -50,8 +50,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("📝 Received transcription request (base64)");
-
     // Convert base64 to buffer
     const buffer = Buffer.from(audio, "base64");
 

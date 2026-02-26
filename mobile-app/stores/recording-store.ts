@@ -135,8 +135,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
         await recordingService.cancelRecording();
       }
     } catch (e) {
-      // Ignore cleanup errors
-      console.error('Error during reset:', e);
+      // Silently ignore cleanup errors
     }
 
     // Clear the metering buffer

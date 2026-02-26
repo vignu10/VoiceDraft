@@ -13,7 +13,7 @@ import { BorderRadius, Shadows, Spacing, Typography } from '@/constants/design-s
 import { useGenerate } from '@/hooks/use-generate';
 import { useGuestTrial } from '@/hooks/use-guest-trial';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { useTranscribe, useTranscribeS3 } from '@/hooks/use-transcribe';
+import { useTranscribe } from '@/hooks/use-transcribe';
 import { createPost, type CreatePostData } from '@/services/api/posts';
 import { useAchievementsStore, useGuestDraftStore, useRecordingStore } from '@/stores';
 import type { Draft, Length, Tone } from '@/types/draft';
@@ -226,14 +226,10 @@ function TwinklingIcon({ name, size = 56 }: TwinklingIconProps) {
 export default function ProcessingScreen() {
   const params = useLocalSearchParams<{
     audioUri?: string;
-    audioFileUrl?: string;
-    audioS3Key?: string;
     duration: string;
     keyword?: string;
     tone: string;
     length: string;
-    fileSize?: string;
-    mimeType?: string;
     isGuestFlow?: string;
   }>();
 
@@ -262,11 +258,7 @@ export default function ProcessingScreen() {
   } = useGuestTrial();
 
   const transcribeMutation = useTranscribe();
-  const transcribeS3Mutation = useTranscribeS3();
   const generateMutation = useGenerate();
-
-  // Determine if we're using S3 (new) or local audio (legacy)
-  const isUsingS3 = !!params.audioFileUrl && !!params.audioS3Key;
 
   // Determine if this is a guest flow
   const isGuestFlow = params.isGuestFlow === 'true';
@@ -284,13 +276,8 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
 
-        // Use S3 transcription if S3 params are available, otherwise use legacy base64
-        const transcription = isUsingS3
-          ? await transcribeS3Mutation.mutateAsync({
-              audioUrl: params.audioFileUrl!,
-              audioKey: params.audioS3Key!,
-            })
-          : await transcribeMutation.mutateAsync(params.audioUri!);
+        // Transcribe from local audio file (base64 method)
+        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);
@@ -308,6 +295,25 @@ export default function ProcessingScreen() {
 
         if (isGuestFlow) {
           // Guest flow: save draft locally, skip createPost()
+          const guestDraftId = `guest-${Date.now()}`;
+          const guestDraft = {
+            id: guestDraftId,
+            status: 'ready' as const,
+            title: blog.title,
+            content: blog.content,
+            metaDescription: blog.metaDescription,
+            transcript: transcription.text,
+            targetKeyword: params.keyword,
+            tone: params.tone as Tone,
+            length: params.length as Length,
+            wordCount: blog.wordCount,
+            isFavorite: false,
+            isGuestDraft: true, // Mark as guest draft for content gating
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Save to GuestDraftStore for the current guest flow experience
           setGuestDraft({
             id: 'guest-draft',
             guestId: getGuestId(),
@@ -317,13 +323,16 @@ export default function ProcessingScreen() {
             keywords: params.keyword ? [params.keyword] : [],
             createdAt: new Date().toISOString(),
             audioUri: params.audioUri,
-            // Save S3 info if available (for later sync)
-            audioS3Key: params.audioS3Key,
-            audioFileUrl: params.audioFileUrl,
             audioDuration: transcription.duration,
             tone: params.tone,
             length: params.length,
           });
+
+          // Also save to AsyncStorage 'guest-drafts' so they persist and show in library
+          const existingGuestDrafts = await AsyncStorage.getItem('guest-drafts');
+          const guestDrafts = existingGuestDrafts ? JSON.parse(existingGuestDrafts) : [];
+          guestDrafts.unshift(guestDraft);
+          await AsyncStorage.setItem('guest-drafts', JSON.stringify(guestDrafts));
 
           // Mark trial as completed after successful draft generation
           markTrialCompleted();
@@ -343,20 +352,6 @@ export default function ProcessingScreen() {
         }
 
         // Authenticated flow: create post via API
-        // Use S3 URL if available, otherwise fall back to local URI
-        const audioFileUrl = params.audioFileUrl || params.audioUri;
-
-        // Derive audio format from mime type
-        const getAudioFormat = (mimeType?: string): 'm4a' | 'mp3' | 'wav' | 'webm' | undefined => {
-          if (!mimeType) return undefined;
-          if (mimeType.includes('m4a') || mimeType.includes('mp4')) return 'm4a';
-          if (mimeType.includes('mpeg')) return 'mp3';
-          if (mimeType.includes('wav')) return 'wav';
-          if (mimeType.includes('webm')) return 'webm';
-          return undefined;
-        };
-
-        // Create post via API with S3 fields
         const createData: CreatePostData = {
           title: blog.title,
           content: blog.content,
@@ -365,12 +360,6 @@ export default function ProcessingScreen() {
           target_keyword: params.keyword,
           tone: params.tone as Tone,
           length: params.length as Length,
-          audio_file_url: params.audioFileUrl,
-          audio_s3_key: params.audioS3Key,
-          audio_duration_seconds: parseInt(params.duration!, 10),
-          audio_file_size_bytes: params.fileSize ? parseInt(params.fileSize, 10) : undefined,
-          audio_mime_type: params.mimeType,
-          audio_format: getAudioFormat(params.mimeType),
         };
 
         const post = await createPost(createData);
@@ -380,10 +369,6 @@ export default function ProcessingScreen() {
         const draft: Draft = {
           id,
           status: 'ready',
-          audioUri: audioFileUrl,
-          audioFileUrl: params.audioFileUrl,
-          audioS3Key: params.audioS3Key,
-          audioDuration: parseInt(params.duration!, 10),
           transcript: transcription.text,
           targetKeyword: params.keyword,
           tone: params.tone as Tone,
@@ -437,7 +422,7 @@ export default function ProcessingScreen() {
 
     processRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUsingS3, isGuestFlow]);
+  }, [isGuestFlow]);
 
   const handleRetry = () => {
     setError(null);
@@ -453,13 +438,8 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
 
-        // Use S3 transcription if S3 params are available, otherwise use legacy base64
-        const transcription = isUsingS3
-          ? await transcribeS3Mutation.mutateAsync({
-              audioUrl: params.audioFileUrl!,
-              audioKey: params.audioS3Key!,
-            })
-          : await transcribeMutation.mutateAsync(params.audioUri!);
+        // Transcribe from local audio file (base64 method)
+        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);
@@ -477,6 +457,25 @@ export default function ProcessingScreen() {
 
         if (isGuestFlow) {
           // Guest flow: save draft locally, skip createPost()
+          const guestDraftId = `guest-${Date.now()}`;
+          const guestDraft = {
+            id: guestDraftId,
+            status: 'ready' as const,
+            title: blog.title,
+            content: blog.content,
+            metaDescription: blog.metaDescription,
+            transcript: transcription.text,
+            targetKeyword: params.keyword,
+            tone: params.tone as Tone,
+            length: params.length as Length,
+            wordCount: blog.wordCount,
+            isFavorite: false,
+            isGuestDraft: true, // Mark as guest draft for content gating
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Save to GuestDraftStore for the current guest flow experience
           setGuestDraft({
             id: 'guest-draft',
             guestId: getGuestId(),
@@ -486,13 +485,16 @@ export default function ProcessingScreen() {
             keywords: params.keyword ? [params.keyword] : [],
             createdAt: new Date().toISOString(),
             audioUri: params.audioUri,
-            // Save S3 info if available (for later sync)
-            audioS3Key: params.audioS3Key,
-            audioFileUrl: params.audioFileUrl,
             audioDuration: transcription.duration,
             tone: params.tone,
             length: params.length,
           });
+
+          // Also save to AsyncStorage 'guest-drafts' so they persist and show in library
+          const existingGuestDrafts = await AsyncStorage.getItem('guest-drafts');
+          const guestDrafts = existingGuestDrafts ? JSON.parse(existingGuestDrafts) : [];
+          guestDrafts.unshift(guestDraft);
+          await AsyncStorage.setItem('guest-drafts', JSON.stringify(guestDrafts));
 
           // Mark trial as completed after successful draft generation
           markTrialCompleted();
@@ -512,20 +514,6 @@ export default function ProcessingScreen() {
         }
 
         // Authenticated flow: create post via API
-        // Use S3 URL if available, otherwise fall back to local URI
-        const audioFileUrl = params.audioFileUrl || params.audioUri;
-
-        // Derive audio format from mime type
-        const getAudioFormat = (mimeType?: string): 'm4a' | 'mp3' | 'wav' | 'webm' | undefined => {
-          if (!mimeType) return undefined;
-          if (mimeType.includes('m4a') || mimeType.includes('mp4')) return 'm4a';
-          if (mimeType.includes('mpeg')) return 'mp3';
-          if (mimeType.includes('wav')) return 'wav';
-          if (mimeType.includes('webm')) return 'webm';
-          return undefined;
-        };
-
-        // Create post via API with S3 fields
         const createData: CreatePostData = {
           title: blog.title,
           content: blog.content,
@@ -534,12 +522,6 @@ export default function ProcessingScreen() {
           target_keyword: params.keyword,
           tone: params.tone as Tone,
           length: params.length as Length,
-          audio_file_url: params.audioFileUrl,
-          audio_s3_key: params.audioS3Key,
-          audio_duration_seconds: parseInt(params.duration!, 10),
-          audio_file_size_bytes: params.fileSize ? parseInt(params.fileSize, 10) : undefined,
-          audio_mime_type: params.mimeType,
-          audio_format: getAudioFormat(params.mimeType),
         };
 
         const post = await createPost(createData);
@@ -549,10 +531,6 @@ export default function ProcessingScreen() {
         const draft: Draft = {
           id,
           status: 'ready',
-          audioUri: audioFileUrl,
-          audioFileUrl: params.audioFileUrl,
-          audioS3Key: params.audioS3Key,
-          audioDuration: parseInt(params.duration!, 10),
           transcript: transcription.text,
           targetKeyword: params.keyword,
           tone: params.tone as Tone,

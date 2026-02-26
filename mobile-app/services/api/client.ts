@@ -65,7 +65,6 @@ class ApiClient {
       const refreshed = await this.refreshTokenCallback();
       return refreshed;
     } catch (error) {
-      console.error("[API] Token refresh failed:", error);
       return false;
     } finally {
       this.isRefreshing = false;
@@ -130,7 +129,6 @@ class ApiClient {
         const errorData = await response
           .json()
           .catch(() => ({ error: "Rate limit exceeded" }));
-        console.warn("[API] Rate limited:", errorData);
         return {
           success: false,
           error:

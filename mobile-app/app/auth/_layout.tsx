@@ -44,7 +44,8 @@ export default function AuthLayout() {
       <Stack.Screen
         name="sign-in"
         options={{
-          // No special options for sign-in - it's the entry point
+          // Enable swipe back on sign-in so users can return to previous screen
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
