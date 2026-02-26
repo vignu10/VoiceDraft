@@ -4,7 +4,6 @@ import { FadeIn } from "@/components/ui/animated/animated-wrappers";
 import { PressableScale } from "@/components/ui/animated/pressable-scale";
 import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
-import { GuestDraftGate } from "@/components/ui/guest-draft-gate";
 import { GuestDraftScrollGate } from "@/components/ui/guest-draft-scroll-gate";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
@@ -99,13 +98,13 @@ export default function DraftEditorScreen() {
     },
   });
 
-  // Trigger content gate for guest users (not for guest flow - GuestDraftGate handles that)
+  // Trigger content gate for guest users (not for guest flow - GuestDraftScrollGate handles that)
   const triggerContentGate = useCallback(() => {
     // Only show gate if:
     // 1. User is NOT authenticated
     // 2. User has completed a draft (trial completed successfully)
     // 3. Gate is not already showing
-    // 4. This is NOT a guest flow (guest flow uses GuestDraftGate instead)
+    // 4. This is NOT a guest flow (guest flow uses GuestDraftScrollGate instead)
     if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow) {
       setShowContentGate(true);
     }
