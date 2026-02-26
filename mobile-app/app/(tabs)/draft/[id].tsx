@@ -5,6 +5,7 @@ import { PressableScale } from "@/components/ui/animated/pressable-scale";
 import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
 import { GuestDraftGate } from "@/components/ui/guest-draft-gate";
+import { GuestDraftScrollGate } from "@/components/ui/guest-draft-scroll-gate";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
@@ -578,32 +579,57 @@ export default function DraftEditorScreen() {
               </View>
             </ScrollView>
           ) : (
-            <Animated.ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={[
-                styles.previewContent,
-                { backgroundColor: colors.surface },
-              ]}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
-                {title || "Untitled"}
-              </ThemedText>
-              {metaDescription && (
-                <ThemedText
-                  style={[styles.previewMeta, { color: colors.textMuted }]}
+            <>
+              {isGuestFlow ? (
+                <GuestDraftScrollGate>
+                  <View style={[styles.previewContent, { backgroundColor: colors.surface }]}>
+                    <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
+                      {title || "Untitled"}
+                    </ThemedText>
+                    {metaDescription && (
+                      <ThemedText
+                        style={[styles.previewMeta, { color: colors.textMuted }]}
+                      >
+                        {metaDescription}
+                      </ThemedText>
+                    )}
+                    <View
+                      style={[styles.divider, { backgroundColor: colors.border }]}
+                    />
+                    <ThemedText style={[styles.previewBody, { color: colors.text }]}>
+                      {content || "No content..."}
+                    </ThemedText>
+                  </View>
+                </GuestDraftScrollGate>
+              ) : (
+                <Animated.ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={[
+                    styles.previewContent,
+                    { backgroundColor: colors.surface },
+                  ]}
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
                 >
-                  {metaDescription}
-                </ThemedText>
+                  <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
+                    {title || "Untitled"}
+                  </ThemedText>
+                  {metaDescription && (
+                    <ThemedText
+                      style={[styles.previewMeta, { color: colors.textMuted }]}
+                    >
+                      {metaDescription}
+                    </ThemedText>
+                  )}
+                  <View
+                    style={[styles.divider, { backgroundColor: colors.border }]}
+                  />
+                  <ThemedText style={[styles.previewBody, { color: colors.text }]}>
+                    {content || "No content..."}
+                  </ThemedText>
+                </Animated.ScrollView>
               )}
-              <View
-                style={[styles.divider, { backgroundColor: colors.border }]}
-              />
-              <ThemedText style={[styles.previewBody, { color: colors.text }]}>
-                {content || "No content..."}
-              </ThemedText>
-            </Animated.ScrollView>
+            </>
           )}
 
           {/* Content Gate Overlay - only shown for guest users */}
@@ -613,11 +639,6 @@ export default function DraftEditorScreen() {
             onSignUp={handleSignUp}
             scrollPercentage={scrollPercentage}
           />
-
-          {/* GuestDraftGate - blurs half content and shows sign-up prompt for guest flow */}
-          {isGuestFlow && (
-            <GuestDraftGate onSignUp={handleGuestSignUp} />
-          )}
           </KeyboardAvoidingView>
         </View>
       </SafeAreaView>
