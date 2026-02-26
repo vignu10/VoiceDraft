@@ -99,13 +99,6 @@ export function ScrollTriggeredPrompt({
               </ThemedText>
             </PressableScale>
           </View>
-
-          {/* Maybe Later */}
-          <PressableScale onPress={onDismiss} hapticStyle="light">
-            <ThemedText style={[styles.dismissText, { color: colors.textTertiary }]}>
-              Maybe Later
-            </ThemedText>
-          </PressableScale>
         </View>
       </Animated.View>
     </Animated.View>
@@ -184,11 +177,6 @@ const styles = StyleSheet.create({
   buttonTextSecondary: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
-    includeFontPadding: false,
-  },
-  dismissText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
     includeFontPadding: false,
   },
 });
