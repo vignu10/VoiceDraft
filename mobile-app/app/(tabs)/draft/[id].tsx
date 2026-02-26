@@ -4,7 +4,7 @@ import { FadeIn } from "@/components/ui/animated/animated-wrappers";
 import { PressableScale } from "@/components/ui/animated/pressable-scale";
 import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
-import { GuestDraftGate } from "@/components/ui/guest-draft-gate";
+import { GuestDraftScrollGate } from "@/components/ui/guest-draft-scroll-gate";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
@@ -51,7 +51,6 @@ export default function DraftEditorScreen() {
 
   // Guest draft store
   const guestDraft = useGuestDraftStore((state) => state.draft);
-  const clearGuestDraft = useGuestDraftStore((state) => state.clearGuestDraft);
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("edit");
@@ -110,13 +109,13 @@ export default function DraftEditorScreen() {
     },
   });
 
-  // Trigger content gate for guest users (not for guest flow - GuestDraftGate handles that)
+  // Trigger content gate for guest users (not for guest flow - GuestDraftScrollGate handles that)
   const triggerContentGate = useCallback(() => {
     // Only show gate if:
     // 1. User is NOT authenticated
     // 2. User has completed a draft (trial completed successfully)
     // 3. Gate is not already showing
-    // 4. This is NOT a guest flow (guest flow uses GuestDraftGate instead)
+    // 4. This is NOT a guest flow (guest flow uses GuestDraftScrollGate instead)
     // 5. This is NOT a guest draft (id doesn't start with "guest-")
     const isGuestDraftId = id?.startsWith("guest-") || id === "guest";
 
@@ -341,12 +340,6 @@ export default function DraftEditorScreen() {
     }, 1000);
     return () => clearTimeout(timer);
   }, [title, metaDescription, content, saveDraft, draft, isGuestFlow]);
-
-  // Guest flow: sign-up handler
-  const handleGuestSignUp = useCallback(() => {
-    clearGuestDraft();
-    router.push("/auth/sign-up");
-  }, [clearGuestDraft]);
 
   const handleExport = () => {
     Alert.alert("Export", "Choose format", [
@@ -678,33 +671,57 @@ export default function DraftEditorScreen() {
               </View>
             </ScrollView>
           ) : (
-            <Animated.ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={[
-                styles.previewContent,
-                { backgroundColor: colors.surface },
-              ]}
-              // Only attach scroll handler if NOT a guest draft (guest drafts use GuestDraftGate instead)
-              onScroll={(isGuestFlow || id?.startsWith("guest-") || id === "guest") ? undefined : handleScroll}
-              scrollEventThrottle={(isGuestFlow || id?.startsWith("guest-") || id === "guest") ? undefined : 16}
-            >
-              <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
-                {title || "Untitled"}
-              </ThemedText>
-              {metaDescription && (
-                <ThemedText
-                  style={[styles.previewMeta, { color: colors.textMuted }]}
+            <>
+              {(isGuestFlow || id?.startsWith("guest-") || id === "guest") ? (
+                <GuestDraftScrollGate>
+                  <View style={[styles.previewContent, { backgroundColor: colors.surface }]}>
+                    <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
+                      {title || "Untitled"}
+                    </ThemedText>
+                    {metaDescription && (
+                      <ThemedText
+                        style={[styles.previewMeta, { color: colors.textMuted }]}
+                      >
+                        {metaDescription}
+                      </ThemedText>
+                    )}
+                    <View
+                      style={[styles.divider, { backgroundColor: colors.border }]}
+                    />
+                    <ThemedText style={[styles.previewBody, { color: colors.text }]}>
+                      {content || "No content..."}
+                    </ThemedText>
+                  </View>
+                </GuestDraftScrollGate>
+              ) : (
+                <Animated.ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={[
+                    styles.previewContent,
+                    { backgroundColor: colors.surface },
+                  ]}
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
                 >
-                  {metaDescription}
-                </ThemedText>
+                  <ThemedText style={[styles.previewTitle, { color: colors.text }]}>
+                    {title || "Untitled"}
+                  </ThemedText>
+                  {metaDescription && (
+                    <ThemedText
+                      style={[styles.previewMeta, { color: colors.textMuted }]}
+                    >
+                      {metaDescription}
+                    </ThemedText>
+                  )}
+                  <View
+                    style={[styles.divider, { backgroundColor: colors.border }]}
+                  />
+                  <ThemedText style={[styles.previewBody, { color: colors.text }]}>
+                    {content || "No content..."}
+                  </ThemedText>
+                </Animated.ScrollView>
               )}
-              <View
-                style={[styles.divider, { backgroundColor: colors.border }]}
-              />
-              <ThemedText style={[styles.previewBody, { color: colors.text }]}>
-                {content || "No content..."}
-              </ThemedText>
-            </Animated.ScrollView>
+            </>
           )}
 
           {/* Content Gate Overlay - only shown for guest users */}
@@ -714,12 +731,6 @@ export default function DraftEditorScreen() {
             onSignUp={handleSignUp}
             scrollPercentage={scrollPercentage}
           />
-
-          {/* GuestDraftGate - blurs half content and shows sign-up prompt for guest flow */}
-          {/* Show gate when isGuestFlow is true OR when id starts with "guest-" (from library) */}
-          {(isGuestFlow || id?.startsWith("guest-")) && (
-            <GuestDraftGate onSignUp={handleGuestSignUp} />
-          )}
           </KeyboardAvoidingView>
         </View>
       </SafeAreaView>
