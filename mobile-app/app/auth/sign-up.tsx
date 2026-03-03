@@ -1,7 +1,8 @@
-import { router } from "expo-router";
+import { router, useNavigation, Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Controller } from "react-hook-form";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,6 +25,7 @@ import { useAuthStore } from "@/stores";
 import { signUpSchema } from "@/validations";
 
 export default function SignUpScreen() {
+  const navigation = useNavigation();
   const { signUpUser, isLoading, clearError } = useAuthStore();
 
   const form = useAuthForm(signUpSchema, {
@@ -86,10 +88,23 @@ export default function SignUpScreen() {
   return (
     // @ts-ignore - SafeAreaView needs flex: 1 to expand
     <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Back Button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+
         {/* Logo/Illustration area */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <View style={styles.logoContainer}>
@@ -232,7 +247,7 @@ export default function SignUpScreen() {
           <ThemedText style={styles.footerText}>
             Already have an account?{" "}
           </ThemedText>
-          <PressableScale onPress={() => router.push("/auth/sign-in")}>
+          <PressableScale onPress={() => router.replace("/auth/sign-in")}>
             <ThemedText style={styles.signInLink}>Sign In</ThemedText>
           </PressableScale>
         </Animated.View>
@@ -248,6 +263,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing[5],
     paddingTop: Spacing[10],
+  },
+  backButton: {
+    position: "absolute",
+    top: Spacing[6],
+    left: Spacing[5],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
   logoContainer: {
     alignItems: "center",

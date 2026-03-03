@@ -11,9 +11,6 @@ interface GuestDraft {
   keywords: string[];
   createdAt: string; // ISO date
   audioUri?: string; // local file path (may be cleaned up)
-  // S3 audio info (if uploaded during guest flow)
-  audioS3Key?: string;
-  audioFileUrl?: string;
   audioDuration?: number;
   // Additional metadata
   tone?: string;

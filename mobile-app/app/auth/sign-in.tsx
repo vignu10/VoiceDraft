@@ -1,5 +1,7 @@
-import { router } from "expo-router";
+import { router, useNavigation, Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
+import { TouchableOpacity } from "react-native";
 import { Controller } from "react-hook-form";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -24,6 +26,7 @@ import { useAuthStore } from "@/stores";
 import { signInSchema } from "@/validations";
 
 export default function SignInScreen() {
+  const navigation = useNavigation();
   const { signInUser, isLoading, error, clearError } = useAuthStore();
 
   const form = useAuthForm(signInSchema, {
@@ -59,10 +62,23 @@ export default function SignInScreen() {
   return (
     // @ts-ignore - SafeAreaView needs flex: 1 to expand
     <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1 }}>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Back Button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+
         {/* Logo/Illustration area */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <View style={styles.logoContainer}>
@@ -168,7 +184,7 @@ export default function SignInScreen() {
           <ThemedText style={styles.footerText}>
             Don&apos;t have an account?{" "}
           </ThemedText>
-          <PressableScale onPress={() => router.push("/auth/sign-up")}>
+          <PressableScale onPress={() => router.replace("/auth/sign-up")}>
             <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
           </PressableScale>
         </Animated.View>
@@ -184,6 +200,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: Spacing[5],
     paddingTop: Spacing[10],
+  },
+  backButton: {
+    position: "absolute",
+    top: Spacing[6],
+    left: Spacing[5],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
   logoContainer: {
     alignItems: "center",

@@ -5,12 +5,6 @@
  */
 
 import { AUDIO_CONFIG } from "@/constants/config";
-import {
-  generateS3Filename,
-  getMimeType,
-  uploadAudioToS3,
-  type UploadProgress,
-} from "@/services/api/s3-upload";
 import { Audio } from "expo-av";
 import {
   deleteAsync,
@@ -23,14 +17,6 @@ import {
 export interface RecordingResult {
   uri: string;
   duration: number;
-}
-
-export interface S3UploadResult {
-  audioFileUrl: string;
-  audioS3Key: string;
-  duration: number;
-  fileSize?: number;
-  mimeType?: string;
 }
 
 type MeteringCallback = (level: number) => void;
@@ -155,12 +141,10 @@ class RecordingService {
       // Fast update interval for smooth waveform (20fps)
       this.recording.setProgressUpdateInterval(50);
 
-      console.log("[RecordingService] Starting recording...");
       await this.recording.startAsync();
 
       // Set the recording as active AFTER starting
       this.isRecordingActive = true;
-      console.log("[RecordingService] Recording started successfully");
     } catch (error) {
       console.error("[RecordingService] Error starting recording:", error);
       await this.cleanup();
@@ -364,89 +348,6 @@ class RecordingService {
     } catch (error) {
       console.error(
         '[RecordingService] Error in stopRecordingLocally:',
-        error,
-      );
-      await this.cleanup();
-      throw error;
-    }
-  }
-
-  /**
-   * Stop recording and upload directly to S3
-   * This is the preferred method for the new S3 + API-driven architecture
-   */
-  async stopRecordingAndUploadToS3(
-    onProgress?: (progress: UploadProgress) => void,
-  ): Promise<S3UploadResult> {
-    if (!this.recording) {
-      throw new Error("No recording to stop");
-    }
-
-    const recordingToStop = this.recording;
-    let uri: string | null = null;
-
-    try {
-      // Get URI before stopping (recording must be loaded)
-      uri = recordingToStop.getURI();
-
-      if (this.isPausedState) {
-        try {
-          await recordingToStop.startAsync();
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch {
-          // Silently handle resume error
-        }
-      }
-
-      // Stop the recording (handle already unloaded case gracefully)
-      try {
-        await recordingToStop.stopAndUnloadAsync();
-      } catch (e: any) {
-        // If recording was already unloaded, that's okay
-        if (!e?.message?.includes("already been unloaded")) {
-          throw e;
-        }
-      }
-
-      const duration = this.recordedDuration;
-
-      // Get file info for size
-      const fileInfo = uri ? await getInfoAsync(uri) : null;
-      const fileSize = fileInfo?.exists ? fileInfo.size || 0 : 0;
-      const mimeType = getMimeType(uri || "");
-
-      // Generate S3 filename
-      const filename = generateS3Filename("recording");
-
-      // Upload to S3 with progress tracking
-      const s3Result = await uploadAudioToS3(
-        uri || "",
-        filename,
-        mimeType,
-        onProgress,
-      );
-
-      // Clean up local file after successful upload
-      if (uri) {
-        try {
-          await deleteAsync(uri);
-        } catch {
-          // Silently handle cleanup error
-        }
-      }
-
-      await this.cleanup();
-
-      return {
-        audioFileUrl: s3Result.publicUrl,
-        audioS3Key: s3Result.key,
-        duration,
-        fileSize,
-        mimeType,
-      };
-    } catch (error) {
-      console.error(
-        "[RecordingService] Error in stopRecordingAndUploadToS3:",
         error,
       );
       await this.cleanup();

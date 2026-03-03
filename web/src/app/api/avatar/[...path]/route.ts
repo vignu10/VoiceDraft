@@ -84,7 +84,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Avatar serve error:', error);
     if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
       return NextResponse.json({ error: 'Avatar not found' }, { status: 404 });
     }

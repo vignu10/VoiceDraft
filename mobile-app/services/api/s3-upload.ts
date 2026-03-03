@@ -79,7 +79,6 @@ export async function uploadAudioToS3(
           }),
         });
       } catch (uploadError) {
-        console.error("[S3 Upload] uploadAsync failed:", uploadError);
         throw uploadError;
       }
 
@@ -93,7 +92,6 @@ export async function uploadAudioToS3(
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.error(`[S3 Upload] Attempt ${attempt + 1} failed:`, errorMessage);
 
       // 401 Unauthorized is non-retryable — the auth state won't change between
       // retries. Throw immediately so the caller can handle it gracefully

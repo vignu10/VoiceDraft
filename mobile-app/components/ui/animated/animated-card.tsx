@@ -51,7 +51,7 @@ export function AnimatedCard({
         withSpring(1, Springs.list)
       );
     }
-  }, [animateEntry, delay, progress]);
+  }, [animateEntry, delay]);
 
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';

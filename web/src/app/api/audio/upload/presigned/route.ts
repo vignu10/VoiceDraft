@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
       region: process.env.AWS_REGION || 'eu-north-1',
     });
   } catch (error) {
-    console.error('Error generating presigned URL:', error);
     return NextResponse.json(
       { error: 'Failed to generate presigned URL', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

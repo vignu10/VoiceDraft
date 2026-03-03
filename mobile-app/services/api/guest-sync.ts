@@ -20,10 +20,6 @@ interface SyncGuestDraftResult {
  * Sync a guest draft to the authenticated user's account
  * This should be called after a guest user signs in
  *
- * Requirements:
- * - Audio MUST be uploaded to S3 before calling sync
- * - If guest draft only has local audioUri, upload to S3 first using the S3 upload service
- *
  * @param options - The sync options containing the auth token
  * @returns The sync result with the created post
  */
@@ -44,7 +40,7 @@ export async function syncGuestDraft(
     // Set the token for this request
     apiClient.setToken(options.token);
 
-    // Call the sync endpoint with S3 audio info
+    // Call the sync endpoint
     const response: ApiResponse<{
       post: {
         id: string;
@@ -59,9 +55,6 @@ export async function syncGuestDraft(
       transcription: guestDraft.transcription,
       keywords: guestDraft.keywords,
       createdAt: guestDraft.createdAt,
-      // S3 audio info - must be set before calling sync
-      audioS3Key: guestDraft.audioS3Key,
-      audioFileUrl: guestDraft.audioFileUrl,
       audioDuration: guestDraft.audioDuration,
       // Optional metadata
       tone: guestDraft.tone,
@@ -92,7 +85,6 @@ export async function syncGuestDraft(
       message: response.error || 'Failed to sync guest draft',
     };
   } catch (error) {
-    console.error('[GuestSync] Error syncing draft:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -107,15 +99,6 @@ export async function syncGuestDraft(
 export function hasGuestDraftToSync(): boolean {
   const guestDraft = useGuestDraftStore.getState().draft;
   return guestDraft !== null;
-}
-
-/**
- * Check if the guest draft has audio uploaded to S3
- * If false, audio needs to be uploaded before syncing
- */
-export function isGuestAudioReadyForSync(): boolean {
-  const guestDraft = useGuestDraftStore.getState().draft;
-  return !!(guestDraft?.audioS3Key && guestDraft?.audioFileUrl);
 }
 
 /**

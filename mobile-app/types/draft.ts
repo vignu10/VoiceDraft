@@ -6,11 +6,7 @@ export interface Draft {
   id: string;
   status: DraftStatus;
   audioUri?: string;
-  audioFileUrl?: string;
-  audioS3Key?: string;
   audioDuration?: number;
-  fileSize?: number;
-  mimeType?: string;
   transcript?: string;
   targetKeyword?: string;
   tone: Tone;
@@ -20,6 +16,7 @@ export interface Draft {
   content?: string;
   wordCount?: number;
   isFavorite: boolean;
+  isGuestDraft?: boolean; // True if created during guest trial (for content gating)
   createdAt: string; // ISO date string for AsyncStorage compatibility
   updatedAt: string; // ISO date string for AsyncStorage compatibility
   // Sync fields for backend integration

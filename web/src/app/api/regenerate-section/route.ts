@@ -11,8 +11,6 @@ export async function POST(req: NextRequest) {
 
     const { sectionIndex, instruction, currentContent } = await req.json();
 
-    console.log('📝 Received section regeneration request');
-
     const result = await regenerateSection(currentContent || '', instruction);
 
     return NextResponse.json(result);

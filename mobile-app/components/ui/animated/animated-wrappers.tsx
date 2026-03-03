@@ -42,7 +42,7 @@ export function FadeIn({
       delay,
       withTiming(1, { duration, easing: Easings.easeOut })
     );
-  }, [delay, duration, opacity, reducedMotion]);
+  }, [delay, duration, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -85,7 +85,7 @@ export function SlideIn({
       return;
     }
     progress.value = withDelay(delay, withSpring(1, Springs.default));
-  }, [delay, progress, reducedMotion]);
+  }, [delay, reducedMotion]);
 
   const isVertical = direction === 'up' || direction === 'down';
   const sign = direction === 'up' || direction === 'left' ? 1 : -1;
@@ -134,7 +134,7 @@ export function ScaleIn({
       return;
     }
     progress.value = withDelay(delay, withSpring(1, Springs.bouncy));
-  }, [delay, progress, reducedMotion]);
+  }, [delay, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: reducedMotion ? 1 : interpolate(progress.value, [0, 1], [0, 1]),
@@ -219,7 +219,7 @@ export function Bounce({
         mass: 0.8,
       })
     );
-  }, [delay, scale, reducedMotion]);
+  }, [delay, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -274,7 +274,7 @@ export function Pulse({
     const interval = setInterval(animate, duration);
 
     return () => clearInterval(interval);
-  }, [maxScale, minScale, duration, scale, reducedMotion]);
+  }, [maxScale, minScale, duration, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

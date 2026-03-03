@@ -329,62 +329,17 @@ export default function RecordingScreen() {
   }, [duration, isRecording, isPaused, lastMilestone, showToast]);
 
   const processRecording = useCallback(async () => {
-    // Guest flow: stop locally and navigate to keyword screen with isGuestFlow=true
-    if (!isAuthenticated) {
-      try {
-        const result = await recordingService.stopRecordingLocally();
-        if (!result?.uri) {
-          Alert.alert("Recording Error", "Failed to save recording");
-          return;
-        }
-
-        setRecording(false);
-        setPaused(false);
-        setLastMilestone(0);
-
-        // Navigate to keyword screen with guest flag
-        // markTrialUsed() will be called in processing.tsx after successful draft generation
-        router.push({
-          pathname: "/keyword",
-          params: {
-            audioUri: result.uri,
-            duration: String(duration),
-            isGuestFlow: "true",
-          },
-        });
-      } catch {
-        Alert.alert(
-          "Recording Error",
-          "Failed to save recording. Please try again.",
-        );
-        setRecording(false);
-        setPaused(false);
-        await resetStore();
-      }
-      return;
-    }
-
+    // Both guest and authenticated users: stop recording locally and navigate to keyword screen
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      setUploadMessage("Preparing upload...");
-
-      // Upload to S3 directly (new S3 + API-driven architecture)
-      const s3Result = await recordingService.stopRecordingAndUploadToS3(
-        (progress) => {
-          setUploadProgress(progress.percentage);
-          setUploadMessage(
-            `Uploading audio... ${Math.round(progress.percentage)}%`,
-          );
-          console.log(`[Recording] Upload progress: ${progress.percentage}%`);
-        },
-      );
+      const result = await recordingService.stopRecording();
+      if (!result?.uri) {
+        Alert.alert("Recording Error", "Failed to save recording");
+        return;
+      }
 
       setIsUploading(false);
       setRecording(false);
       setPaused(false);
-
-      // Reset milestone tracking for next recording
       setLastMilestone(0);
 
       // Show warm celebration for successful recording
@@ -404,7 +359,7 @@ export default function RecordingScreen() {
       });
 
       // Track recording for achievements
-      recordRecording(s3Result.duration);
+      recordRecording(result.duration);
 
       // Navigate after celebration - track timer for cleanup
       if (celebrationTimerRef.current) {
@@ -415,11 +370,9 @@ export default function RecordingScreen() {
         router.push({
           pathname: "/keyword",
           params: {
-            audioFileUrl: s3Result.audioFileUrl,
-            audioS3Key: s3Result.audioS3Key,
-            duration: s3Result.duration.toString(),
-            fileSize: s3Result.fileSize?.toString() || "",
-            mimeType: s3Result.mimeType || "",
+            audioUri: result.uri,
+            duration: result.duration.toString(),
+            isGuestFlow: isAuthenticated ? undefined : "true",
           },
         });
       }, 1500);

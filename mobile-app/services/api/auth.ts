@@ -129,8 +129,6 @@ export async function initializeAuth(): Promise<void> {
     // Register the refresh callback with the API client
     // This enables automatic token refresh on 401 errors
     apiClient.setRefreshTokenCallback(refreshAccessToken);
-
-    console.log('[Auth] Initialized successfully with token refresh callback');
   } catch (error) {
     console.error('Failed to initialize auth:', error);
   }
@@ -144,7 +142,6 @@ export async function refreshAccessToken(): Promise<boolean> {
   try {
     const refreshToken = await AsyncStorage.getItem('refresh_token');
     if (!refreshToken) {
-      console.log('[Auth] No refresh token available');
       return false;
     }
 
@@ -176,7 +173,6 @@ export async function refreshAccessToken(): Promise<boolean> {
     // Update API client with new token
     apiClient.setToken(result.access_token);
 
-    console.log('[Auth] Token refreshed successfully');
     return true;
   } catch (error) {
     console.error('[Auth] Token refresh error:', error);

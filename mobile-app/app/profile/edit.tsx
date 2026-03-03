@@ -141,9 +141,9 @@ export default function ProfileEditScreen() {
                     source={{ uri: getAvatarUrl(avatarUrl) ?? undefined }}
                     style={styles.avatarImage}
                     onError={(e: any) => {
-                      console.log('Edit screen - Avatar image error:', e.nativeEvent);
+                      // Image loading failed - will use placeholder
                     }}
-                    onLoad={() => console.log('Edit screen - Avatar image loaded successfully')}
+                    onLoad={() => { /* Image loaded successfully */ }}
                   />
                 ) : (
                   <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primaryLight }]}>

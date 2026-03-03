@@ -21,8 +21,6 @@ interface ErrorWithStatus extends Error {
 }
 
 export function handleError(error: unknown, message?: string) {
-  console.error('API Error:', error);
-
   const err = error as ErrorWithStatus;
   const errorMessage = err?.message || message || 'An error occurred';
 

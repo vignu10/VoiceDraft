@@ -14,13 +14,6 @@ export interface CreatePostData {
   target_keyword?: string;
   tone?: 'professional' | 'casual' | 'conversational';
   length?: 'short' | 'medium' | 'long';
-  // S3 audio fields
-  audio_file_url?: string;  // S3 public URL
-  audio_s3_key?: string;    // S3 key
-  audio_file_size_bytes?: number;
-  audio_mime_type?: string;
-  audio_duration_seconds?: number;
-  audio_format?: 'm4a' | 'mp3' | 'wav' | 'webm';
 }
 
 export interface UpdatePostData {
@@ -65,12 +58,6 @@ export async function createPost(data: CreatePostData): Promise<Post> {
     meta_description: data.meta_description,
     transcript: data.transcript,
     target_keyword: data.target_keyword,
-    audio_file_url: data.audio_file_url,
-    audio_s3_key: data.audio_s3_key,
-    audio_file_size_bytes: data.audio_file_size_bytes,
-    audio_mime_type: data.audio_mime_type,
-    audio_duration_seconds: data.audio_duration_seconds,
-    audio_format: data.audio_format,
     style_used: styleUsed,
     word_count: undefined, // Let backend calculate
   });

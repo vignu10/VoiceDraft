@@ -28,8 +28,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
     }
 
-    console.log('📤 Uploading audio file for post:', postId);
-
     // Upload to Supabase storage
     const fileName = `${user.id}/${postId}.${file.name.split('.').pop()}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -61,8 +59,6 @@ export async function POST(req: NextRequest) {
     if (postError) {
       return handleError(postError, 'Failed to update post with audio URL');
     }
-
-    console.log('✅ Audio upload successful');
 
     return NextResponse.json({
       path: uploadData.path,
