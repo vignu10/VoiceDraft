@@ -1,6 +1,32 @@
-import { useEffect, useState } from 'react';
+/**
+ * PublishSuccessToast Component
+ *
+ * A toast notification shown when a draft is successfully published.
+ * Displays the published post URL with options to copy, view, and share.
+ *
+ * Features:
+ * - Auto-dismiss after 5 seconds
+ * - Copy URL to clipboard with haptic feedback
+ * - View and Share action buttons
+ * - Smooth slide-in/slide-out animations
+ * - Theme-aware colors
+ * - Memory leak prevention with proper timer cleanup
+ *
+ * @example
+ * ```tsx
+ * <PublishSuccessToast
+ *   visible={showToast}
+ *   postUrl="https://vogn.ai/posts/abc123"}
+ *   onViewPress={() => router.push(postUrl)}
+ *   onSharePress={() => share(postUrl)}
+ *   onDismiss={() => setShowToast(false)}
+ * />
+ * ```
+ */
+
+import { useEffect, useState, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View, Text, Platform } from 'react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -11,16 +37,31 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { BorderRadius, Shadows, Spacing, Typography } from '@/constants/design-system';
+import { Duration, Springs } from '@/constants/animations';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { PressableScale } from '@/components/ui/animated/pressable-scale';
 
+/**
+ * Props for PublishSuccessToast component
+ */
 interface PublishSuccessToastProps {
+  /** Whether the toast is currently visible */
   visible: boolean;
+  /** The full URL of the published post */
   postUrl: string;
+  /** Callback when the View button is pressed */
   onViewPress: () => void;
+  /** Callback when the Share button is pressed */
   onSharePress: () => void;
+  /** Callback when the toast is dismissed (auto-dismiss or manual) */
   onDismiss: () => void;
 }
 
+/** Auto-dismiss duration in milliseconds */
 const AUTO_DISMISS_MS = 5000;
+
+/** Duration for showing "Copied!" feedback */
+const COPY_FEEDBACK_MS = 2000;
 
 export function PublishSuccessToast({
   visible,
@@ -30,34 +71,82 @@ export function PublishSuccessToast({
   onDismiss,
 }: PublishSuccessToastProps) {
   const [copiedText, setCopiedText] = useState<'Copied!' | ''>('');
+  const colors = useThemeColors();
 
+  // Animation values
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
 
+  // Timer refs for cleanup to prevent memory leaks
+  const autoDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (autoDismissTimerRef.current) {
+        clearTimeout(autoDismissTimerRef.current);
+      }
+      if (copyFeedbackTimerRef.current) {
+        clearTimeout(copyFeedbackTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (visible) {
-      translateY.value = withSpring(0, { damping: 15 });
-      opacity.value = withTiming(1, { duration: 300 });
-      const timer = setTimeout(() => { handleDismiss(); }, AUTO_DISMISS_MS);
-      return () => clearTimeout(timer);
+      // Animate in
+      translateY.value = withSpring(0, Springs.gentle);
+      opacity.value = withTiming(1, { duration: Duration.fast });
+
+      // Set up auto-dismiss timer
+      if (autoDismissTimerRef.current) {
+        clearTimeout(autoDismissTimerRef.current);
+      }
+      autoDismissTimerRef.current = setTimeout(() => {
+        handleDismiss();
+      }, AUTO_DISMISS_MS);
     } else {
+      // Reset animation state
       handleDismiss();
     }
   }, [visible]);
 
+  /**
+   * Handles toast dismissal with slide-out animation
+   * Properly wrapped for use in worklets and callbacks
+   */
   const handleDismiss = () => {
     'worklet';
-    translateY.value = withSpring(-100, { damping: 15 });
-    opacity.value = withTiming(0, { duration: 200 }, () => {
+    translateY.value = withSpring(-100, Springs.gentle);
+    opacity.value = withTiming(0, { duration: Duration.fast }, () => {
       runOnJS(onDismiss)();
     });
   };
 
+  /**
+   * Copies the post URL to clipboard with haptic feedback
+   * Shows "Copied!" confirmation for 2 seconds
+   */
   const handleCopyUrl = async () => {
-    await Clipboard.setStringAsync(postUrl);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setCopiedText('Copied!');
-    setTimeout(() => setCopiedText(''), 2000);
+    try {
+      await Clipboard.setStringAsync(postUrl);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setCopiedText('Copied!');
+
+      // Clear previous timer if exists
+      if (copyFeedbackTimerRef.current) {
+        clearTimeout(copyFeedbackTimerRef.current);
+      }
+
+      // Reset copied text after delay
+      copyFeedbackTimerRef.current = setTimeout(() => {
+        setCopiedText('');
+      }, COPY_FEEDBACK_MS);
+    } catch (error) {
+      // Silently fail if clipboard access is denied
+      console.error('Failed to copy URL:', error);
+    }
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -67,30 +156,39 @@ export function PublishSuccessToast({
 
   if (!visible) return null;
 
+  // Strip protocol from URL for cleaner display
+  const displayUrl = postUrl.replace('https://', '').replace('http://', '');
+
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <Pressable onPress={handleCopyUrl} style={styles.toastContent}>
+      <PressableScale
+        onPress={handleCopyUrl}
+        style={[styles.toastContent, { backgroundColor: colors.surface }]}
+        haptic
+      >
         <View style={styles.successIcon}>
-          <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+          <Ionicons name="checkmark-circle" size={24} color={colors.success} />
         </View>
         <View style={styles.content}>
-          <Text style={styles.title}>Published!</Text>
-          <Text style={styles.url} numberOfLines={2}>
-            {postUrl.replace('https://', '').replace('http://', '')}
+          <Text style={[styles.title, { color: colors.success }]}>Published!</Text>
+          <Text style={[styles.url, { color: colors.text }]} numberOfLines={2}>
+            {displayUrl}
           </Text>
-          <Text style={styles.hint}>{copiedText || 'Tap to copy URL'}</Text>
+          <Text style={[styles.hint, { color: colors.textTertiary }]}>
+            {copiedText || 'Tap to copy URL'}
+          </Text>
         </View>
         <View style={styles.actions}>
-          <Pressable onPress={onViewPress} style={styles.actionButton}>
-            <Ionicons name="open-outline" size={18} color="#3B82F6" />
-            <Text style={styles.actionButtonText}>View</Text>
-          </Pressable>
-          <Pressable onPress={onSharePress} style={styles.actionButton}>
-            <Ionicons name="share-social-outline" size={18} color="#3B82F6" />
-            <Text style={styles.actionButtonText}>Share</Text>
-          </Pressable>
+          <PressableScale onPress={onViewPress} style={styles.actionButton}>
+            <Ionicons name="open-outline" size={18} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.primary }]}>View</Text>
+          </PressableScale>
+          <PressableScale onPress={onSharePress} style={styles.actionButton}>
+            <Ionicons name="share-social-outline" size={18} color={colors.primary} />
+            <Text style={[styles.actionButtonText, { color: colors.primary }]}>Share</Text>
+          </PressableScale>
         </View>
-      </Pressable>
+      </PressableScale>
     </Animated.View>
   );
 }
@@ -106,33 +204,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[4],
   },
   toastContent: {
-    backgroundColor: '#FFFFFF',
     borderRadius: BorderRadius.xl,
     padding: Spacing[4],
     ...Shadows.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  successIcon: { marginRight: Spacing[3] },
-  content: { flex: 1 },
+  successIcon: {
+    marginRight: Spacing[3],
+  },
+  content: {
+    flex: 1,
+  },
   title: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold,
-    color: '#10B981',
     marginBottom: Spacing[1],
   },
   url: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
-    color: '#1F2937',
     marginBottom: Spacing[1],
   },
   hint: {
     fontSize: Typography.fontSize.xs,
-    color: '#9CA3AF',
   },
   actions: {
     flexDirection: 'row',
@@ -151,6 +244,5 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: '#3B82F6',
   },
 });
