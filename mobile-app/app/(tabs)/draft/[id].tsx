@@ -794,6 +794,8 @@ export default function DraftEditorScreen() {
         draft={draft}
         journalUrlPrefix="my-journal"  // TODO: Will add in Task 5
         onPublishSuccess={handlePublishSuccess}
+        onPublishStart={() => setIsPublishing(true)}
+        onPublishEnd={() => setIsPublishing(false)}
       />
 
       {/* Publish Success Toast */}
@@ -801,10 +803,12 @@ export default function DraftEditorScreen() {
         visible={publishedPostUrl !== null}
         postUrl={publishedPostUrl || ''}
         onViewPress={() => {
-          // TODO: Will implement with web browser
+          // TODO: Will implement with web browser in later task
+          console.log('View post:', publishedPostUrl);
         }}
         onSharePress={() => {
-          // TODO: Will implement with share
+          // TODO: Will implement with share in later task
+          console.log('Share post:', publishedPostUrl);
         }}
         onDismiss={handleToastDismiss}
       />

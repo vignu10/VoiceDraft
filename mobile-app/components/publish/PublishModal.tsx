@@ -58,6 +58,10 @@ export interface PublishModalProps {
   onPublishSuccess: (postUrl: string) => void;
   /** Callback function called when publish fails with error details */
   onError?: (error: Error) => void;
+  /** Callback function called when publish operation starts */
+  onPublishStart?: () => void;
+  /** Callback function called when publish operation ends (success or failure) */
+  onPublishEnd?: () => void;
 }
 
 /**
@@ -88,6 +92,8 @@ export function PublishModal({
   journalUrlPrefix,
   onPublishSuccess,
   onError,
+  onPublishStart,
+  onPublishEnd,
 }: PublishModalProps) {
   const colors = useThemeColors();
   const [isPublishing, setIsPublishing] = useState(false);
@@ -209,6 +215,7 @@ export function PublishModal({
       return;
     }
 
+    onPublishStart?.();
     setIsPublishing(true);
 
     try {
@@ -237,6 +244,7 @@ export function PublishModal({
       }
     } finally {
       setIsPublishing(false);
+      onPublishEnd?.();
     }
   };
 
