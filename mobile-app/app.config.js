@@ -51,7 +51,7 @@ export default {
     },
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000",
-      productionUrl: 'https://your-site.com', // TODO: Update with actual production URL
+      productionUrl: 'https://voice-draft.vercel.app',
     },
   }
 };
