@@ -17,14 +17,14 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900"
+      className="group flex flex-col overflow-hidden border border-stone-200 bg-white transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
     >
       <div className="p-6">
         {/* Author Header */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="relative h-14 w-14 overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="relative h-14 w-14 overflow-hidden rounded-full bg-gradient-to-br from-amber-500 to-orange-600">
               {user_profiles?.avatar_url ? (
                 <Image
                   src={user_profiles.avatar_url}
@@ -42,10 +42,10 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
           {/* Author Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-semibold text-gray-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+            <h3 className="truncate text-lg font-semibold text-stone-900 group-hover:text-amber-700 dark:text-stone-100 dark:group-hover:text-amber-400">
               {display_name}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-stone-500 dark:text-stone-400">
               {formatPostCount(post_count)}
             </p>
           </div>
@@ -53,21 +53,21 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
         {/* Description */}
         {description && (
-          <p className="mt-4 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-4 line-clamp-2 text-sm text-stone-600 dark:text-stone-400">
             {truncate(description, 100)}
           </p>
         )}
 
         {/* Latest Post */}
         {latest_post && (
-          <div className="mt-4 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          <div className="mt-4 rounded bg-stone-100 p-3 dark:bg-stone-800">
+            <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
               Latest post
             </p>
-            <p className="mt-1 truncate text-sm font-medium text-gray-900 dark:text-white">
+            <p className="mt-1 truncate text-sm font-medium text-stone-900 dark:text-stone-100">
               {latest_post.title}
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
               {formatDate(latest_post.published_at)}
             </p>
           </div>

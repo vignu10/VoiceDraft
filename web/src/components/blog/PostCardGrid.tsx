@@ -101,7 +101,7 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <svg
-          className="mb-4 h-16 w-16 text-gray-400"
+          className="mb-4 h-16 w-16 text-stone-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -113,8 +113,8 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
             d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No posts found</h3>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">No posts found</h3>
+        <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
           Try adjusting your search or filters
         </p>
       </div>
@@ -134,7 +134,7 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
           <button
             onClick={loadMore}
             disabled={loading}
-            className="rounded-lg bg-blue-600 px-6 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded bg-stone-900 px-6 py-2.5 font-medium text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

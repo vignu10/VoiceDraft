@@ -29,7 +29,7 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
   };
 
   return (
-    <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/95 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/95">
+    <div className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 backdrop-blur-sm dark:border-stone-800 dark:bg-stone-900/95">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Search Input */}
@@ -40,10 +40,10 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
               onChange={handleSearchChange}
               placeholder="Search blogs..."
               aria-label="Search blogs"
-              className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 pl-10 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+              className="w-full rounded-full border border-stone-300 bg-white px-4 py-2 pl-10 text-sm text-stone-900 placeholder-stone-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder-stone-400"
             />
             <svg
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -59,8 +59,8 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
 
           {/* Sort Options */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
-            <div className="flex rounded-full border border-gray-300 bg-white p-1 dark:border-gray-700 dark:bg-gray-800">
+            <span className="text-sm text-stone-600 dark:text-stone-400">Sort by:</span>
+            <div className="flex rounded-full border border-stone-300 bg-white p-1 dark:border-stone-700 dark:bg-stone-800">
               {sortOptions.map((option) => (
                 <button
                   key={option.value}
@@ -68,8 +68,8 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
                   aria-pressed={selectedSort === option.value}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     selectedSort === option.value
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-700'
                   }`}
                 >
                   {option.label}

@@ -58,10 +58,10 @@ export function FeaturedBlogsGrid({
   if (blogs.length === 0) {
     return (
       <div id="featured-blogs" className="py-16 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
           No blogs yet
         </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-stone-600 dark:text-stone-400">
           Be the first to start a blog and share your voice!
         </p>
       </div>
@@ -71,11 +71,11 @@ export function FeaturedBlogsGrid({
   return (
     <section id="featured-blogs" className="py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="mb-8 text-2xl font-bold text-stone-900 dark:text-stone-100">
           Featured Blogs
         </h2>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
           {blogs.map((blog) => (
             <BlogDiscoveryCard key={blog.id} blog={blog} />
           ))}
@@ -86,7 +86,7 @@ export function FeaturedBlogsGrid({
             <button
               onClick={handleLoadMore}
               disabled={isLoading}
-              className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-8 py-3 text-base font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-8 py-3 text-base font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
             >
               {isLoading ? 'Loading...' : 'Load More Blogs'}
             </button>

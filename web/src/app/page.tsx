@@ -3,12 +3,18 @@ import { DiscoverySearch } from '@/components/discover/DiscoverySearch';
 import { FeaturedBlogsGrid } from '@/components/discover/FeaturedBlogsGrid';
 import { RecentPostsFeed } from '@/components/discover/RecentPostsFeed';
 import type { DiscoveryResponse } from '@/types/discover';
+import { headers } from 'next/headers';
 
 // Fetch initial data server-side
 async function getDiscoveryData(): Promise<DiscoveryResponse> {
   try {
-    // Use relative URL - works both locally and on Vercel
-    const res = await fetch(`/api/discover?blogsLimit=12&postsLimit=12`, {
+    // Get the host and protocol from headers to construct absolute URL
+    const headersList = headers();
+    const host = headersList.get('host') || 'localhost:3000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+
+    const res = await fetch(`${baseUrl}/api/discover?blogsLimit=12&postsLimit=12`, {
       cache: 'no-store',
     });
 

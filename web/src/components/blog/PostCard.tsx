@@ -25,13 +25,13 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
   const postUrl = `/${urlPrefix}/${slug}`;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-lg dark:border-gray-800 dark:bg-gray-900">
+    <article className="group flex flex-col overflow-hidden border border-stone-200 bg-white transition-shadow hover:shadow-md dark:border-stone-800 dark:bg-stone-900">
       {/* Featured Media - Audio Player or Placeholder */}
-      <Link href={postUrl} className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600">
+      <Link href={postUrl} className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600">
         {audio_file_url ? (
           <div className="flex h-full w-full items-center justify-center text-white">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
@@ -57,11 +57,11 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
         {/* Tags and Reading Time */}
         <div className="mb-2 flex items-center gap-2 text-xs">
           {target_keyword && (
-            <span className="rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
               {target_keyword.toUpperCase()}
             </span>
           )}
-          <span className="flex items-center gap-1 text-gray-500">
+          <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
             <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
               <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
             </svg>
@@ -71,21 +71,21 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
 
         {/* Title */}
         <Link href={postUrl}>
-          <h3 className="mb-2 text-lg font-semibold leading-tight text-gray-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+          <h3 className="mb-2 text-lg font-semibold leading-tight text-stone-900 transition-colors group-hover:text-amber-700 dark:text-stone-100 dark:group-hover:text-amber-400">
             {title}
           </h3>
         </Link>
 
         {/* Excerpt */}
-        <p className="mb-4 flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+        <p className="mb-4 flex-1 text-sm text-stone-600 dark:text-stone-400 line-clamp-3">
           {excerpt}
         </p>
 
         {/* Divider */}
-        <hr className="my-3 border-gray-200 dark:border-gray-800" />
+        <hr className="my-3 border-stone-200 dark:border-stone-800" />
 
         {/* Metadata Row */}
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
+        <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-500">
           <div className="flex items-center gap-3">
             {/* View Count */}
             <span className="flex items-center gap-1">
@@ -107,7 +107,7 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
             <button
-              className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+              className="rounded p-1 text-stone-400 transition-colors hover:text-stone-600 dark:hover:text-stone-300"
               aria-label="Share post"
               title="Share"
             >

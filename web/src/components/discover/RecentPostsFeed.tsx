@@ -39,10 +39,10 @@ export function RecentPostsFeed({
   if (posts.length === 0) {
     return (
       <section className="py-16 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
           Latest from the Community
         </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-stone-600 dark:text-stone-400">
           No posts yet. Check back soon!
         </p>
       </section>
@@ -50,9 +50,9 @@ export function RecentPostsFeed({
   }
 
   return (
-    <section className="border-t border-gray-200 bg-gray-50 py-12 dark:border-gray-800 dark:bg-gray-950">
+    <section className="border-t border-stone-200 bg-stone-50 py-12 dark:border-stone-800 dark:bg-stone-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-8 text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="mb-8 text-2xl font-bold text-stone-900 dark:text-stone-100">
           Latest from the Community
         </h2>
 
@@ -71,7 +71,7 @@ export function RecentPostsFeed({
             <button
               onClick={handleLoadMore}
               disabled={isLoading}
-              className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-8 py-3 text-base font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-8 py-3 text-base font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
             >
               {isLoading ? 'Loading...' : 'Load More Posts'}
             </button>

@@ -12,7 +12,7 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
   const { display_name, description, user_profiles } = journal;
 
   return (
-    <header className="border-b border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-900">
+    <header className="border-b border-stone-200 bg-white py-8 dark:border-stone-800 dark:bg-stone-900">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
           {/* Author Avatar */}
@@ -20,7 +20,7 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
             href={`/${journal.url_prefix}`}
             className="flex-shrink-0"
           >
-            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-purple-600 sm:h-20 sm:w-20">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-amber-500 to-orange-600 sm:h-20 sm:w-20">
               {user_profiles.avatar_url ? (
                 <Image
                   src={user_profiles.avatar_url}
@@ -38,18 +38,18 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
 
           {/* Journal Info */}
           <div className="flex-1">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+            <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100 sm:text-3xl">
               {display_name}
             </h1>
 
             {description && (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+              <p className="mt-2 text-sm text-stone-600 dark:text-stone-400 sm:text-base">
                 {description}
               </p>
             )}
 
             {user_profiles.bio && (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-500 sm:text-sm">
+              <p className="mt-2 text-xs text-stone-500 dark:text-stone-500 sm:text-sm">
                 By {user_profiles.full_name || 'Anonymous'}
               </p>
             )}
@@ -58,7 +58,7 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
           {/* Action Buttons - Placeholder for future features */}
           <div className="flex gap-2 sm:mt-0">
             <button
-              className="rounded-full bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+              className="rounded-full bg-stone-100 p-2 text-stone-600 transition-colors hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:hover:bg-stone-700"
               aria-label="Share journal"
               title="Share (coming soon)"
             >

@@ -16,7 +16,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { data: journal } = await supabase
     .from('journals')
-    .select('display_name, description, user_profiles!inner(full_name, avatar_url)')
+    .select('display_name, description, user_profiles(full_name, avatar_url)')
     .eq('url_prefix', params.url_prefix)
     .eq('is_active', true)
     .single();
@@ -41,13 +41,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Fetch data server-side
 async function getJournalData(urlPrefix: string) {
   try {
-    // Fetch journal with user profile
+    // Fetch journal with user profile - removed !inner since FK doesn't exist
     const { data: journal, error: journalError } = await supabase
       .from('journals')
       .select(
         `
         *,
-        user_profiles!inner (
+        user_profiles (
           full_name,
           avatar_url,
           bio
@@ -115,7 +115,7 @@ export default async function BlogPage({ params }: PageProps) {
   const { journal, posts, total } = data;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
       <BlogHeader journal={journal as JournalWithAuthor} />
 
       <div className="sticky top-0 z-20">
