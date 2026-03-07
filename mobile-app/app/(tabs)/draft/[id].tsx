@@ -12,8 +12,10 @@ import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
 import { useAchievementsStore, useAuthStore, useGuestDraftStore } from "@/stores";
 import { getPost } from "@/services/api/posts";
+import { getJournal } from "@/services/api/journal";
 import { mapPostToDraft } from "@/services/mappers/post-to-draft.mapper";
 import type { Draft } from "@/types/draft";
+import type { Journal } from "@/types/journal";
 import { getWordCountMilestone } from "@/utils/delight-messages";
 import { countWords } from "@/utils/formatters";
 import { Ionicons } from "@expo/vector-icons";
@@ -73,6 +75,7 @@ export default function DraftEditorScreen() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedPostUrl, setPublishedPostUrl] = useState<string | null>(null);
+  const [journal, setJournal] = useState<Journal | null>(null);
 
   // Content gating state
   const [showContentGate, setShowContentGate] = useState(false);
@@ -281,6 +284,25 @@ export default function DraftEditorScreen() {
       setActiveTab("preview");
     }
   }, [isGuestFlow]);
+
+  // Fetch journal data for authenticated users
+  useEffect(() => {
+    async function fetchJournal() {
+      if (authStore.isAuthenticated) {
+        try {
+          const journalData = await getJournal();
+          if (journalData) {
+            setJournal(journalData);
+            // Also update auth store with journal data
+            authStore.setJournal(journalData);
+          }
+        } catch (error) {
+          console.error('Failed to fetch journal:', error);
+        }
+      }
+    }
+    fetchJournal();
+  }, [authStore.isAuthenticated]);
 
   const saveDraft = useCallback(async () => {
     if (!draft) return;
@@ -792,7 +814,7 @@ export default function DraftEditorScreen() {
         visible={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         draft={draft}
-        journalUrlPrefix="my-journal"  // TODO: Will add in Task 5
+        journalUrlPrefix={journal?.url_prefix || 'my-journal'}
         onPublishSuccess={handlePublishSuccess}
         onPublishStart={() => setIsPublishing(true)}
         onPublishEnd={() => setIsPublishing(false)}
