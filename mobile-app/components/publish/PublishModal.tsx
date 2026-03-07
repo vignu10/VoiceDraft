@@ -27,6 +27,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  useReducedMotion,
 } from 'react-native-reanimated';
 
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -37,6 +38,7 @@ import { Duration, Springs } from '@/constants/animations';
 import { generateBlogUrl } from '@/utils/url-utils';
 import { publishPost } from '@/services/api/posts';
 import type { Draft } from '@/types/draft';
+import { MIN_WORD_COUNT_WARNING } from '@/constants/config';
 
 const AnimatedView = Animated.View;
 
@@ -54,10 +56,9 @@ export interface PublishModalProps {
   journalUrlPrefix: string;
   /** Callback function called when publish succeeds with the published post URL */
   onPublishSuccess: (postUrl: string) => void;
+  /** Callback function called when publish fails with error details */
+  onError?: (error: Error) => void;
 }
-
-/** Minimum word count threshold for showing short content warning */
-const MIN_WORD_COUNT_WARNING = 100;
 
 /**
  * PublishModal Component
@@ -86,6 +87,7 @@ export function PublishModal({
   draft,
   journalUrlPrefix,
   onPublishSuccess,
+  onError,
 }: PublishModalProps) {
   const colors = useThemeColors();
   const [isPublishing, setIsPublishing] = useState(false);
@@ -93,17 +95,36 @@ export function PublishModal({
   // Animation values
   const scale = useSharedValue(0.9);
   const opacity = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
 
   // Animate in when modal becomes visible
+  // Cleanup animations on unmount to prevent memory leaks
   React.useEffect(() => {
     if (visible) {
-      scale.value = withSpring(1, Springs.modal);
-      opacity.value = withTiming(1, { duration: Duration.modalEnter });
+      if (reducedMotion) {
+        // Skip animations for reduced motion
+        scale.value = 1;
+        opacity.value = 1;
+      } else {
+        scale.value = withSpring(1, Springs.modal);
+        opacity.value = withTiming(1, { duration: Duration.modalEnter });
+      }
     } else {
-      scale.value = withTiming(0.9, { duration: Duration.modalExit });
-      opacity.value = withTiming(0, { duration: Duration.modalExit });
+      if (!reducedMotion) {
+        scale.value = withTiming(0.9, { duration: Duration.modalExit });
+        opacity.value = withTiming(0, { duration: Duration.modalExit });
+      } else {
+        scale.value = 0.9;
+        opacity.value = 0;
+      }
     }
-  }, [visible]);
+
+    // Cleanup function to cancel ongoing animations
+    return () => {
+      // Reanimated will automatically clean up animations when component unmounts
+      // This return ensures React's cleanup rules are followed
+    };
+  }, [visible, reducedMotion]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -117,28 +138,32 @@ export function PublishModal({
    * Validates the draft and returns appropriate warning message
    * Returns null if no warnings
    */
-  const getValidationWarning = (): { type: 'warning' | 'error'; message: string } | null => {
+  type ValidationWarning = { type: 'warning' | 'error'; message: string };
+
+  const getValidationWarning = (): ValidationWarning | null => {
+    // Early return: no draft
     if (!draft) {
       return { type: 'error', message: 'No draft selected' };
     }
 
-    // Check if content is empty
+    // Early return: empty content
     const hasContent = draft.content && draft.content.trim().length > 0;
     if (!hasContent) {
       return { type: 'error', message: 'Error: Post is empty' };
     }
 
-    // Check if title is missing
+    // Early return: missing title
     if (!draft.title || draft.title.trim().length === 0) {
       return { type: 'warning', message: 'Warning: No title set' };
     }
 
-    // Check if content is very short
+    // Early return: very short content
     const wordCount = draft.wordCount || 0;
     if (wordCount < MIN_WORD_COUNT_WARNING) {
       return { type: 'warning', message: 'Warning: Post is very short' };
     }
 
+    // No warnings
     return null;
   };
 
@@ -205,6 +230,11 @@ export function PublishModal({
       console.error('Failed to publish post:', error);
       // Trigger error haptic feedback
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // Call error callback with user-friendly error message
+      const errorObj = error instanceof Error ? error : new Error('Failed to publish post');
+      if (onError) {
+        onError(errorObj);
+      }
     } finally {
       setIsPublishing(false);
     }
@@ -406,14 +436,14 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 400, // Max width for better readability on larger screens
     alignSelf: 'center',
   },
   modal: {
     borderRadius: BorderRadius['2xl'],
     borderWidth: 1,
     overflow: 'hidden',
-    maxHeight: '80%',
+    maxHeight: '80%', // Ensure modal doesn't exceed viewport height
   },
   header: {
     paddingTop: Spacing[6],

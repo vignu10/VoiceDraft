@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
-import type { DiscoveryResponse } from '@/types/discover';
+import type { DiscoveryResponse, BlogDiscoveryCard, DiscoverySort, PostWithPrefix } from '@/types/discover';
 
 // GET featured blogs and recent posts for discovery hub
 export async function GET(req: NextRequest) {
@@ -12,6 +12,38 @@ export async function GET(req: NextRequest) {
     const postsLimit = parseInt(searchParams.get('postsLimit') || '12');
     const postsOffset = parseInt(searchParams.get('postsOffset') || '0');
     const sort = searchParams.get('sort') || 'newest';
+
+    // Validate query parameters
+    const VALID_SORTS: DiscoverySort[] = ['newest', 'active', 'posts'];
+    const validSort = VALID_SORTS.includes(sort as DiscoverySort) ? sort as DiscoverySort : 'newest';
+
+    if (isNaN(blogsLimit) || blogsLimit < 1 || blogsLimit > 100) {
+      return NextResponse.json(
+        { error: 'blogsLimit must be between 1 and 100' },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(blogsOffset) || blogsOffset < 0) {
+      return NextResponse.json(
+        { error: 'blogsOffset must be >= 0' },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(postsLimit) || postsLimit < 1 || postsLimit > 100) {
+      return NextResponse.json(
+        { error: 'postsLimit must be between 1 and 100' },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(postsOffset) || postsOffset < 0) {
+      return NextResponse.json(
+        { error: 'postsOffset must be >= 0' },
+        { status: 400 }
+      );
+    }
 
     // Fetch featured blogs with post counts and latest post
     let blogsQuery = supabase
@@ -36,7 +68,7 @@ export async function GET(req: NextRequest) {
       .eq('is_active', true);
 
     // Add sorting for blogs
-    switch (sort) {
+    switch (validSort) {
       case 'active':
         // Sort by most recent activity (latest post)
         blogsQuery = blogsQuery.order('updated_at', { ascending: false });
@@ -62,10 +94,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform journals into blog discovery cards
-    const blogs = (journals || []).map((journal: any) => {
+    const blogs: BlogDiscoveryCard[] = (journals || []).map((journal) => {
       const posts = journal.posts || [];
       const latestPost = posts.length > 0
-        ? posts.sort((a: any, b: any) =>
+        ? posts.sort((a: { published_at: string }, b: { published_at: string }) =>
             new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
           )[0]
         : null;
@@ -91,8 +123,8 @@ export async function GET(req: NextRequest) {
     });
 
     // Sort by post count if requested
-    if (sort === 'posts') {
-      blogs.sort((a: any, b: any) => b.post_count - a.post_count);
+    if (validSort === 'posts') {
+      blogs.sort((a: BlogDiscoveryCard, b: BlogDiscoveryCard) => b.post_count - a.post_count);
     }
 
     // Fetch recent posts across all blogs
@@ -126,7 +158,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform posts to include url_prefix
-    const postsWithPrefix = (posts || []).map((post: any) => ({
+    const postsWithPrefix: PostWithPrefix[] = (posts || []).map((post) => ({
       ...post,
       url_prefix: post.journals?.url_prefix || '',
     }));

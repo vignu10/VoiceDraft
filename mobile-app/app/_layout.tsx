@@ -18,6 +18,7 @@ import {
 import { useEffect, useRef } from 'react';
 import { apiClient } from '@/services/api/client';
 import { useAuthStore } from '@/stores/auth-store';
+import { useRouter } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,7 +28,9 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const signOutUser = useAuthStore((state) => state.signOutUser);
   const initializedRef = useRef(false);
 
   // CRITICAL: Initialize apiClient token from persisted auth store
@@ -38,8 +41,15 @@ export default function RootLayout() {
       if (accessToken) {
         apiClient.setToken(accessToken);
       }
+
+      // Set up automatic logout when token refresh fails (401 with invalid token)
+      apiClient.setOnAuthFailed(async () => {
+        await signOutUser();
+        // Navigate to auth screen after logout
+        router.replace('/auth/sign-in');
+      });
     }
-  }, [accessToken]);
+  }, [accessToken, signOutUser]);
 
   // OPTIMIZATION: Load only essential font variants (3 instead of 5)
   // This reduces initial bundle size and speeds up time-to-interactive

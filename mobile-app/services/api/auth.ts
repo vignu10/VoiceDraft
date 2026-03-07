@@ -30,7 +30,7 @@ export interface SignInData {
   password: string;
 }
 
-export async function signUp(data: SignUpData): Promise<AuthResponse> {
+export async function signUp(data: SignUpData, signal?: AbortSignal): Promise<AuthResponse> {
   try {
     // Create user with Supabase
     const response = await fetch(`${SUPABASE_AUTH_URL}/signup`, {
@@ -46,6 +46,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
           full_name: data.displayName,
         },
       }),
+      signal,
     });
 
     if (!response.ok) {
@@ -64,7 +65,7 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
   }
 }
 
-export async function signIn(data: SignInData): Promise<AuthResponse> {
+export async function signIn(data: SignInData, signal?: AbortSignal): Promise<AuthResponse> {
   try {
     const response = await fetch(`${SUPABASE_AUTH_URL}/token?grant_type=password`, {
       method: 'POST',
@@ -76,6 +77,7 @@ export async function signIn(data: SignInData): Promise<AuthResponse> {
         email: data.email,
         password: data.password,
       }),
+      signal,
     });
 
     if (!response.ok) {

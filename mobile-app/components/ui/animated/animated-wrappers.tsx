@@ -158,6 +158,55 @@ export function ScaleIn({
 }
 
 // ============================================
+// ZOOM IN WRAPPER
+// ============================================
+interface ZoomInProps {
+  children: ReactNode;
+  delay?: number;
+  initialScale?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function ZoomIn({
+  children,
+  delay = 0,
+  initialScale = 0.8,
+  style,
+}: ZoomInProps) {
+  const progress = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    // Skip animation if reduced motion is enabled
+    if (reducedMotion) {
+      progress.value = 1;
+      return;
+    }
+    progress.value = withDelay(delay, withSpring(1, Springs.bouncy));
+  }, [delay, reducedMotion]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: reducedMotion ? 1 : interpolate(progress.value, [0, 1], [0, 1]),
+    transform: [
+      {
+        scale: reducedMotion ? 1 : interpolate(
+          progress.value,
+          [0, 1],
+          [initialScale, 1],
+          Extrapolation.CLAMP
+        ),
+      },
+    ],
+  }));
+
+  return (
+    <Animated.View style={[animatedStyle, style]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// ============================================
 // STAGGERED CHILDREN WRAPPER
 // ============================================
 interface StaggerProps {

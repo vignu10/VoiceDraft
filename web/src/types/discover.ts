@@ -21,9 +21,14 @@ export interface BlogDiscoveryCard {
   };
 }
 
+// Extended post type with url_prefix for discovery
+export interface PostWithPrefix extends PostCardData {
+  url_prefix: string;
+}
+
 export interface DiscoveryResponse {
   blogs: BlogDiscoveryCard[];
-  posts: PostCardData[];
+  posts: PostWithPrefix[];
   blogsTotal: number;
   postsTotal: number;
   hasMoreBlogs: boolean;

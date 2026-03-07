@@ -10,7 +10,6 @@ import { FadeIn, SlideIn } from "@/components/ui/animated/animated-wrappers";
 import { PressableScale } from "@/components/ui/animated/pressable-scale";
 import {
   MiniCelebration,
-  WelcomeTooltip,
   useDelightToast,
 } from "@/components/ui/delight";
 import { useDialog } from "@/components/ui/dialog";
@@ -28,6 +27,7 @@ import {
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
 import { recordingService } from "@/services/audio/recording-service";
+import { Audio } from "expo-av";
 import {
   useAchievementsStore,
   useRecordingStore,
@@ -44,7 +44,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, AppState, AppStateStatus, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Check if audio has meaningful sound levels
@@ -65,6 +65,10 @@ interface StateCardProps {
   onPrimaryAction: () => void;
   onSecondaryAction: () => void;
   colors: ReturnType<typeof useThemeColors>;
+  // Optional play functionality for resume card
+  recordingUri?: string | null;
+  isPlaying?: boolean;
+  onPlayPress?: () => void;
 }
 
 function StateCard({
@@ -75,6 +79,9 @@ function StateCard({
   onPrimaryAction,
   onSecondaryAction,
   colors,
+  recordingUri,
+  isPlaying,
+  onPlayPress,
 }: StateCardProps) {
   // Card configuration based on type - memoized to prevent recreation
   const config = useMemo(
@@ -86,11 +93,12 @@ function StateCard({
           iconColor: colors.primary,
           title: formatDuration(duration) + " recorded",
           subtitle: getRecordingTip("resume"),
-          primaryLabel: "Resume",
+          primaryLabel: "Continue",
           primaryBg: colors.primary,
           primaryIcon: "play" as const,
           secondaryLabel: "Start Fresh",
           showKeyword: false,
+          showPlayButton: true,
         },
         continueDraft: {
           icon: "document-text" as const,
@@ -135,6 +143,7 @@ function StateCard({
           styles.stateCard,
           {
             backgroundColor: colors.surface,
+            borderColor: colors.border,
             shadowColor: colors.shadowColor,
           },
         ]}
@@ -176,6 +185,25 @@ function StateCard({
 
         {/* Actions */}
         <View style={styles.stateCardActions}>
+          {/* Play button for resume card */}
+          {(config as any).showPlayButton && recordingUri && onPlayPress && (
+            <PressableScale
+              onPress={onPlayPress}
+              hapticStyle="light"
+              accessibilityLabel={isPlaying ? "Pause" : "Play"}
+              style={[
+                styles.playButton,
+                { backgroundColor: colors.primaryLight },
+              ]}
+            >
+              <Ionicons
+                name={isPlaying ? "pause" : "play"}
+                size={20}
+                color={colors.primary}
+              />
+            </PressableScale>
+          )}
+
           {/* Secondary action as text-only link */}
           <PressableScale
             onPress={onSecondaryAction}
@@ -242,6 +270,7 @@ export default function RecordingScreen() {
     duration,
     audioUri,
     hasExistingRecording,
+    savedRecordingUri,
     lastDraftId,
     lastDraftTitle,
     lastDraftKeyword,
@@ -254,6 +283,7 @@ export default function RecordingScreen() {
     reset: resetStore,
     clearExisting,
     markAsExisting,
+    setSavedRecordingUri,
     clearLastDraft,
   } = useRecordingStore();
 
@@ -296,14 +326,25 @@ export default function RecordingScreen() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
 
+  // App state for detecting background/foreground changes
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+
+  // Audio playback state
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (celebrationTimerRef.current) {
         clearTimeout(celebrationTimerRef.current);
       }
+      // Cleanup sound
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
-  }, []);
+  }, [sound]);
 
   // Track recording for achievements
   const recordRecording = useAchievementsStore(
@@ -327,6 +368,37 @@ export default function RecordingScreen() {
       }
     }
   }, [duration, isRecording, isPaused, lastMilestone, showToast]);
+
+  // Monitor app state changes to auto-save recording when navigating away
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      // When app goes to background while recording
+      if (
+        appState.match(/active|foreground/) &&
+        nextAppState === "background" &&
+        isRecording &&
+        !isPaused
+      ) {
+        // Save the recording before leaving
+        recordingService.saveTemporaryRecording()
+          .then((savedUri) => {
+            setSavedRecordingUri(savedUri);
+            setRecording(false);
+            setPaused(true);
+          })
+          .catch(() => {
+            // If save fails, just log and continue
+            console.log("[Recording] Failed to save temporary recording");
+          });
+      }
+
+      setAppState(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, isRecording, isPaused, setRecording, setSavedRecordingUri]);
 
   const processRecording = useCallback(async () => {
     // Both guest and authenticated users: stop recording locally and navigate to keyword screen
@@ -561,30 +633,34 @@ export default function RecordingScreen() {
 
   const handleResume = useCallback(async () => {
     try {
-      await recordingService.startRecording(
-        (level: number) => addMeteringLevel(level),
-        (seconds: number) => setDuration(seconds),
-      );
-      setRecording(true);
-      setPaused(false);
-      // Mark that we're continuing the existing recording
-      markAsExisting();
+      let uriToUse = savedRecordingUri;
 
-      // Show celebration for resuming
-      setCelebration({
-        visible: true,
-        message: getRecordingTip("resume"),
-      });
-
-      // Clear previous timer and set new one
-      if (celebrationTimerRef.current) {
-        clearTimeout(celebrationTimerRef.current);
+      // If we don't have a saved URI, save the current recording first
+      if (!uriToUse && recordingService.isRecording()) {
+        uriToUse = await recordingService.saveTemporaryRecording();
+        setSavedRecordingUri(uriToUse);
       }
-      celebrationTimerRef.current = setTimeout(() => {
-        setCelebration({ visible: false, message: "" });
-      }, 1200);
+
+      if (uriToUse) {
+        // Navigate to keyword page with the saved recording
+        router.push({
+          pathname: "/keyword",
+          params: {
+            audioUri: uriToUse,
+            duration: duration.toString(),
+            isGuestFlow: isAuthenticated ? undefined : "true",
+          },
+        });
+      } else {
+        // No recording to continue - show alert
+        Alert.alert(
+          "No Recording Found",
+          "Please start a new recording.",
+          [{ text: "OK" }]
+        );
+      }
     } catch (error) {
-      console.error("Error resuming recording:", error);
+      console.error("Error continuing to keyword page:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
       Alert.alert(warmError.title, warmError.message, [
@@ -597,12 +673,11 @@ export default function RecordingScreen() {
       ]);
     }
   }, [
-    addMeteringLevel,
-    setDuration,
-    setRecording,
-    setPaused,
+    savedRecordingUri,
+    duration,
+    isAuthenticated,
+    setSavedRecordingUri,
     resetStore,
-    markAsExisting,
   ]);
 
   const handleStartFresh = useCallback(async () => {
@@ -621,6 +696,41 @@ export default function RecordingScreen() {
       clearExisting();
     }
   }, [clearExisting, showDialog]);
+
+  // Play/Pause the saved recording
+  const handlePlayPress = useCallback(async () => {
+    if (!savedRecordingUri) return;
+
+    try {
+      if (isPlaying && sound) {
+        // Pause
+        await sound.pauseAsync();
+        setIsPlaying(false);
+      } else {
+        // Play
+        if (sound) {
+          await sound.stopAsync();
+          await sound.playAsync();
+          setIsPlaying(true);
+        } else {
+          const { sound: newSound } = await Audio.Sound.createAsync(
+            { uri: savedRecordingUri },
+            { shouldPlay: true },
+            onPlaybackStatusUpdate => {
+              if (onPlaybackStatusUpdate.isLoaded && onPlaybackStatusUpdate.didJustFinish) {
+                setIsPlaying(false);
+                setSound(null);
+              }
+            }
+          );
+          setSound(newSound);
+          setIsPlaying(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  }, [savedRecordingUri, isPlaying, sound]);
 
   // Continue Draft handlers
   const handleContinueDraft = useCallback(() => {
@@ -711,7 +821,7 @@ export default function RecordingScreen() {
   const showResumeCard =
     !isRecording &&
     !isPaused &&
-    hasExistingRecording &&
+    (savedRecordingUri !== null || hasExistingRecording) &&
     duration > 0 &&
     !audioUri &&
     !showContinueDraftCard &&
@@ -759,21 +869,6 @@ export default function RecordingScreen() {
         visible={isUploading}
         message={uploadMessage}
         progress={uploadProgress}
-      />
-
-      {/* Welcome tooltip for first-time users */}
-      <WelcomeTooltip
-        visible={
-          isFirstRecording &&
-          !isRecording &&
-          !isPaused &&
-          !showResumeCard &&
-          !showContinueDraftCard &&
-          !showRecordingReadyCard
-        }
-        message="Tap the microphone to start recording your voice. Speak naturally!"
-        position="top"
-        delay={800}
       />
 
       {/* Ambient background that appears during recording */}
@@ -839,48 +934,33 @@ export default function RecordingScreen() {
 
           {/* Content */}
           <View style={styles.content}>
-            {/* Guest Draft Counter - show for non-authenticated users */}
+            {/* Guest Draft Counter - simplified, more subtle */}
             {!isAuthenticated && remainingDrafts < maxFreeDrafts && (
               <FadeIn delay={50}>
-                <View
-                  style={[
-                    styles.guestCounterBadge,
-                    { backgroundColor: colors.primaryLight },
-                  ]}
-                >
-                  <Ionicons name="gift" size={14} color={colors.primary} />
-                  <ThemedText
-                    style={[styles.guestCounterText, { color: colors.primary }]}
-                  >
+                <View style={styles.guestCounterSimple}>
+                  <ThemedText style={[styles.guestCounterTextSimple, { color: colors.textMuted }]}>
                     {remainingDrafts} free draft{remainingDrafts !== 1 ? "s" : ""} left
                   </ThemedText>
                 </View>
               </FadeIn>
             )}
 
-            {/* Hero Message - shown in empty ready state */}
+            {/* Single Message - consolidated from hero + hint + tip */}
             {!isRecording &&
               !isPaused &&
               !showResumeCard &&
               !showContinueDraftCard &&
               !showRecordingReadyCard && (
                 <FadeIn delay={100}>
-                  <View style={styles.heroContainer}>
-                    <ThemedText
-                      style={[styles.heroMessage, { color: colors.text }]}
-                    >
+                  <View style={styles.messageContainer}>
+                    <ThemedText style={[styles.messageText, { color: colors.text }]}>
                       {heroMessage}
-                    </ThemedText>
-                    <ThemedText
-                      style={[styles.heroHint, { color: colors.textSecondary }]}
-                    >
-                      {getRecordingHint()}
                     </ThemedText>
                   </View>
                 </FadeIn>
               )}
 
-            {/* Waveform with gradient bars and glow */}
+            {/* Waveform - simplified with less visual weight */}
             <SlideIn direction="up" delay={100}>
               <View
                 style={styles.waveformContainer}
@@ -892,7 +972,7 @@ export default function RecordingScreen() {
               >
                 <SimulatedWaveform
                   isRecording={isRecording && !isPaused}
-                  height={120}
+                  height={100}
                   barCount={40}
                   barWidth={4}
                   barGap={2}
@@ -900,7 +980,7 @@ export default function RecordingScreen() {
               </View>
             </SlideIn>
 
-            {/* Timer - simplified with less vertical space */}
+            {/* Timer */}
             <SlideIn direction="up" delay={200}>
               <View
                 style={styles.timerContainer}
@@ -915,20 +995,6 @@ export default function RecordingScreen() {
                 />
               </View>
             </SlideIn>
-
-            {/* Tip - only show when no state card is visible */}
-            {!showResumeCard &&
-              !showContinueDraftCard &&
-              !showRecordingReadyCard && (
-                <FadeIn delay={300}>
-                  <ThemedText
-                    style={[styles.tip, { color: colors.textSecondary }]}
-                    accessibilityLiveRegion="polite"
-                  >
-                    {getTipText()}
-                  </ThemedText>
-                </FadeIn>
-              )}
           </View>
 
           {/* Unified State Card - adapts to current state */}
@@ -939,6 +1005,9 @@ export default function RecordingScreen() {
               onPrimaryAction={handleResume}
               onSecondaryAction={handleStartFresh}
               colors={colors}
+              recordingUri={savedRecordingUri}
+              isPlaying={isPlaying}
+              onPlayPress={handlePlayPress}
             />
           )}
 
@@ -1146,40 +1215,82 @@ const styles = StyleSheet.create({
   controlsHidden: {
     display: "none",
   },
-  // Unified State Card Styles
+  // Simplified Styles
+  messageContainer: {
+    alignItems: "center",
+    marginBottom: Spacing[8],
+    paddingHorizontal: Spacing[6],
+  },
+  messageText: {
+    fontSize: Typography.fontSize["2xl"],
+    fontWeight: Typography.fontWeight.semibold,
+    textAlign: "center",
+    lineHeight: Typography.fontSize["2xl"] * Typography.lineHeight.relaxed,
+    includeFontPadding: false,
+  },
+  guestCounterSimple: {
+    alignSelf: "center",
+    marginBottom: Spacing[3],
+  },
+  guestCounterTextSimple: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    includeFontPadding: false,
+  },
+  waveformContainer: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    overflow: "hidden",
+    marginBottom: Spacing[8],
+    padding: Spacing[3],
+  },
+  timerContainer: {
+    marginBottom: Spacing[6],
+    minHeight: 70,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // Unified State Card Styles - Simplified
   stateCard: {
     marginHorizontal: Spacing[6],
-    padding: Spacing[5],
-    borderRadius: BorderRadius["2xl"],
-    ...Shadows.md,
+    padding: Spacing[4],
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
   },
   stateCardIcon: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     borderRadius: BorderRadius.full,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
-    marginBottom: Spacing[4],
+    marginBottom: Spacing[3],
+  },
+  playButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    alignItems: "center",
   },
   stateCardContent: {
     alignItems: "center",
-    marginBottom: Spacing[5],
-    gap: Spacing[2],
+    marginBottom: Spacing[4],
+    gap: Spacing[1],
   },
   stateCardTitle: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.extrabold,
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
     textAlign: "center",
     includeFontPadding: false,
-    lineHeight: Typography.fontSize.xl * Typography.lineHeight.tight,
+    lineHeight: Typography.fontSize.lg * Typography.lineHeight.tight,
   },
   stateCardSubtitle: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.normal,
     textAlign: "center",
     includeFontPadding: false,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },
   keywordTag: {
     flexDirection: "row",

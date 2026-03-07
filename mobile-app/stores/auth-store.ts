@@ -11,13 +11,15 @@ interface AuthStateExtended extends AuthState {
   setUser: (user: UserProfile) => void;
   setToken: (token: string) => void;
   setJournal: (journal: Journal) => void;
-  signInUser: (email: string, password: string) => Promise<void>;
-  signUpUser: (email: string, password: string, displayName?: string) => Promise<void>;
+  signInUser: (email: string, password: string, signal?: AbortSignal) => Promise<void>;
+  signUpUser: (email: string, password: string, displayName?: string, signal?: AbortSignal) => Promise<void>;
   signOutUser: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   clearError: () => void;
   signInWithOAuth: (provider: 'google' | 'linkedin') => Promise<void>;
+  cancelPendingRequest: () => void;
+  _abortController: AbortController | null;
 }
 
 const initialState: AuthState = {
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthStateExtended>()(
       ...initialState,
       isLoading: false,
       error: null,
+      _abortController: null as AbortController | null,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
 
@@ -49,10 +52,30 @@ export const useAuthStore = create<AuthStateExtended>()(
 
       clearError: () => set({ error: null }),
 
-      signInUser: async (email, password) => {
-        set({ isLoading: true, error: null });
+      cancelPendingRequest: () => {
+        const state = get();
+        if (state._abortController) {
+          state._abortController.abort();
+          set({ _abortController: null, isLoading: false, error: null });
+        }
+      },
+
+      signInUser: async (email, password, signal) => {
+        // Cancel any existing request
+        get().cancelPendingRequest();
+
+        // Create new AbortController if no signal provided
+        const controller = signal ? undefined : new AbortController();
+        const abortSignal = signal || controller?.signal;
+
+        if (controller) {
+          set({ _abortController: controller, isLoading: true, error: null });
+        } else {
+          set({ isLoading: true, error: null });
+        }
+
         try {
-          const { user, access_token } = await signIn({ email, password });
+          const { user, access_token } = await signIn({ email, password }, abortSignal);
           // Ensure user profile exists after sign in (auto-creates if missing)
           await getProfile();
           set({
@@ -61,20 +84,38 @@ export const useAuthStore = create<AuthStateExtended>()(
             isAuthenticated: true,
             isLoading: false,
             error: null,
+            _abortController: null,
           });
           // Sync guest drafts from AsyncStorage to server
           await syncGuestDrafts();
         } catch (error) {
+          // Don't set error if request was aborted
+          if (error instanceof Error && error.name === 'AbortError') {
+            set({ isLoading: false, _abortController: null });
+            throw error;
+          }
           const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
-          set({ isLoading: false, error: errorMessage });
+          set({ isLoading: false, error: errorMessage, _abortController: null });
           throw error;
         }
       },
 
-      signUpUser: async (email, password, displayName) => {
-        set({ isLoading: true, error: null });
+      signUpUser: async (email, password, displayName, signal) => {
+        // Cancel any existing request
+        get().cancelPendingRequest();
+
+        // Create new AbortController if no signal provided
+        const controller = signal ? undefined : new AbortController();
+        const abortSignal = signal || controller?.signal;
+
+        if (controller) {
+          set({ _abortController: controller, isLoading: true, error: null });
+        } else {
+          set({ isLoading: true, error: null });
+        }
+
         try {
-          const { user, access_token } = await signUp({ email, password, displayName });
+          const { user, access_token } = await signUp({ email, password, displayName }, abortSignal);
           // Ensure user profile exists after sign up (auto-creates if missing)
           await getProfile();
           set({
@@ -83,12 +124,18 @@ export const useAuthStore = create<AuthStateExtended>()(
             isAuthenticated: true,
             isLoading: false,
             error: null,
+            _abortController: null,
           });
           // Sync guest drafts from AsyncStorage to server
           await syncGuestDrafts();
         } catch (error) {
+          // Don't set error if request was aborted
+          if (error instanceof Error && error.name === 'AbortError') {
+            set({ isLoading: false, _abortController: null });
+            throw error;
+          }
           const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
-          set({ isLoading: false, error: errorMessage });
+          set({ isLoading: false, error: errorMessage, _abortController: null });
           throw error;
         }
       },
@@ -130,7 +177,7 @@ export const useAuthStore = create<AuthStateExtended>()(
         accessToken: state.accessToken,
         user: state.user,
         journal: state.journal,
-        // Don't persist isLoading and error
+        // Don't persist isLoading, error, and _abortController
       }),
     }
   )

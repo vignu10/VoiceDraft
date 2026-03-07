@@ -71,7 +71,7 @@ export function WelcomeTooltip({
 
   const animatedStyle = useAnimatedStyle(() => ({
     position: 'absolute',
-    bottom: 140,
+    bottom: 220,
     left: Spacing[4],
     right: Spacing[4],
     transform: [{ translateY: translateY.value }],

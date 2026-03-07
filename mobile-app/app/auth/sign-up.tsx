@@ -1,8 +1,14 @@
-import { router, useNavigation, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { router, Stack } from "expo-router";
 import React from "react";
 import { Controller } from "react-hook-form";
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,8 +30,10 @@ import { useAuthForm } from "@/hooks/use-auth-form";
 import { useAuthStore } from "@/stores";
 import { signUpSchema } from "@/validations";
 
+// Request timeout in milliseconds (30 seconds)
+const REQUEST_TIMEOUT = 30000;
+
 export default function SignUpScreen() {
-  const navigation = useNavigation();
   const { signUpUser, isLoading, clearError } = useAuthStore();
 
   const form = useAuthForm(signUpSchema, {
@@ -38,6 +46,14 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
+  // Handle cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      // Cancel any pending request when component unmounts
+      useAuthStore.getState().cancelPendingRequest();
+    };
+  }, []);
+
   const handleSignUp = async (data: {
     displayName: string;
     email: string;
@@ -46,12 +62,26 @@ export default function SignUpScreen() {
   }) => {
     clearError();
 
+    // Create a new AbortController for this request
+    const abortController = new AbortController();
+
+    // Set timeout for this specific request
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+      Alert.alert(
+        "Request Timeout",
+        "The sign-up request took too long. Please check your connection and try again.",
+      );
+    }, REQUEST_TIMEOUT);
+
     try {
       await signUpUser(
         data.email.trim(),
         data.password,
         data.displayName.trim(),
+        abortController.signal,
       );
+      clearTimeout(timeoutId);
       Alert.alert(
         "Account Created!",
         "Your account has been created. Please sign in to continue.",
@@ -63,6 +93,11 @@ export default function SignUpScreen() {
         ],
       );
     } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === "AbortError") {
+        // Don't show alert for abort (it could be user navigation or timeout)
+        return;
+      }
       const errorMessage =
         err instanceof Error ? err.message : "Failed to create account";
       console.error("[SignUp] Error:", errorMessage, err);
@@ -99,7 +134,10 @@ export default function SignUpScreen() {
       >
         {/* Back Button */}
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            useAuthStore.getState().cancelPendingRequest();
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -247,7 +285,12 @@ export default function SignUpScreen() {
           <ThemedText style={styles.footerText}>
             Already have an account?{" "}
           </ThemedText>
-          <PressableScale onPress={() => router.replace("/auth/sign-in")}>
+          <PressableScale
+            onPress={() => {
+              useAuthStore.getState().cancelPendingRequest();
+              router.replace("/auth/sign-in");
+            }}
+          >
             <ThemedText style={styles.signInLink}>Sign In</ThemedText>
           </PressableScale>
         </Animated.View>

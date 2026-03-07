@@ -64,3 +64,6 @@ export const TONE_DESCRIPTIONS = {
   casual: 'Friendly and relaxed',
   conversational: 'Like talking to a friend',
 };
+
+// Publish Validation
+export const MIN_WORD_COUNT_WARNING = 100; // Minimum word count threshold for showing short content warning

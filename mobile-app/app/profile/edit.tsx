@@ -114,7 +114,8 @@ export default function ProfileEditScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top', 'bottom']}>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
         <View style={styles.safeArea}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Header */}
@@ -140,7 +141,7 @@ export default function ProfileEditScreen() {
                   <Image
                     source={{ uri: getAvatarUrl(avatarUrl) ?? undefined }}
                     style={styles.avatarImage}
-                    onError={(e: any) => {
+                    onError={() => {
                       // Image loading failed - will use placeholder
                     }}
                     onLoad={() => { /* Image loaded successfully */ }}
@@ -214,6 +215,7 @@ export default function ProfileEditScreen() {
           </SlideIn>
         </ScrollView>
         </View>
+      {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
       </SafeAreaView>
     </ThemedView>
   );

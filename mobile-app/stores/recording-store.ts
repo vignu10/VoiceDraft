@@ -57,6 +57,9 @@ interface RecordingState {
   lastDraftKeyword: string | null;
   lastDraftContent: string | null;
 
+  // Saved recording URI (for when user navigates away during recording)
+  savedRecordingUri: string | null;
+
   // Actions
   setRecording: (isRecording: boolean) => void;
   setPaused: (isPaused: boolean) => void;
@@ -68,6 +71,7 @@ interface RecordingState {
   reset: () => Promise<void>;
   clearExisting: () => void;
   markAsExisting: () => void;
+  setSavedRecordingUri: (uri: string | null) => void;
 
   // Continue Draft actions
   setLastDraft: (draftId: string, title: string | null, keyword: string | null, content: string | null) => void;
@@ -88,6 +92,9 @@ const initialState = {
   lastDraftTitle: null,
   lastDraftKeyword: null,
   lastDraftContent: null,
+
+  // Saved recording URI
+  savedRecordingUri: null,
 };
 
 // Create circular buffer instance for metering levels (increased capacity for smoother waveform)
@@ -158,6 +165,10 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   markAsExisting: () => {
     // Mark current recording as existing (for resume scenario)
     set({ hasExistingRecording: true });
+  },
+
+  setSavedRecordingUri: (uri) => {
+    set({ savedRecordingUri: uri, hasExistingRecording: !!uri });
   },
 
   setLastDraft: (draftId, title, keyword, content) => {

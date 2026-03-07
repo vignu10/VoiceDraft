@@ -1,9 +1,14 @@
-import { router, useNavigation, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { router, Stack } from "expo-router";
 import React from "react";
-import { TouchableOpacity } from "react-native";
 import { Controller } from "react-hook-form";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -25,8 +30,10 @@ import { useAuthForm } from "@/hooks/use-auth-form";
 import { useAuthStore } from "@/stores";
 import { signInSchema } from "@/validations";
 
+// Request timeout in milliseconds (30 seconds)
+const REQUEST_TIMEOUT = 30000;
+
 export default function SignInScreen() {
-  const navigation = useNavigation();
   const { signInUser, isLoading, error, clearError } = useAuthStore();
 
   const form = useAuthForm(signInSchema, {
@@ -36,12 +43,52 @@ export default function SignInScreen() {
 
   const [showPassword, setShowPassword] = React.useState(false);
 
+  // Handle cleanup on unmount and timeout
+  React.useEffect(() => {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        abortController.abort();
+        clearError();
+      }
+    }, REQUEST_TIMEOUT);
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+      // Also cancel any pending request in the store
+      useAuthStore.getState().cancelPendingRequest();
+    };
+  }, [isLoading, clearError]);
+
   const handleSignIn = async (data: { email: string; password: string }) => {
     clearError();
 
+    // Create a new AbortController for this request
+    const abortController = new AbortController();
+
+    // Set timeout for this specific request
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+      Alert.alert(
+        "Request Timeout",
+        "The sign-in request took too long. Please check your connection and try again.",
+      );
+    }, REQUEST_TIMEOUT);
+
     try {
-      await signInUser(data.email.trim(), data.password);
-    } catch {
+      await signInUser(
+        data.email.trim(),
+        data.password,
+        abortController.signal,
+      );
+      clearTimeout(timeoutId);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === "AbortError") {
+        // Don't show alert for abort (it could be user navigation or timeout)
+        return;
+      }
       Alert.alert("Sign In Failed", error || "Invalid email or password");
     }
   };
@@ -73,7 +120,10 @@ export default function SignInScreen() {
       >
         {/* Back Button */}
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            useAuthStore.getState().cancelPendingRequest();
+            router.back();
+          }}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -131,7 +181,12 @@ export default function SignInScreen() {
             )}
           />
 
-          <PressableScale onPress={() => router.push("/auth/forgot-password")}>
+          <PressableScale
+            onPress={() => {
+              useAuthStore.getState().cancelPendingRequest();
+              router.push("/auth/forgot-password");
+            }}
+          >
             <ThemedText style={styles.forgotPassword}>
               Forgot Password?
             </ThemedText>
@@ -184,7 +239,12 @@ export default function SignInScreen() {
           <ThemedText style={styles.footerText}>
             Don&apos;t have an account?{" "}
           </ThemedText>
-          <PressableScale onPress={() => router.replace("/auth/sign-up")}>
+          <PressableScale
+            onPress={() => {
+              useAuthStore.getState().cancelPendingRequest();
+              router.replace("/auth/sign-up");
+            }}
+          >
             <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
           </PressableScale>
         </Animated.View>

@@ -25,11 +25,13 @@ export class RateLimitError extends Error {
 }
 
 type RefreshTokenCallback = () => Promise<boolean>;
+type AuthFailedCallback = () => void;
 
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
   private refreshTokenCallback: RefreshTokenCallback | null = null;
+  private onAuthFailedCallback: AuthFailedCallback | null = null;
   private isRefreshing: boolean = false;
 
   constructor(baseUrl: string) {
@@ -53,7 +55,16 @@ class ApiClient {
   }
 
   /**
+   * Register a callback to handle authentication failure (401 with failed refresh)
+   * This should trigger logout and navigation to login screen
+   */
+  setOnAuthFailed(callback: AuthFailedCallback) {
+    this.onAuthFailedCallback = callback;
+  }
+
+  /**
    * Attempt to refresh the token and return true if successful
+   * If refresh fails, triggers the auth failed callback (logout)
    */
   private async tryRefreshToken(): Promise<boolean> {
     if (this.isRefreshing || !this.refreshTokenCallback) {
@@ -63,8 +74,16 @@ class ApiClient {
     this.isRefreshing = true;
     try {
       const refreshed = await this.refreshTokenCallback();
+      if (!refreshed && this.onAuthFailedCallback) {
+        // Token refresh failed, trigger logout
+        this.onAuthFailedCallback();
+      }
       return refreshed;
     } catch (error) {
+      // Refresh threw an error, trigger logout
+      if (this.onAuthFailedCallback) {
+        this.onAuthFailedCallback();
+      }
       return false;
     } finally {
       this.isRefreshing = false;
@@ -174,11 +193,24 @@ class ApiClient {
   }
 
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = async (): Promise<Response> => {
+      return await fetch(`${this.baseUrl}${endpoint}`, {
         method: "GET",
         headers: this.getHeaders(),
       });
+    };
+
+    try {
+      let response = await makeRequest();
+
+      // If 401 Unauthorized, try to refresh token and retry
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+
+        if (refreshed) {
+          response = await makeRequest();
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -213,12 +245,25 @@ class ApiClient {
   }
 
   async put<T>(endpoint: string, data: object): Promise<ApiResponse<T>> {
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = async (): Promise<Response> => {
+      return await fetch(`${this.baseUrl}${endpoint}`, {
         method: "PUT",
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
+    };
+
+    try {
+      let response = await makeRequest();
+
+      // If 401 Unauthorized, try to refresh token and retry
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+
+        if (refreshed) {
+          response = await makeRequest();
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -253,12 +298,25 @@ class ApiClient {
   }
 
   async patch<T>(endpoint: string, data: object): Promise<ApiResponse<T>> {
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = async (): Promise<Response> => {
+      return await fetch(`${this.baseUrl}${endpoint}`, {
         method: "PATCH",
         headers: this.getHeaders(),
         body: JSON.stringify(data),
       });
+    };
+
+    try {
+      let response = await makeRequest();
+
+      // If 401 Unauthorized, try to refresh token and retry
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+
+        if (refreshed) {
+          response = await makeRequest();
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -293,11 +351,24 @@ class ApiClient {
   }
 
   async delete(endpoint: string): Promise<ApiResponse<void>> {
-    try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const makeRequest = async (): Promise<Response> => {
+      return await fetch(`${this.baseUrl}${endpoint}`, {
         method: "DELETE",
         headers: this.getHeaders(),
       });
+    };
+
+    try {
+      let response = await makeRequest();
+
+      // If 401 Unauthorized, try to refresh token and retry
+      if (response.status === 401) {
+        const refreshed = await this.tryRefreshToken();
+
+        if (refreshed) {
+          response = await makeRequest();
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
