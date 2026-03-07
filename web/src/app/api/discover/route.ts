@@ -94,8 +94,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform journals into blog discovery cards
-    const blogs: BlogDiscoveryCard[] = (journals || []).map((journal) => {
-      const posts = journal.posts || [];
+    const blogs: BlogDiscoveryCard[] = (journals || []).map((journal: any) => {
+      const posts = Array.isArray(journal.posts) ? journal.posts : [];
+      const userProfile = journal.user_profiles || { full_name: null, avatar_url: null };
+
       const latestPost = posts.length > 0
         ? posts.sort((a: { published_at: string }, b: { published_at: string }) =>
             new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
@@ -105,19 +107,19 @@ export async function GET(req: NextRequest) {
       return {
         id: journal.id,
         url_prefix: journal.url_prefix,
-        display_name: journal.display_name,
+        display_name: journal.display_name || 'Untitled Blog',
         description: journal.description,
         created_at: journal.created_at,
         post_count: posts.length,
         latest_post: latestPost ? {
           id: latestPost.id,
-          title: latestPost.title,
-          slug: latestPost.slug,
+          title: latestPost.title || 'Untitled',
+          slug: latestPost.slug || '',
           published_at: latestPost.published_at,
         } : null,
-        user_profiles: journal.user_profiles || {
-          full_name: null,
-          avatar_url: null,
+        user_profiles: {
+          full_name: userProfile.full_name,
+          avatar_url: userProfile.avatar_url,
         },
       };
     });
