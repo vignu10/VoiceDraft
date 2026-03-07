@@ -5,6 +5,8 @@ import { PressableScale } from "@/components/ui/animated/pressable-scale";
 import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
 import { GuestDraftScrollGate } from "@/components/ui/guest-draft-scroll-gate";
+import { PublishModal } from "@/components/publish/PublishModal";
+import { PublishSuccessToast } from "@/components/publish/PublishSuccessToast";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
@@ -66,6 +68,11 @@ export default function DraftEditorScreen() {
     message?: string;
   }>({ visible: false });
   const [previousWordCount, setPreviousWordCount] = useState(0);
+
+  // Publish state
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishedPostUrl, setPublishedPostUrl] = useState<string | null>(null);
 
   // Content gating state
   const [showContentGate, setShowContentGate] = useState(false);
@@ -376,6 +383,19 @@ export default function DraftEditorScreen() {
     ]);
   };
 
+  const handlePublishPress = () => {
+    setShowPublishModal(true);
+  };
+
+  const handlePublishSuccess = (postUrl: string) => {
+    setPublishedPostUrl(postUrl);
+    setShowPublishModal(false);
+  };
+
+  const handleToastDismiss = () => {
+    setPublishedPostUrl(null);
+  };
+
   const wordCount = countWords(content);
   const isOverLimit = (val: number, max: number) => val > max;
 
@@ -520,6 +540,38 @@ export default function DraftEditorScreen() {
                       size={22}
                       color={colors.primary}
                     />
+                  </PressableScale>
+                )}
+
+                {/* Publish button - hide for guest flow */}
+                {!isGuestFlow && (
+                  <PressableScale
+                    onPress={handlePublishPress}
+                    disabled={!draft?.serverId || isPublishing}
+                    style={[
+                      styles.iconBtn,
+                      {
+                        backgroundColor: !draft?.serverId
+                          ? colors.backgroundTertiary
+                          : colors.primary,
+                        opacity: !draft?.serverId ? 0.5 : 1,
+                      },
+                    ]}
+                    accessibilityLabel="Publish draft"
+                    hapticStyle="light"
+                  >
+                    {isPublishing ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={colors.textInverse}
+                      />
+                    ) : (
+                      <Ionicons
+                        name="rocket-outline"
+                        size={20}
+                        color={colors.textInverse}
+                      />
+                    )}
                   </PressableScale>
                 )}
 
@@ -734,6 +786,28 @@ export default function DraftEditorScreen() {
           </KeyboardAvoidingView>
         </View>
       </SafeAreaView>
+
+      {/* Publish Modal */}
+      <PublishModal
+        visible={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        draft={draft}
+        journalUrlPrefix="my-journal"  // TODO: Will add in Task 5
+        onPublishSuccess={handlePublishSuccess}
+      />
+
+      {/* Publish Success Toast */}
+      <PublishSuccessToast
+        visible={publishedPostUrl !== null}
+        postUrl={publishedPostUrl || ''}
+        onViewPress={() => {
+          // TODO: Will implement with web browser
+        }}
+        onSharePress={() => {
+          // TODO: Will implement with share
+        }}
+        onDismiss={handleToastDismiss}
+      />
     </ThemedView>
   );
 }
