@@ -11,7 +11,9 @@ import {
   unpublishPost,
 } from '@/services/api/posts';
 import type { Draft } from '@/types/draft';
-import { useCallback } from 'react';
+import { useAuthStore } from '@/stores/auth-store';
+import { generateBlogUrl } from '@/utils/url-utils';
+import { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -33,6 +35,8 @@ export interface UseDraftActionsProps {
 export interface UseDraftActionsReturn {
   handleMenuAction: (action: string) => Promise<void>;
   handlePublishToggle: (draft: Draft) => Promise<void>;
+  publishedPostUrl: string | null;
+  setPublishedPostUrl: (url: string | null) => void;
 }
 
 /**
@@ -43,6 +47,8 @@ export interface UseDraftActionsReturn {
  */
 export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsReturn {
   const { drafts, setDrafts, menuDraftId, setShowMenu, showDialog } = props;
+  const { journal } = useAuthStore();
+  const [publishedPostUrl, setPublishedPostUrl] = useState<string | null>(null);
 
   /**
    * Handle menu action for a draft
@@ -68,13 +74,18 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
                 setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
               } catch (error) {
                 console.error('Failed to delete draft:', error);
+                throw error;
               }
             },
           });
 
           if (confirmed) {
             // Clear old AsyncStorage
-            await AsyncStorage.removeItem('drafts');
+            try {
+              await AsyncStorage.removeItem('drafts');
+            } catch (error) {
+              console.error('Failed to clear drafts from storage:', error);
+            }
           }
           break;
         }
@@ -87,8 +98,10 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
-          setDrafts((prev) => [newDraft, ...prev]);
-          await AsyncStorage.setItem('drafts', JSON.stringify([newDraft, ...drafts]));
+          // Create updated array once to avoid race condition
+          const updatedDrafts = [newDraft, ...drafts];
+          setDrafts(updatedDrafts);
+          await AsyncStorage.setItem('drafts', JSON.stringify(updatedDrafts));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           break;
         }
@@ -125,21 +138,37 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
           setDrafts((prev) =>
             prev.map((d) => (d.id === draft.id ? { ...d, status: ('ready' as const) } : d))
           );
+          setPublishedPostUrl(null);
         } else {
-          await publishPost(draft.serverId!);
+          const publishedPost = await publishPost(draft.serverId!);
           setDrafts((prev) =>
             prev.map((d) => (d.id === draft.id ? { ...d, status: ('published' as const) } : d))
           );
+          // Generate URL using journal's url_prefix and post's slug
+          if (journal?.url_prefix && publishedPost.slug) {
+            const postUrl = generateBlogUrl(journal.url_prefix, publishedPost.slug);
+            setPublishedPostUrl(postUrl);
+          }
         }
       } catch (error) {
         console.error('Failed to toggle publish:', error);
+        // Show error feedback to user
+        await showDialog({
+          title: 'Publish Failed',
+          message: `Failed to ${draft.status === 'published' ? 'unpublish' : 'publish'} this draft. Please try again.`,
+          variant: 'default',
+          confirmText: 'OK',
+          onConfirm: () => {},
+        });
       }
     },
-    [setDrafts]
+    [setDrafts, journal, showDialog]
   );
 
   return {
     handleMenuAction,
     handlePublishToggle,
+    publishedPostUrl,
+    setPublishedPostUrl,
   };
 }

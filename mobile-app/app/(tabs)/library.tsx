@@ -18,14 +18,15 @@ import {
   SelectionBar,
 } from '@/components/library';
 import { useDialog } from '@/components/ui/dialog';
-import { deletePost, publishPost, unpublishPost } from '@/services/api/posts';
+import { PublishSuccessToast } from '@/components/publish';
+import { deletePost } from '@/services/api/posts';
 import { useAuthStore } from '@/stores/auth-store';
 import { useLibraryData } from '@/hooks/use-library-data';
 import { useDraftSelection } from '@/hooks/use-draft-selection';
+import { useDraftActions } from '@/hooks/use-draft-actions';
 import type { Draft } from '@/types/draft';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -77,92 +78,24 @@ export default function LibraryTab() {
   const [showMenu, setShowMenu] = useState(false);
   const [menuDraftId, setMenuDraftId] = useState<string | null>(null);
 
-  // Draft actions
-  const handleMenuAction = useCallback(
-    async (action: string) => {
-      if (!menuDraftId) return;
-      setShowMenu(false);
+  // Draft actions hook
+  const {
+    handleMenuAction,
+    handlePublishToggle,
+    publishedPostUrl,
+    setPublishedPostUrl,
+  } = useDraftActions({
+    drafts: localDrafts,
+    setDrafts: setLocalDrafts,
+    menuDraftId,
+    setShowMenu,
+    showDialog,
+  });
 
-      const draft = localDrafts.find((d) => d.id === menuDraftId);
-      if (!draft) return;
-
-      switch (action) {
-        case 'delete': {
-          const confirmed = await showDialog({
-            title: 'Delete Draft',
-            message: 'Are you sure you want to delete this draft?',
-            variant: 'destructive',
-            confirmText: 'Delete',
-            onConfirm: async () => {
-              try {
-                await deletePost(draft.id);
-                setLocalDrafts((prev) => prev.filter((d) => d.id !== draft.id));
-              } catch (error) {
-                console.error('Failed to delete draft:', error);
-              }
-            },
-          });
-
-          if (confirmed) {
-            await AsyncStorage.removeItem('drafts');
-          }
-          break;
-        }
-
-        case 'duplicate': {
-          const newDraft: Draft = {
-            ...draft,
-            id: Date.now().toString(),
-            title: draft.title ? `${draft.title} (Copy)` : 'Untitled Draft (Copy)',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          setLocalDrafts((prev) => [newDraft, ...prev]);
-          await AsyncStorage.setItem('drafts', JSON.stringify([newDraft, ...localDrafts]));
-          break;
-        }
-
-        case 'share': {
-          router.push({
-            pathname: '/keyword',
-            params: { shareDraftId: draft.id },
-          });
-          break;
-        }
-
-        case 'favorite': {
-          const favDrafts = localDrafts.map((d) =>
-            d.id === menuDraftId ? { ...d, isFavorite: !d.isFavorite } : d
-          );
-          setLocalDrafts(favDrafts);
-          await AsyncStorage.setItem('drafts', JSON.stringify(favDrafts));
-          break;
-        }
-      }
-    },
-    [localDrafts, menuDraftId, showDialog]
-  );
-
-  const handlePublishToggle = useCallback(
-    async (draft: Draft) => {
-      try {
-        if (draft.status === 'published') {
-          await unpublishPost(draft.serverId!);
-          setLocalDrafts((prev) =>
-            prev.map((d) => (d.id === draft.id ? { ...d, status: ('ready' as const) } : d))
-          );
-        } else {
-          await publishPost(draft.serverId!);
-          setLocalDrafts((prev) =>
-            prev.map((d) => (d.id === draft.id ? { ...d, status: ('published' as const) } : d))
-          );
-        }
-      } catch (error) {
-        console.error('Failed to toggle publish:', error);
-      }
-    },
-    []
-  );
+  // Handler for toast dismissal
+  const handleToastDismiss = useCallback(() => {
+    setPublishedPostUrl(null);
+  }, [setPublishedPostUrl]);
 
   // Handle draft press
   const handleDraftPress = useCallback(
@@ -323,6 +256,31 @@ export default function LibraryTab() {
             handlePublishToggle(menuDraft);
           }
         }}
+      />
+
+      {/* Publish Success Toast */}
+      <PublishSuccessToast
+        visible={publishedPostUrl !== null}
+        postUrl={publishedPostUrl || ''}
+        onViewPress={async () => {
+          await showDialog({
+            title: 'Coming Soon',
+            message: 'View in browser feature will be available soon!',
+            variant: 'default',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
+        }}
+        onSharePress={async () => {
+          await showDialog({
+            title: 'Coming Soon',
+            message: 'Share feature will be available soon!',
+            variant: 'default',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
+        }}
+        onDismiss={handleToastDismiss}
       />
     </>
   );
