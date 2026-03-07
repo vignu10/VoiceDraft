@@ -16,7 +16,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { data: journal } = await supabase
     .from('journals')
-    .select('display_name, description, user_profiles(full_name, avatar_url)')
+    .select('display_name, description')
     .eq('url_prefix', params.url_prefix)
     .eq('is_active', true)
     .single();
@@ -41,19 +41,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Fetch data server-side
 async function getJournalData(urlPrefix: string) {
   try {
-    // Fetch journal with user profile - removed !inner since FK doesn't exist
+    // Fetch journal without user profile join (no FK relationship exists)
     const { data: journal, error: journalError } = await supabase
       .from('journals')
-      .select(
-        `
-        *,
-        user_profiles (
-          full_name,
-          avatar_url,
-          bio
-        )
-      `
-      )
+      .select('*')
       .eq('url_prefix', urlPrefix)
       .eq('is_active', true)
       .single();
@@ -95,7 +86,14 @@ async function getJournalData(urlPrefix: string) {
     }));
 
     return {
-      journal,
+      journal: {
+        ...journal,
+        user_profiles: {
+          full_name: null,
+          avatar_url: null,
+          bio: null,
+        },
+      },
       posts: postsWithExcerpts,
       total: posts?.length || 0,
     };
@@ -119,19 +117,7 @@ export default async function BlogPage({ params }: PageProps) {
       <BlogHeader journal={journal as JournalWithAuthor} />
 
       <div className="sticky top-0 z-20">
-        <BlogControls
-          onSearchChange={(search) => {
-            // Handled by PostCardGrid via window.__blogFetch
-            if (typeof window !== 'undefined' && (window as any).__blogFetch) {
-              (window as any).__blogFetch(search, 'newest');
-            }
-          }}
-          onSortChange={(sort) => {
-            if (typeof window !== 'undefined' && (window as any).__blogFetch) {
-              (window as any).__blogFetch('', sort);
-            }
-          }}
-        />
+        <BlogControls />
       </div>
 
       <main className="container-wide py-8">

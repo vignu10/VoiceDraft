@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import type { SortOption } from '@/types/blog';
 
 interface BlogControlsProps {
-  onSearchChange: (search: string) => void;
-  onSortChange: (sort: SortOption) => void;
+  onSearchChange?: (search: string) => void;
+  onSortChange?: (sort: SortOption) => void;
   initialSort?: SortOption;
 }
 
@@ -29,7 +29,7 @@ export function BlogControls({
 
   // Notify parent when debounced search changes
   useEffect(() => {
-    onSearchChange(debouncedSearch);
+    onSearchChange?.(debouncedSearch);
   }, [debouncedSearch, onSearchChange]);
 
   const sortOptions: { value: SortOption; label: string }[] = [
@@ -78,7 +78,7 @@ export function BlogControls({
               onChange={(e) => {
                 const newSort = e.target.value as SortOption;
                 setSort(newSort);
-                onSortChange(newSort);
+                onSortChange?.(newSort);
               }}
               className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
             >

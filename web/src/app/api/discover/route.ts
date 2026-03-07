@@ -54,10 +54,6 @@ export async function GET(req: NextRequest) {
         display_name,
         description,
         created_at,
-        user_profiles (
-          full_name,
-          avatar_url
-        ),
         posts (
           id,
           title,
@@ -96,7 +92,6 @@ export async function GET(req: NextRequest) {
     // Transform journals into blog discovery cards
     const blogs: BlogDiscoveryCard[] = (journals || []).map((journal: any) => {
       const posts = Array.isArray(journal.posts) ? journal.posts : [];
-      const userProfile = journal.user_profiles || { full_name: null, avatar_url: null };
 
       const latestPost = posts.length > 0
         ? posts.sort((a: { published_at: string }, b: { published_at: string }) =>
@@ -118,8 +113,8 @@ export async function GET(req: NextRequest) {
           published_at: latestPost.published_at,
         } : null,
         user_profiles: {
-          full_name: userProfile.full_name,
-          avatar_url: userProfile.avatar_url,
+          full_name: null,
+          avatar_url: null,
         },
       };
     });
@@ -129,15 +124,15 @@ export async function GET(req: NextRequest) {
       blogs.sort((a: BlogDiscoveryCard, b: BlogDiscoveryCard) => b.post_count - a.post_count);
     }
 
-    // Fetch recent posts across all blogs
+    // Fetch recent posts across all blogs with journal info
     const { data: posts, error: postsError, count: postsCount } = await supabase
       .from('posts')
       .select(`
         id,
+        journal_id,
         title,
         slug,
         content,
-        excerpt,
         meta_description,
         target_keyword,
         published_at,
@@ -146,14 +141,20 @@ export async function GET(req: NextRequest) {
         view_count,
         audio_file_url,
         audio_duration_seconds,
-        style_used,
-        journals (
-          url_prefix
-        )
+        style_used
       `, { count: 'exact' })
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .range(postsOffset, postsOffset + postsLimit - 1);
+
+    // Get journal URL prefixes for posts
+    const journalIds = [...new Set(posts?.map(p => p.journal_id) || [])];
+    const { data: journalsForPosts } = await supabase
+      .from('journals')
+      .select('id, url_prefix')
+      .in('id', journalIds);
+
+    const journalMap = new Map(journalsForPosts?.map(j => [j.id, j.url_prefix]) || []);
 
     if (postsError) {
       return handleError(postsError);
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
     // Transform posts to include url_prefix
     const postsWithPrefix: PostWithPrefix[] = (posts || []).map((post) => ({
       ...post,
-      url_prefix: post.journals?.url_prefix || '',
+      url_prefix: journalMap.get(post.journal_id) || '',
     }));
 
     const response: DiscoveryResponse = {

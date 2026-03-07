@@ -10,16 +10,7 @@ export async function GET(
   try {
     const { data: journal, error } = await supabase
       .from("journals")
-      .select(
-        `
-        *,
-        user_profiles!inner (
-          full_name,
-          avatar_url,
-          bio
-        )
-      `,
-      )
+      .select("*")
       .eq("url_prefix", params.url_prefix)
       .eq("is_active", true)
       .single();
