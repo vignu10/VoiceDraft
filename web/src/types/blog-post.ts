@@ -16,6 +16,8 @@ export interface BlogPost {
     id: string;
     display_name: string;
     url_prefix: string;
+    description: string | null;
+    created_at: string;
     user_profiles: {
       full_name: string | null;
       avatar_url: string | null;

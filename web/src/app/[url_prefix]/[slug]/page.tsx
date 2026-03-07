@@ -25,8 +25,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .select(`
       *,
       journals (
-        display_name,
-        url_prefix
+        *,
+        user_profiles (
+          full_name,
+          avatar_url,
+          bio
+        )
       )
     `)
     .eq('slug', params.slug)
@@ -42,11 +46,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${post.title} - ${post.journals?.display_name || 'Blog'}`,
     description: post.meta_description || post.content?.slice(0, 160) || '',
+    authors: post.journals?.user_profiles?.full_name ? [post.journals.user_profiles.full_name] : undefined,
     openGraph: {
       title: post.title,
       description: post.meta_description || post.content?.slice(0, 160) || '',
       type: 'article',
       publishedTime: post.published_at,
+      authors: post.journals?.user_profiles?.full_name ? [post.journals.user_profiles.full_name] : undefined,
     },
   };
 }
