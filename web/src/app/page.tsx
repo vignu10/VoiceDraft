@@ -45,7 +45,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen">
       <HeroSection />
-      <DiscoverySearch onSortChange={() => {}} initialSort="newest" />
+      <DiscoverySearch initialSort="newest" />
       <FeaturedBlogsGrid
         initialBlogs={initialData.blogs}
         initialTotal={initialData.blogsTotal}

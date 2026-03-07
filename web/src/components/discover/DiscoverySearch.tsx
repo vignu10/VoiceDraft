@@ -11,17 +11,16 @@ const sortOptions: { value: DiscoverySort; label: string }[] = [
 ];
 
 interface DiscoverySearchProps {
-  onSortChange: (sort: DiscoverySort) => void;
   initialSort?: DiscoverySort;
 }
 
-export function DiscoverySearch({ onSortChange, initialSort = 'newest' }: DiscoverySearchProps) {
+export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSort, setSelectedSort] = useState<DiscoverySort>(initialSort);
 
   const handleSortChange = (sort: DiscoverySort) => {
     setSelectedSort(sort);
-    onSortChange(sort);
+    // TODO: Trigger re-fetch of blogs with new sort
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
