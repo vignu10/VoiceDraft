@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 
 type DiscoverySort = 'newest' | 'active' | 'posts';
 
@@ -41,6 +40,7 @@ export function DiscoverySearch({ onSortChange, initialSort = 'newest' }: Discov
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search blogs..."
+              aria-label="Search blogs"
               className="w-full rounded-full border border-gray-300 bg-white px-4 py-2 pl-10 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
             />
             <svg
@@ -66,6 +66,7 @@ export function DiscoverySearch({ onSortChange, initialSort = 'newest' }: Discov
                 <button
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
+                  aria-pressed={selectedSort === option.value}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     selectedSort === option.value
                       ? 'bg-blue-600 text-white'
@@ -73,7 +74,6 @@ export function DiscoverySearch({ onSortChange, initialSort = 'newest' }: Discov
                   }`}
                 >
                   {option.label}
-                }
                 </button>
               ))}
             </div>
