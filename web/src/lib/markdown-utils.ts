@@ -1,4 +1,3 @@
-import { visit } from 'unist-util-visit';
 import type { Heading } from '@/types/blog-post';
 
 /**
