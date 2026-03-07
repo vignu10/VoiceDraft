@@ -1,8 +1,10 @@
+import Constants from 'expo-constants';
+
 /**
  * Production URL for the web app
- * TODO: Move to app config/environment variables
+ * Retrieved from app config, falls back to default if not configured
  */
-const PRODUCTION_URL = 'https://your-site.com'; // Replace with actual production URL
+const PRODUCTION_URL = Constants.expoConfig?.extra?.productionUrl || 'https://your-site.com';
 
 /**
  * Regular expression pattern for validating URL-friendly identifiers
