@@ -40,45 +40,69 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 // Fetch data server-side
 async function getJournalData(urlPrefix: string) {
-  const { data: journal, error } = await supabase
-    .from('journals')
-    .select(
+  try {
+    // Fetch journal with user profile
+    const { data: journal, error: journalError } = await supabase
+      .from('journals')
+      .select(
+        `
+        *,
+        user_profiles!inner (
+          full_name,
+          avatar_url,
+          bio
+        )
       `
-      *,
-      user_profiles!inner (
-        full_name,
-        avatar_url,
-        bio
       )
-    `
-    )
-    .eq('url_prefix', urlPrefix)
-    .eq('is_active', true)
-    .single();
+      .eq('url_prefix', urlPrefix)
+      .eq('is_active', true)
+      .single();
 
-  if (error || !journal) {
+    if (journalError || !journal) {
+      console.error('Journal fetch error:', journalError);
+      return null;
+    }
+
+    // Fetch initial posts
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('journal_id', journal.id)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(12);
+
+    if (postsError) {
+      console.error('Posts fetch error:', postsError);
+    }
+
+    // Safely map posts with default values for all fields
+    const postsWithExcerpts = (posts || []).map((post) => ({
+      id: post.id,
+      title: post.title || 'Untitled',
+      slug: post.slug || '',
+      excerpt: post.content ? post.content.slice(0, 150) + (post.content.length > 150 ? '...' : '') : '',
+      content: post.content || '',
+      meta_description: post.meta_description,
+      target_keyword: post.target_keyword,
+      published_at: post.published_at || new Date().toISOString(),
+      word_count: post.word_count || 0,
+      reading_time_minutes: post.reading_time_minutes || 1,
+      view_count: post.view_count || 0,
+      audio_file_url: post.audio_file_url,
+      audio_duration_seconds: post.audio_duration_seconds,
+      style_used: post.style_used || 0,
+    }));
+
+    return {
+      journal,
+      posts: postsWithExcerpts,
+      total: posts?.length || 0,
+    };
+  } catch (error) {
+    console.error('getJournalData error:', error);
     return null;
   }
-
-  // Fetch initial posts
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('journal_id', journal.id)
-    .eq('status', 'published')
-    .order('published_at', { ascending: false })
-    .limit(12);
-
-  const postsWithExcerpts = (posts || []).map((post) => ({
-    ...post,
-    excerpt: post.content ? post.content.slice(0, 150) + (post.content.length > 150 ? '...' : '') : '',
-  }));
-
-  return {
-    journal,
-    posts: postsWithExcerpts,
-    total: posts?.length || 0,
-  };
 }
 
 export default async function BlogPage({ params }: PageProps) {

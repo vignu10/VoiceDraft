@@ -6,13 +6,28 @@ import type { DiscoveryResponse } from '@/types/discover';
 
 // Fetch initial data server-side
 async function getDiscoveryData(): Promise<DiscoveryResponse> {
-  // Use relative URL - works both locally and on Vercel
-  const res = await fetch(`/api/discover?blogsLimit=12&postsLimit=12`, {
-    cache: 'no-store',
-  });
+  try {
+    // Use relative URL - works both locally and on Vercel
+    const res = await fetch(`/api/discover?blogsLimit=12&postsLimit=12`, {
+      cache: 'no-store',
+    });
 
-  if (!res.ok) {
-    console.error('Failed to fetch discovery data');
+    if (!res.ok) {
+      console.error('Failed to fetch discovery data, status:', res.status);
+      return {
+        blogs: [],
+        posts: [],
+        blogsTotal: 0,
+        postsTotal: 0,
+        hasMoreBlogs: false,
+        hasMorePosts: false,
+      };
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error('getDiscoveryData error:', error);
     return {
       blogs: [],
       posts: [],
@@ -22,8 +37,6 @@ async function getDiscoveryData(): Promise<DiscoveryResponse> {
       hasMorePosts: false,
     };
   }
-
-  return res.json();
 }
 
 export default async function HomePage() {
