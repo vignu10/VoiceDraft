@@ -44,3 +44,6 @@ export interface BlogFilters {
   search: string;
   sort: SortOption;
 }
+
+// Re-export blog post types for convenience
+export type { BlogPost, Heading, TableOfContentsProps, MarkdownRendererProps, PostMetaProps, RelatedPostsProps } from './blog-post';
