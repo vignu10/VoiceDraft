@@ -44,7 +44,7 @@ import { PressableScale } from '@/components/ui/animated/pressable-scale';
 /**
  * Props for PublishSuccessToast component
  */
-interface PublishSuccessToastProps {
+export interface PublishSuccessToastProps {
   /** Whether the toast is currently visible */
   visible: boolean;
   /** The full URL of the published post */
