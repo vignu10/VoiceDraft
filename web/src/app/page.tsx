@@ -6,8 +6,8 @@ import type { DiscoveryResponse } from '@/types/discover';
 
 // Fetch initial data server-side
 async function getDiscoveryData(): Promise<DiscoveryResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/discover?blogsLimit=12&postsLimit=12`, {
+  // Use relative URL - works both locally and on Vercel
+  const res = await fetch(`/api/discover?blogsLimit=12&postsLimit=12`, {
     cache: 'no-store',
   });
 
