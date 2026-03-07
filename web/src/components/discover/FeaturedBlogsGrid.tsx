@@ -58,10 +58,10 @@ export function FeaturedBlogsGrid({
   if (blogs.length === 0) {
     return (
       <div id="featured-blogs" className="py-16 text-center">
-        <h2 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+        <h2 className="text-2xl font-semibold text-neutral-900 dark:text-white">
           No blogs yet
         </h2>
-        <p className="mt-2 text-stone-600 dark:text-stone-400">
+        <p className="mt-2 text-neutral-600 dark:text-neutral-400">
           Be the first to start a blog and share your voice!
         </p>
       </div>
@@ -70,8 +70,8 @@ export function FeaturedBlogsGrid({
 
   return (
     <section id="featured-blogs" className="py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-8 text-2xl font-bold text-stone-900 dark:text-stone-100">
+      <div className="container-wide">
+        <h2 className="mb-8 text-2xl font-semibold text-neutral-900 dark:text-white">
           Featured Blogs
         </h2>
 
@@ -86,9 +86,9 @@ export function FeaturedBlogsGrid({
             <button
               onClick={handleLoadMore}
               disabled={isLoading}
-              className="inline-flex items-center justify-center rounded-full border border-stone-300 bg-white px-8 py-3 text-base font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+              className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-8 py-3 text-sm font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-white dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:focus:ring-neutral-500 dark:focus:ring-offset-neutral-950"
             >
-              {isLoading ? 'Loading...' : 'Load More Blogs'}
+              {isLoading ? 'Loading...' : 'Load More'}
             </button>
           </div>
         )}

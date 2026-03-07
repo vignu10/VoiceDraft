@@ -115,7 +115,7 @@ export default async function BlogPage({ params }: PageProps) {
   const { journal, posts, total } = data;
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <BlogHeader journal={journal as JournalWithAuthor} />
 
       <div className="sticky top-0 z-20">
@@ -134,7 +134,7 @@ export default async function BlogPage({ params }: PageProps) {
         />
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="container-wide py-8">
         <PostCardGrid
           initialPosts={posts as PostCardData[]}
           urlPrefix={params.url_prefix}

@@ -25,97 +25,67 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
   const postUrl = `/${urlPrefix}/${slug}`;
 
   return (
-    <article className="group flex flex-col overflow-hidden border border-stone-200 bg-white transition-shadow hover:shadow-md dark:border-stone-800 dark:bg-stone-900">
-      {/* Featured Media - Audio Player or Placeholder */}
-      <Link href={postUrl} className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600">
+    <article className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+      {/* Featured Media */}
+      <Link href={postUrl} className="relative aspect-video w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
         {audio_file_url ? (
-          <div className="flex h-full w-full items-center justify-center text-white">
+          <div className="flex h-full w-full items-center justify-center">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </div>
               {audio_duration_seconds && (
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {Math.floor(audio_duration_seconds / 60)}:{(audio_duration_seconds % 60).toString().padStart(2, '0')}
                 </span>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <svg className="h-16 w-16 text-white/30" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+          <div className="flex h-full w-full items-center justify-center text-neutral-400">
+            <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
           </div>
         )}
       </Link>
 
-      {/* Card Content */}
-      <div className="flex flex-1 flex-col p-4">
-        {/* Tags and Reading Time */}
-        <div className="mb-2 flex items-center gap-2 text-xs">
-          {target_keyword && (
-            <span className="rounded bg-amber-100 px-2 py-1 font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-400">
-              {target_keyword.toUpperCase()}
-            </span>
-          )}
-          <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
-            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-5">
+        {/* Meta */}
+        <div className="mb-3 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+          <span className="flex items-center gap-1">
+            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
             </svg>
             {formatReadingTime(reading_time_minutes)}
           </span>
+          {target_keyword && (
+            <>
+              <span className="text-neutral-300 dark:text-neutral-700">•</span>
+              <span className="font-medium text-accent">{target_keyword}</span>
+            </>
+          )}
         </div>
 
         {/* Title */}
         <Link href={postUrl}>
-          <h3 className="mb-2 text-lg font-semibold leading-tight text-stone-900 transition-colors group-hover:text-amber-700 dark:text-stone-100 dark:group-hover:text-amber-400">
+          <h3 className="mb-2 text-xl font-semibold leading-snug text-neutral-900 transition-colors group-hover:text-accent dark:text-white">
             {title}
           </h3>
         </Link>
 
         {/* Excerpt */}
-        <p className="mb-4 flex-1 text-sm text-stone-600 dark:text-stone-400 line-clamp-3">
+        <p className="mb-4 flex-1 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
           {excerpt}
         </p>
 
-        {/* Divider */}
-        <hr className="my-3 border-stone-200 dark:border-stone-800" />
-
-        {/* Metadata Row */}
-        <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-500">
-          <div className="flex items-center gap-3">
-            {/* View Count */}
-            <span className="flex items-center gap-1">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
-              </svg>
-              {formatViewCount(view_count)}
-            </span>
-
-            {/* Publish Date */}
-            <span className="flex items-center gap-1">
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
-              </svg>
-              {formatDate(published_at)}
-            </span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1">
-            <button
-              className="rounded p-1 text-stone-400 transition-colors hover:text-stone-600 dark:hover:text-stone-300"
-              aria-label="Share post"
-              title="Share"
-            >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
-              </svg>
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-500">
+          <span>{formatDate(published_at)}</span>
+          <span>{formatViewCount(view_count)} views</span>
         </div>
       </div>
     </article>

@@ -17,14 +17,14 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group flex flex-col overflow-hidden border border-stone-200 bg-white transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-stone-800 dark:bg-stone-900"
+      className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <div className="p-6">
-        {/* Author Header */}
+        {/* Header */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="relative h-14 w-14 overflow-hidden rounded-full bg-gradient-to-br from-amber-500 to-orange-600">
+            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
               {user_profiles?.avatar_url ? (
                 <Image
                   src={user_profiles.avatar_url}
@@ -33,7 +33,7 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-lg font-bold text-white">
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-neutral-600 dark:text-neutral-400">
                   {getInitials(authorName)}
                 </div>
               )}
@@ -42,10 +42,10 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
           {/* Author Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-semibold text-stone-900 group-hover:text-amber-700 dark:text-stone-100 dark:group-hover:text-amber-400">
+            <h3 className="truncate text-lg font-semibold text-neutral-900 transition-colors group-hover:text-accent dark:text-white">
               {display_name}
             </h3>
-            <p className="text-sm text-stone-500 dark:text-stone-400">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {formatPostCount(post_count)}
             </p>
           </div>
@@ -53,21 +53,21 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
         {/* Description */}
         {description && (
-          <p className="mt-4 line-clamp-2 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-4 line-clamp-2 text-sm text-neutral-600 dark:text-neutral-400">
             {truncate(description, 100)}
           </p>
         )}
 
         {/* Latest Post */}
         {latest_post && (
-          <div className="mt-4 rounded bg-stone-100 p-3 dark:bg-stone-800">
-            <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
-              Latest post
+          <div className="mt-4 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800/50">
+            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+              Latest
             </p>
-            <p className="mt-1 truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+            <p className="mt-1 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
               {latest_post.title}
             </p>
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-500">
+            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
               {formatDate(latest_post.published_at)}
             </p>
           </div>
