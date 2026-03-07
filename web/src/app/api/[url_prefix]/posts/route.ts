@@ -90,7 +90,7 @@ export async function GET(
     // Generate excerpts for posts
     const postsWithExcerpts = (posts || []).map(post => ({
       ...post,
-      excerpt: post.content.slice(0, 150) + (post.content.length > 150 ? '...' : ''),
+      excerpt: post.content ? post.content.slice(0, 150) + (post.content.length > 150 ? '...' : '') : '',
     }));
 
     const response: PostsResponse = {

@@ -71,7 +71,7 @@ async function getJournalData(urlPrefix: string) {
 
   const postsWithExcerpts = (posts || []).map((post) => ({
     ...post,
-    excerpt: post.content.slice(0, 150) + (post.content.length > 150 ? '...' : ''),
+    excerpt: post.content ? post.content.slice(0, 150) + (post.content.length > 150 ? '...' : '') : '',
   }));
 
   return {
