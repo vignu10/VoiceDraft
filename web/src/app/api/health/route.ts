@@ -1,27 +1,15 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 export async function GET() {
-  try {
-    // Test basic connection
-    const { data, error, count } = await supabase
-      .from('journals')
-      .select('id, url_prefix, display_name', { count: 'exact', head: true })
-      .eq('is_active', true)
-      .limit(1);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    return NextResponse.json({
-      status: 'ok',
-      database: 'connected',
-      journals_count: count,
-      sample: data ? data[0] : null,
-      error: error ? error.message : null,
-    });
-  } catch (error: any) {
-    return NextResponse.json({
-      status: 'error',
-      database: 'disconnected',
-      error: error.message,
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    status: 'ok',
+    environment: {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey,
+      supabaseUrlPrefix: supabaseUrl?.substring(0, 20) + '...',
+    },
+  });
 }
