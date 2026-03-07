@@ -81,7 +81,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
               <div className="group relative mb-4">
                 <SyntaxHighlighter
                   language={language}
-                  style={isDark ? vscDarkPlus : vs}
+                  style={(isDark ? vscDarkPlus : vs) as any}
                   PreTag="div"
                   className="rounded-lg"
                   {...props}
