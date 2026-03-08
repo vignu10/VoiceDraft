@@ -110,14 +110,22 @@ export default async function BlogPostPage({ params }: PageProps) {
   const headings = extractHeadings(post.content || '');
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
       <BlogHeader journal={post.journals} />
 
       <div className="sticky top-0 z-20">
         <BlogControls />
       </div>
 
-      <main className="container-wide py-8">
+      {/* Delight-themed gradient header */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent" />
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4">
+          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-accent/20 to-transparent blur-3xl" />
+        </div>
+      </div>
+
+      <main className="container-wide relative py-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           {/* Main content */}
           <article className="min-w-0">
