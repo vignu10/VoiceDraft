@@ -25,7 +25,7 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
   const postUrl = `/${urlPrefix}/${slug}`;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
+    <article className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-shadow duration-300 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
       {/* Featured Media */}
       <Link href={postUrl} className="relative aspect-video w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
         {audio_file_url ? (

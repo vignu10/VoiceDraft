@@ -19,15 +19,9 @@ export function HeroSection() {
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/api/auth/signin"
-                className="inline-flex items-center justify-center rounded-lg bg-accent px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-neutral-950"
+                className="inline-flex items-center justify-center rounded-lg bg-accent px-8 py-3.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-neutral-950"
               >
                 Start Writing
-              </Link>
-              <Link
-                href="#featured-blogs"
-                className="inline-flex items-center justify-center rounded-lg px-8 py-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2 focus:ring-offset-white dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:ring-neutral-500 dark:focus:ring-offset-neutral-950"
-              >
-                Explore Content
               </Link>
             </div>
           </div>

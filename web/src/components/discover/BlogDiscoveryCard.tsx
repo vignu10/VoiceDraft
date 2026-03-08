@@ -17,7 +17,7 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all hover:shadow-lg hover:-translate-y-0.5 dark:border-neutral-800 dark:bg-neutral-900"
+      className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-shadow duration-300 hover:shadow-lg hover:-translate-y-0.5 will-change-transform dark:border-neutral-800 dark:bg-neutral-900"
     >
       <div className="p-6">
         {/* Header */}
