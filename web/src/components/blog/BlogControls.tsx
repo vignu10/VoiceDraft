@@ -2,18 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import type { SortOption } from '@/types/blog';
+import { FontSizeControls, useFontSize } from '@/components/blog-post/FontSizeControls';
 
 interface BlogControlsProps {
   onSearchChange?: (search: string) => void;
   onSortChange?: (sort: SortOption) => void;
   initialSort?: SortOption;
+  onFontSizeChange?: (size: 'small' | 'medium' | 'large') => void;
+  showFontSizeControls?: boolean;
 }
 
 export function BlogControls({
   onSearchChange,
   onSortChange,
-  initialSort = 'newest'
+  initialSort = 'newest',
+  onFontSizeChange,
+  showFontSizeControls = false,
 }: BlogControlsProps) {
+  const { fontSize, setFontSize } = useFontSize();
+
+  const handleFontSizeChange = (size: 'small' | 'medium' | 'large') => {
+    setFontSize(size);
+    onFontSizeChange?.(size);
+  };
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortOption>(initialSort);
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -67,8 +78,14 @@ export function BlogControls({
             />
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2">
+          {/* Font Size & Sort Controls */}
+          <div className="flex items-center gap-4">
+            {showFontSizeControls && (
+              <FontSizeControls fontSize={fontSize} onFontSizeChange={handleFontSizeChange} />
+            )}
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2">
             <label htmlFor="sort" className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
               Sort
             </label>
@@ -88,6 +105,7 @@ export function BlogControls({
                 </option>
               ))}
             </select>
+            </div>
           </div>
         </div>
       </div>

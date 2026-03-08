@@ -1,8 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { RelatedPostsProps, BlogPost } from '@/types/blog-post';
 import { PostCard } from '@/components/blog/PostCard';
-
-import type { PostCardData } from '@/types/blog-post';
+import type { PostCardData } from '@/types/blog';
 
 async function getRelatedPosts(journalId: string, currentPostId: string, limit = 4): Promise<PostCardData[]> {
   const { data, error } = await supabase

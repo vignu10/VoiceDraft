@@ -1,8 +1,14 @@
 import { formatDate, formatReadingTime, formatViewCount } from '@/lib/blog-utils';
 import type { PostMetaProps } from '@/types/blog-post';
+import { ShareButtons } from '@/components/blog-post/ShareButtons';
 
 export function PostMeta({ post, urlPrefix }: PostMetaProps) {
   const { title, published_at, reading_time_minutes, view_count, target_keyword, journals } = post;
+
+  // Construct full URL for sharing
+  const shareUrl = typeof window !== 'undefined'
+    ? window.location.href
+    : `${process.env.NEXT_PUBLIC_APP_URL || ''}/${urlPrefix}/${post.slug}`;
 
   return (
     <div className="mb-8">
@@ -12,6 +18,11 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
           {title}
         </h1>
         <div className="absolute -bottom-2 left-0 h-1 w-32 rounded-full bg-gradient-to-r from-accent to-accent-light" />
+      </div>
+
+      {/* Share buttons */}
+      <div className="mb-4">
+        <ShareButtons title={title} url={shareUrl} />
       </div>
 
       {/* Meta info with delight styling */}

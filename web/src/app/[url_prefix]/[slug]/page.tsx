@@ -1,14 +1,16 @@
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { BlogHeader } from '@/components/blog/BlogHeader';
 import { BlogControls } from '@/components/blog/BlogControls';
-import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { TableOfContentsWrapper } from '@/components/blog-post/TableOfContentsWrapper';
 import { PostMeta } from '@/components/blog-post/PostMeta';
+import { ArticleContent } from '@/components/blog-post/ArticleContent';
 import { RelatedPosts } from '@/components/blog-post/RelatedPosts';
 import { extractHeadings } from '@/lib/markdown-utils';
 import type { BlogPost, Heading } from '@/types/blog-post';
+import type { JournalWithAuthor } from '@/types/blog';
 import 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface PageProps {
@@ -92,7 +94,7 @@ async function getPostData(urlPrefix: string, slug: string) {
       ...post,
       journals: {
         ...journal,
-        user_profiles: {
+        user_profiles: journal.user_profiles || {
           full_name: null,
           avatar_url: null,
           bio: null,
@@ -118,10 +120,10 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
-      <BlogHeader journal={post.journals} />
+      <BlogHeader journal={post.journals as JournalWithAuthor} />
 
       <div className="sticky top-0 z-20">
-        <BlogControls />
+        <BlogControls showFontSizeControls />
       </div>
 
       {/* Delight-themed gradient header */}
@@ -133,13 +135,24 @@ export default async function BlogPostPage({ params }: PageProps) {
       </div>
 
       <main className="container-wide relative py-8">
+        {/* Breadcrumb navigation */}
+        <nav className="mb-6" aria-label="Breadcrumb">
+          <Link
+            href={`/${params.url_prefix}`}
+            className="inline-flex items-center gap-1 text-sm text-neutral-600 transition-colors hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 dark:text-neutral-400"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>{post.journals.display_name}</span>
+          </Link>
+        </nav>
+
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           {/* Main content */}
           <article className="min-w-0">
             <PostMeta post={post} urlPrefix={params.url_prefix} />
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
-              <MarkdownRenderer content={post.content || ''} />
-            </div>
+            <ArticleContent content={post.content || ''} />
             <RelatedPosts
               currentPostId={post.id}
               journalId={post.journal_id}
