@@ -3,10 +3,9 @@ import { supabase } from '@/lib/supabase';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BlogHeader } from '@/components/blog/BlogHeader';
-import { BlogControls } from '@/components/blog/BlogControls';
 import { TableOfContentsWrapper } from '@/components/blog-post/TableOfContentsWrapper';
 import { PostMeta } from '@/components/blog-post/PostMeta';
-import { ArticleContent } from '@/components/blog-post/ArticleContent';
+import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { RelatedPosts } from '@/components/blog-post/RelatedPosts';
 import { extractHeadings } from '@/lib/markdown-utils';
 import type { BlogPost, Heading } from '@/types/blog-post';
@@ -122,10 +121,6 @@ export default async function BlogPostPage({ params }: PageProps) {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
       <BlogHeader journal={post.journals as JournalWithAuthor} />
 
-      <div className="sticky top-0 z-20">
-        <BlogControls showFontSizeControls />
-      </div>
-
       {/* Delight-themed gradient header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent" />
@@ -152,7 +147,9 @@ export default async function BlogPostPage({ params }: PageProps) {
           {/* Main content */}
           <article className="min-w-0">
             <PostMeta post={post} urlPrefix={params.url_prefix} />
-            <ArticleContent content={post.content || ''} />
+            <div className="prose prose-neutral dark:prose-invert max-w-none">
+              <MarkdownRenderer content={post.content || ''} />
+            </div>
             <RelatedPosts
               currentPostId={post.id}
               journalId={post.journal_id}
