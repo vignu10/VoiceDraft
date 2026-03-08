@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { BlogHeader } from '@/components/blog/BlogHeader';
 import { BlogControls } from '@/components/blog/BlogControls';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
-import { TableOfContents, useActiveHeading } from '@/components/blog-post/TableOfContents';
+import { TableOfContentsWrapper } from '@/components/blog-post/TableOfContentsWrapper';
 import { PostMeta } from '@/components/blog-post/PostMeta';
 import { RelatedPosts } from '@/components/blog-post/RelatedPosts';
 import { extractHeadings } from '@/lib/markdown-utils';
@@ -20,39 +20,39 @@ interface PageProps {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  // First get the journal by url_prefix
+  const { data: journal } = await supabase
+    .from('journals')
+    .select('id, display_name')
+    .eq('url_prefix', params.url_prefix)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!journal) {
+    return { title: 'Journal Not Found' };
+  }
+
+  // Then get the post
   const { data: post } = await supabase
     .from('posts')
-    .select(`
-      *,
-      journals (
-        *,
-        user_profiles (
-          full_name,
-          avatar_url,
-          bio
-        )
-      )
-    `)
+    .select('title, meta_description, content, published_at')
     .eq('slug', params.slug)
+    .eq('journal_id', journal.id)
     .eq('status', 'published')
-    .single();
+    .maybeSingle();
 
   if (!post) {
-    return {
-      title: 'Post Not Found',
-    };
+    return { title: 'Post Not Found' };
   }
 
   return {
-    title: `${post.title} - ${post.journals?.display_name || 'Blog'}`,
+    title: `${post.title} - ${journal.display_name || 'Blog'}`,
     description: post.meta_description || post.content?.slice(0, 160) || '',
-    authors: post.journals?.user_profiles?.full_name ? [post.journals.user_profiles.full_name] : undefined,
     openGraph: {
       title: post.title,
       description: post.meta_description || post.content?.slice(0, 160) || '',
       type: 'article',
       publishedTime: post.published_at,
-      authors: post.journals?.user_profiles?.full_name ? [post.journals.user_profiles.full_name] : undefined,
     },
   };
 }
@@ -60,44 +60,51 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Fetch data server-side
 async function getPostData(urlPrefix: string, slug: string) {
   try {
+    // First get the journal by url_prefix
+    const { data: journal, error: journalError } = await supabase
+      .from('journals')
+      .select('*')
+      .eq('url_prefix', urlPrefix)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (journalError || !journal) {
+      console.error('Journal fetch error:', journalError);
+      return null;
+    }
+
+    // Then get the post
     const { data: post, error } = await supabase
       .from('posts')
-      .select(`
-        *,
-        journals (
-          *,
-          user_profiles (
-            full_name,
-            avatar_url,
-            bio
-          )
-        )
-      `)
+      .select('*')
       .eq('slug', slug)
+      .eq('journal_id', journal.id)
       .eq('status', 'published')
-      .single();
+      .maybeSingle();
 
     if (error || !post) {
       console.error('Post fetch error:', error);
       return null;
     }
 
-    // Verify URL prefix matches
-    if (post.journals?.url_prefix !== urlPrefix) {
-      return null;
-    }
+    // Combine the data
+    const blogPost: BlogPost = {
+      ...post,
+      journals: {
+        ...journal,
+        user_profiles: {
+          full_name: null,
+          avatar_url: null,
+          bio: null,
+        },
+      },
+    };
 
-    return post as BlogPost;
+    return blogPost;
   } catch (error) {
     console.error('getPostData error:', error);
     return null;
   }
-}
-
-// Active heading wrapper component
-function TableOfContentsWrapper({ headings, urlPrefix }: { headings: Heading[]; urlPrefix: string }) {
-  const activeId = useActiveHeading(headings);
-  return <TableOfContents headings={headings} activeId={activeId} urlPrefix={urlPrefix} />;
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
