@@ -19,6 +19,7 @@ import { useEffect, useRef } from 'react';
 import { apiClient } from '@/services/api/client';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'expo-router';
+import { initializeAuth } from '@/services/api/auth';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,6 +39,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
+
+      // Initialize auth system - sets up token refresh callback
+      initializeAuth();
+
+      // Set the token if already present (from persisted store)
       if (accessToken) {
         apiClient.setToken(accessToken);
       }

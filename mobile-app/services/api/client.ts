@@ -140,6 +140,13 @@ class ApiClient {
 
         if (refreshed) {
           response = await makeRequest();
+        } else {
+          // Token refresh failed and auth failed callback was triggered
+          // Return a graceful error instead of throwing
+          return {
+            success: false,
+            error: 'Session expired. Please sign in again.',
+          };
         }
       }
 
@@ -209,6 +216,13 @@ class ApiClient {
 
         if (refreshed) {
           response = await makeRequest();
+        } else {
+          // Token refresh failed and auth failed callback was triggered
+          // Return a graceful error instead of throwing
+          return {
+            success: false,
+            error: 'Session expired. Please sign in again.',
+          };
         }
       }
 
@@ -262,6 +276,13 @@ class ApiClient {
 
         if (refreshed) {
           response = await makeRequest();
+        } else {
+          // Token refresh failed and auth failed callback was triggered
+          // Return a graceful error instead of throwing
+          return {
+            success: false,
+            error: 'Session expired. Please sign in again.',
+          };
         }
       }
 
@@ -315,6 +336,13 @@ class ApiClient {
 
         if (refreshed) {
           response = await makeRequest();
+        } else {
+          // Token refresh failed and auth failed callback was triggered
+          // Return a graceful error instead of throwing
+          return {
+            success: false,
+            error: 'Session expired. Please sign in again.',
+          };
         }
       }
 
@@ -367,6 +395,13 @@ class ApiClient {
 
         if (refreshed) {
           response = await makeRequest();
+        } else {
+          // Token refresh failed and auth failed callback was triggered
+          // Return a graceful error instead of throwing
+          return {
+            success: false,
+            error: 'Session expired. Please sign in again.',
+          };
         }
       }
 
