@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/auth-store';
-import { MailIcon, LockClosedIcon, UserIcon } from 'lucide-react';
+import { MailIcon, LockIcon, UserIcon } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -99,7 +99,7 @@ export default function SignUpPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<LockClosedIcon className="h-5 w-5" />}
+              leftIcon={<LockIcon className="h-5 w-5" />}
               helperText="Must be at least 8 characters"
             />
 
@@ -111,7 +111,7 @@ export default function SignUpPage() {
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              leftIcon={<LockClosedIcon className="h-5 w-5" />}
+              leftIcon={<LockIcon className="h-5 w-5" />}
               error={confirmPassword && password !== confirmPassword ? 'Passwords do not match' : ''}
             />
           </div>

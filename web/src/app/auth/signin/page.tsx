@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/auth-store';
-import { MailIcon, LockClosedIcon } from 'lucide-react';
+import { MailIcon, LockIcon } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -79,7 +79,7 @@ export default function SignInPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<LockClosedIcon className="h-5 w-5" />}
+              leftIcon={<LockIcon className="h-5 w-5" />}
             />
           </div>
 

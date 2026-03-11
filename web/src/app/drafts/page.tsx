@@ -8,11 +8,10 @@ import { DraftCard } from '@/components/drafts/DraftCard';
 import { useDraftStore } from '@/stores/draft-store';
 import { PostStatus } from '@/lib/types';
 import {
-  SearchIcon,
-  GridIcon,
-  ListIcon,
-  FilterIcon,
-  PlusIcon,
+  Search,
+  Grid3x3,
+  List,
+  Plus,
 } from 'lucide-react';
 
 const filterOptions = [
@@ -84,7 +83,7 @@ export default function DraftsPage() {
             </div>
 
             <Button href="/record">
-              <PlusIcon className="w-5 h-5 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               New Recording
             </Button>
           </div>
@@ -96,7 +95,7 @@ export default function DraftsPage() {
                 placeholder="Search drafts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<SearchIcon className="w-5 h-5" />}
+                leftIcon={<Search className="w-5 h-5" />}
               />
             </div>
 
@@ -126,7 +125,7 @@ export default function DraftsPage() {
                   )}
                   aria-label="Grid view"
                 >
-                  <GridIcon className="w-5 h-5" />
+                  <Grid3x3 className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
@@ -138,7 +137,7 @@ export default function DraftsPage() {
                   )}
                   aria-label="List view"
                 >
-                  <ListIcon className="w-5 h-5" />
+                  <List className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -188,7 +187,7 @@ export default function DraftsPage() {
             </p>
             {!searchQuery && (
               <Button href="/record" className="mt-4">
-                <PlusIcon className="w-5 h-5 mr-2" />
+                <Plus className="w-5 h-5 mr-2" />
                 Start Recording
               </Button>
             )}

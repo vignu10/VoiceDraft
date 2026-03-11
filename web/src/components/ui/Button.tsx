@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -6,6 +7,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
+  href?: string;
   children: React.ReactNode;
 }
 
@@ -55,31 +57,51 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       fullWidth = false,
       disabled,
+      href,
       className,
       children,
       ...props
     },
     ref
   ) => {
+    const baseClasses = cn(
+      'inline-flex items-center justify-center gap-2 rounded-xl',
+      'transition-all duration-200 ease-out',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
+      'active:scale-95',
+      variantStyles[variant],
+      sizeStyles[size],
+      fullWidth && 'w-full',
+      className
+    );
+
+    const content = (
+      <>
+        {isLoading && loadingSpinner}
+        {children}
+      </>
+    );
+
+    if (href) {
+      return (
+        <Link
+          href={href}
+          className={baseClasses}
+        >
+          {content}
+        </Link>
+      );
+    }
+
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-xl',
-          'transition-all duration-200 ease-out',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          'active:scale-95',
-          variantStyles[variant],
-          sizeStyles[size],
-          fullWidth && 'w-full',
-          className
-        )}
+        className={baseClasses}
         {...props}
       >
-        {isLoading && loadingSpinner}
-        {children}
+        {content}
       </button>
     );
   }

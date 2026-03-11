@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useRecordingStore } from '@/stores/recording-store';
 import { useDraftStore } from '@/stores/draft-store';
-import { MicIcon, StopIcon, RefreshCwIcon } from 'lucide-react';
+import { Mic, Square, RefreshCw } from 'lucide-react';
 
 export default function RecordPage() {
   const router = useRouter();
@@ -113,7 +113,7 @@ export default function RecordPage() {
                   {isRecording ? (
                     <div className="w-16 h-16 bg-white rounded-md" />
                   ) : (
-                    <MicIcon className="w-20 h-20 text-white" strokeWidth={1.5} />
+                    <Mic className="w-20 h-20 text-white" strokeWidth={1.5} />
                   )}
 
                   {/* Pulse animation when recording */}
@@ -134,7 +134,7 @@ export default function RecordPage() {
                     onClick={handleCancelRecording}
                     disabled={isProcessing}
                   >
-                    <RefreshCwIcon className="w-4 h-4 mr-2" />
+                    <RefreshCw className="w-4 h-4 mr-2" />
                     Cancel
                   </Button>
                 </div>
@@ -189,7 +189,7 @@ export default function RecordPage() {
               className="flex flex-col items-center px-4 py-2 text-primary-600"
               aria-current="page"
             >
-              <MicIcon className="w-6 h-6" />
+              <Mic className="w-6 h-6" />
               <span className="text-xs mt-1 font-medium">Record</span>
             </button>
             <button className="flex flex-col items-center px-4 py-2 text-neutral-600 dark:text-neutral-400">
