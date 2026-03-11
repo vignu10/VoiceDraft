@@ -40,16 +40,18 @@ export function BlogControls({
   ];
 
   return (
-    <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-950/95">
-      <div className="container-wide py-4">
+    <div className="sticky top-0 z-10 border-b-2 border-neutral-200/80 bg-white/95 backdrop-blur-md dark:border-neutral-800/80 dark:bg-neutral-950/95 shadow-sm">
+      <div className="container-wide py-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search Input */}
+          {/* Bold Search Input */}
           <div className="relative flex-1 max-w-md">
+            <label htmlFor="posts-search" className="sr-only">Search posts</label>
             <svg
-              className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400"
+              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 pointer-events-none"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -59,18 +61,19 @@ export function BlogControls({
               />
             </svg>
             <input
+              id="posts-search"
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts..."
-              className="w-full rounded-lg border border-neutral-300 bg-white py-2 pl-10 pr-4 text-sm text-neutral-900 placeholder-neutral-400 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
+              className="w-full rounded-xl border-2 border-neutral-300 bg-white py-3 pl-11 pr-4 text-sm font-medium text-neutral-900 placeholder-neutral-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500 dark:focus:border-primary-500"
             />
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
-              Sort
+          {/* Bold Sort Dropdown */}
+          <div className="flex items-center gap-3">
+            <label htmlFor="sort" className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+              Sort by
             </label>
             <select
               id="sort"
@@ -80,7 +83,7 @@ export function BlogControls({
                 setSort(newSort);
                 onSortChange?.(newSort);
               }}
-              className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+              className="rounded-xl border-2 border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-primary-500"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>

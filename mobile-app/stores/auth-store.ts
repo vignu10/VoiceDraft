@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { signIn, signOut, signUp } from '@/services/api/auth';
+import { signIn, signUp } from '@/services/api/auth';
 import { getProfile } from '@/services/api/profiles';
 import { apiClient } from '@/services/api/client';
 import { syncGuestDrafts } from '@/utils/guest-sync';
@@ -158,8 +158,22 @@ export const useAuthStore = create<AuthStateExtended>()(
       signOutUser: async () => {
         set({ isLoading: true });
         try {
-          await signOut();
+          // Clear all AsyncStorage keys
+          await AsyncStorage.multiRemove([
+            'access_token',
+            'refresh_token',
+            'drafts',           // Continue Draft feature
+            'guest-drafts',     // Guest drafts
+            'guest-draft-storage', // Guest draft storage
+          ]);
+
+          // Clear zustand persisted storage by clearing the entire storage
+          await AsyncStorage.clear();
+
+          // Clear API client token
           apiClient.clearToken();
+
+          // Reset auth state to initial values
           set({ ...initialState, isLoading: false, error: null });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Sign out failed';

@@ -1,3 +1,4 @@
+// @ts-ignore - expo-constants types are bundled
 import Constants from 'expo-constants';
 
 /**

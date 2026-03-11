@@ -17,14 +17,17 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white transition-shadow duration-300 hover:shadow-lg hover:-translate-y-0.5 will-change-transform dark:border-neutral-800 dark:bg-neutral-900"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-primary-500/50 hover:shadow-2xl hover:shadow-primary-500/10 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-primary-500/50"
     >
+      {/* Gradient accent on hover */}
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="flex-shrink-0">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+            <div className="relative h-14 w-14 overflow-hidden rounded-xl bg-gradient-to-br from-neutral-100 to-neutral-200 ring-2 ring-white shadow-lg transition-transform duration-300 group-hover:scale-110 dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-900">
               {user_profiles?.avatar_url ? (
                 <Image
                   src={user_profiles.avatar_url}
@@ -33,7 +36,7 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-500 to-primary-600 text-white text-lg font-bold">
                   {getInitials(authorName)}
                 </div>
               )}
@@ -42,10 +45,10 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
           {/* Author Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-lg font-semibold text-neutral-900 transition-colors group-hover:text-accent dark:text-white">
+            <h3 className="truncate text-lg font-bold text-neutral-900 transition-colors group-hover:text-primary-500 dark:text-white">
               {display_name}
             </h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">
               {formatPostCount(post_count)}
             </p>
           </div>
@@ -53,21 +56,24 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
 
         {/* Description */}
         {description && (
-          <p className="mt-4 line-clamp-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             {truncate(description, 100)}
           </p>
         )}
 
         {/* Latest Post */}
         {latest_post && (
-          <div className="mt-4 rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800/50">
-            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-              Latest
-            </p>
-            <p className="mt-1 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <div className="mt-4 rounded-xl bg-gradient-to-br from-neutral-50 to-neutral-100 p-4 ring-1 ring-neutral-200 dark:from-neutral-800/50 dark:to-neutral-900/50 dark:ring-neutral-700">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400">
+              <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+              </svg>
+              <span>Latest Post</span>
+            </div>
+            <p className="mt-2 truncate text-sm font-bold text-neutral-900 dark:text-neutral-100">
               {latest_post.title}
             </p>
-            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+            <p className="mt-1 text-xs font-medium text-neutral-500 dark:text-neutral-500">
               {formatDate(latest_post.published_at)}
             </p>
           </div>

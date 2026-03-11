@@ -120,7 +120,7 @@ export default async function BlogPage({ params }: PageProps) {
         <BlogControls />
       </div>
 
-      <main className="container-wide py-8">
+      <main className="container-wide py-12">
         <PostCardGrid
           initialPosts={posts as PostCardData[]}
           urlPrefix={params.url_prefix}

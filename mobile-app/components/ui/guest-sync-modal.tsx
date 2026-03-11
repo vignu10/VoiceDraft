@@ -77,8 +77,8 @@ export function GuestSyncModal({
       <SafeAreaView
         mode="padding"
         edges={["top", "bottom"]}
-        style={styles.container}
       >
+        <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <SlideIn direction="down" delay={100}>
@@ -174,26 +174,31 @@ export function GuestSyncModal({
             {/* Actions */}
             <SlideIn direction="up" delay={700}>
               <View style={styles.actions}>
-                <AnimatedButton
-                  variant="secondary"
-                  onPress={handleDismiss}
-                  style={styles.secondaryButton}
-                  disabled={isSyncing}
-                >
-                  Skip
-                </AnimatedButton>
-                <AnimatedButton
-                  variant="primary"
-                  onPress={handleSync}
-                  loading={isSyncing}
-                  style={styles.primaryButton}
-                >
-                  Sync Draft
-                </AnimatedButton>
+                <View style={styles.secondaryButton}>
+                  <AnimatedButton
+                    variant="secondary"
+                    onPress={handleDismiss}
+                    fullWidth
+                    disabled={isSyncing}
+                  >
+                    Skip
+                  </AnimatedButton>
+                </View>
+                <View style={styles.primaryButton}>
+                  <AnimatedButton
+                    variant="primary"
+                    onPress={handleSync}
+                    loading={isSyncing}
+                    fullWidth
+                  >
+                    Sync Draft
+                  </AnimatedButton>
+                </View>
               </View>
             </SlideIn>
           </View>
         </ScrollView>
+        </View>
       </SafeAreaView>
     </Modal>
   );

@@ -55,12 +55,18 @@ export function useLibraryData(): UseLibraryDataReturn {
           setTimeout(() => reject(new Error('Request timeout after 10s')), 10000)
         );
 
-        // Authenticated: load from server with timeout
-        const posts = await Promise.race([
-          listPosts({ status: 'draft' }),
+        // Authenticated: load both draft and published posts from server with timeout
+        const [draftPosts, publishedPosts] = await Promise.race([
+          Promise.all([
+            listPosts({ status: 'draft' }),
+            listPosts({ status: 'published' })
+          ]),
           timeoutPromise
-        ]) as Awaited<ReturnType<typeof listPosts>>;
-        const mappedDrafts = mapPostsToDrafts(posts);
+        ]) as [Awaited<ReturnType<typeof listPosts>>, Awaited<ReturnType<typeof listPosts>>];
+
+        // Merge both draft and published posts
+        const allPosts = [...draftPosts, ...publishedPosts];
+        const mappedDrafts = mapPostsToDrafts(allPosts);
         setDrafts(mappedDrafts);
       } else {
         // Not authenticated: load guest drafts from AsyncStorage

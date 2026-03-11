@@ -1,4 +1,4 @@
-import {
+                                                                                                            import {
   AmbientRecordingBg,
   PremiumRecordButton,
   SimulatedWaveform,
@@ -34,7 +34,6 @@ import {
 } from "@/stores";
 import {
   formatDuration,
-  getContinueDraftMessage,
   getHeroMessage,
   getRecordingHint,
   getRecordingMilestone,
@@ -44,7 +43,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, AppState, AppStateStatus, StyleSheet, View } from "react-native";
+import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Check if audio has meaningful sound levels
@@ -55,13 +54,11 @@ function hasAudioActivity(levels: number[]): boolean {
 }
 
 // Unified state card component that adapts to different states
-type StateCardType = "resume" | "continueDraft" | "recordingReady";
+type StateCardType = "resume" | "recordingReady";
 
 interface StateCardProps {
   type: StateCardType;
   duration: number;
-  lastDraftTitle?: string | null;
-  lastDraftKeyword?: string | null;
   onPrimaryAction: () => void;
   onSecondaryAction: () => void;
   colors: ReturnType<typeof useThemeColors>;
@@ -74,8 +71,6 @@ interface StateCardProps {
 function StateCard({
   type,
   duration,
-  lastDraftTitle,
-  lastDraftKeyword,
   onPrimaryAction,
   onSecondaryAction,
   colors,
@@ -100,18 +95,6 @@ function StateCard({
           showKeyword: false,
           showPlayButton: true,
         },
-        continueDraft: {
-          icon: "document-text" as const,
-          iconBg: colors.primaryLight,
-          iconColor: colors.primary,
-          title: lastDraftTitle || "Untitled Draft",
-          subtitle: getContinueDraftMessage("subtitles"),
-          primaryLabel: "Continue",
-          primaryBg: colors.primary,
-          primaryIcon: "create" as const,
-          secondaryLabel: "Discard",
-          showKeyword: true,
-        },
         recordingReady: {
           icon: "checkmark-circle" as const,
           iconBg: colors.successLight,
@@ -128,7 +111,6 @@ function StateCard({
     [
       type,
       duration,
-      lastDraftTitle,
       colors.primaryLight,
       colors.primary,
       colors.successLight,
@@ -161,21 +143,6 @@ function StateCard({
           <ThemedText style={[styles.stateCardTitle, { color: colors.text }]}>
             {config.title}
           </ThemedText>
-          {config.showKeyword && lastDraftKeyword && (
-            <View
-              style={[
-                styles.keywordTag,
-                { backgroundColor: colors.accentLight },
-              ]}
-            >
-              <Ionicons name="pricetag" size={12} color={colors.accent} />
-              <ThemedText
-                style={[styles.keywordText, { color: colors.accent }]}
-              >
-                {lastDraftKeyword}
-              </ThemedText>
-            </View>
-          )}
           <ThemedText
             style={[styles.stateCardSubtitle, { color: colors.textSecondary }]}
           >
@@ -186,7 +153,7 @@ function StateCard({
         {/* Actions */}
         <View style={styles.stateCardActions}>
           {/* Play button for resume card */}
-          {(config as any).showPlayButton && recordingUri && onPlayPress && (
+          {type === "resume" && recordingUri && onPlayPress && (
             <PressableScale
               onPress={onPlayPress}
               hapticStyle="light"
@@ -271,9 +238,6 @@ export default function RecordingScreen() {
     audioUri,
     hasExistingRecording,
     savedRecordingUri,
-    lastDraftId,
-    lastDraftTitle,
-    lastDraftKeyword,
     setRecording,
     setPaused,
     setDuration,
@@ -284,7 +248,6 @@ export default function RecordingScreen() {
     clearExisting,
     markAsExisting,
     setSavedRecordingUri,
-    clearLastDraft,
   } = useRecordingStore();
 
   // Guest trial hook - check if user can record
@@ -405,7 +368,12 @@ export default function RecordingScreen() {
     try {
       const result = await recordingService.stopRecording();
       if (!result?.uri) {
-        Alert.alert("Recording Error", "Failed to save recording");
+        await showDialog({
+          title: "Recording Error",
+          message: "Failed to save recording",
+          confirmText: "Got it",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -453,14 +421,15 @@ export default function RecordingScreen() {
       console.error("Recording error:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
-      Alert.alert(warmError.title, warmError.message, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await resetStore();
-          },
+      await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Got it",
+        variant: "warning",
+        onConfirm: async () => {
+          await resetStore();
         },
-      ]);
+      });
     }
   }, [
     setRecording,
@@ -469,13 +438,19 @@ export default function RecordingScreen() {
     recordRecording,
     isAuthenticated,
     duration,
+    showDialog,
   ]);
 
   const handleStop = useCallback(async () => {
     // Validate minimum duration - use warm message
     if (duration < MIN_RECORDING_DURATION) {
       const warmError = getWarmErrorMessage("tooShort");
-      Alert.alert(warmError.title, warmError.message, [{ text: "Got it" }]);
+      await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Got it",
+        variant: "warning",
+      });
       return;
     }
 
@@ -485,20 +460,21 @@ export default function RecordingScreen() {
     const currentLevels = getMeteringLevels();
     if (!hasAudioActivity(currentLevels)) {
       const warmError = getWarmErrorMessage("noAudio");
-      Alert.alert(warmError.title, warmError.message, [
-        { text: "Try Again", style: "cancel" },
-        {
-          text: "Continue Anyway",
-          onPress: async () => {
-            await processRecording();
-          },
-        },
-      ]);
+      const confirmed = await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Continue Anyway",
+        cancelText: "Try Again",
+        variant: "warning",
+      });
+      if (confirmed) {
+        await processRecording();
+      }
       return;
     }
 
     await processRecording();
-  }, [duration, processRecording]);
+  }, [duration, processRecording, showDialog]);
 
   useEffect(() => {
     if (duration >= MAX_RECORDING_DURATION) {
@@ -514,22 +490,16 @@ export default function RecordingScreen() {
         ? ` Try again in ${minutesUntilReset} minutes.`
         : "";
 
-      Alert.alert(
-        "Free Trial Limit Reached",
-        `You've used all ${maxFreeDrafts} free drafts.${resetMessage}`,
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-          {
-            text: "Sign Up",
-            onPress: () => {
-              router.push("/auth/sign-up");
-            },
-          },
-        ],
-      );
+      const confirmed = await showDialog({
+        title: "Free Trial Limit Reached",
+        message: `You've used all ${maxFreeDrafts} free drafts.${resetMessage}`,
+        confirmText: "Sign Up",
+        cancelText: "Cancel",
+        variant: "info",
+        onConfirm: () => {
+          router.push("/auth/sign-up");
+        },
+      });
       return;
     }
 
@@ -548,14 +518,15 @@ export default function RecordingScreen() {
       console.error("Error starting recording:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
-      Alert.alert(warmError.title, warmError.message, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await resetStore();
-          },
+      await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Got it",
+        variant: "warning",
+        onConfirm: async () => {
+          await resetStore();
         },
-      ]);
+      });
     }
   }, [
     canRecord,
@@ -567,6 +538,7 @@ export default function RecordingScreen() {
     hasExistingRecording,
     maxFreeDrafts,
     minutesUntilReset,
+    showDialog,
   ]);
 
   const handlePauseResume = useCallback(async () => {
@@ -582,36 +554,37 @@ export default function RecordingScreen() {
       console.error("Error pausing/resuming:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
-      Alert.alert(warmError.title, warmError.message, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await resetStore();
-          },
+      await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Got it",
+        variant: "warning",
+        onConfirm: async () => {
+          await resetStore();
         },
-      ]);
+      });
     }
-  }, [isPaused, setPaused, resetStore]);
+  }, [isPaused, setPaused, resetStore, showDialog]);
 
   const handleCancel = useCallback(async () => {
     if (isRecording) {
-      Alert.alert("Discard Recording?", "Your recording will be lost.", [
-        { text: "Keep Recording", style: "cancel" },
-        {
-          text: "Discard",
-          style: "destructive",
-          onPress: async () => {
-            await recordingService.cancelRecording();
-            await resetStore();
-            router.back();
-          },
+      const confirmed = await showDialog({
+        title: "Discard Recording?",
+        message: "Your recording will be lost.",
+        confirmText: "Discard",
+        cancelText: "Keep Recording",
+        variant: "destructive",
+        onConfirm: async () => {
+          await recordingService.cancelRecording();
+          await resetStore();
+          router.back();
         },
-      ]);
+      });
     } else {
       await resetStore();
       router.back();
     }
-  }, [isRecording, resetStore]);
+  }, [isRecording, resetStore, showDialog]);
 
   const handleReset = useCallback(async () => {
     const confirmed = await showDialog({
@@ -633,7 +606,7 @@ export default function RecordingScreen() {
 
   const handleResume = useCallback(async () => {
     try {
-      let uriToUse = savedRecordingUri;
+      let uriToUse = savedRecordingUri || audioUri;
 
       // If we don't have a saved URI, save the current recording first
       if (!uriToUse && recordingService.isRecording()) {
@@ -652,32 +625,36 @@ export default function RecordingScreen() {
           },
         });
       } else {
-        // No recording to continue - show alert
-        Alert.alert(
-          "No Recording Found",
-          "Please start a new recording.",
-          [{ text: "OK" }]
-        );
+        // No recording to continue - show custom dialog
+        await showDialog({
+          title: "No Recording Found",
+          message: "Please start a new recording.",
+          confirmText: "Got it",
+          variant: "info",
+        });
       }
     } catch (error) {
       console.error("Error continuing to keyword page:", error);
       const warmError = getWarmErrorMessage("recordingError");
 
-      Alert.alert(warmError.title, warmError.message, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await resetStore();
-          },
+      await showDialog({
+        title: warmError.title,
+        message: warmError.message,
+        confirmText: "Got it",
+        variant: "warning",
+        onConfirm: async () => {
+          await resetStore();
         },
-      ]);
+      });
     }
   }, [
     savedRecordingUri,
+    audioUri,
     duration,
     isAuthenticated,
     setSavedRecordingUri,
     resetStore,
+    showDialog,
   ]);
 
   const handleStartFresh = useCallback(async () => {
@@ -732,48 +709,6 @@ export default function RecordingScreen() {
     }
   }, [savedRecordingUri, isPlaying, sound]);
 
-  // Continue Draft handlers
-  const handleContinueDraft = useCallback(() => {
-    if (lastDraftId) {
-      // Show celebration before navigating
-      setCelebration({
-        visible: true,
-        message: getContinueDraftMessage("readyMessages"),
-      });
-
-      // Clear previous timer and set new one
-      if (celebrationTimerRef.current) {
-        clearTimeout(celebrationTimerRef.current);
-      }
-      celebrationTimerRef.current = setTimeout(() => {
-        setCelebration({ visible: false, message: "" });
-        router.push({
-          pathname: "/draft/[id]",
-          params: { id: lastDraftId },
-        });
-      }, 800);
-    }
-  }, [lastDraftId]);
-
-  const handleDiscardDraft = useCallback(async () => {
-    const confirmed = await showDialog({
-      title: "Discard Draft?",
-      message:
-        "This will remove the draft and you can start fresh. Your draft will still be available in the library.",
-      confirmText: "Discard",
-      cancelText: "Keep Draft",
-      variant: "destructive",
-      onConfirm: () => {
-        clearLastDraft();
-        showToast(getContinueDraftMessage("discarded"), "info");
-      },
-    });
-    if (confirmed) {
-      clearLastDraft();
-      showToast(getContinueDraftMessage("discarded"), "info");
-    }
-  }, [clearLastDraft, showToast, showDialog]);
-
   // Recording Ready handlers (recording done, waiting for keyword)
   const handleContinueToKeyword = useCallback(() => {
     if (audioUri) {
@@ -806,16 +741,9 @@ export default function RecordingScreen() {
     }
   }, [setAudioUri, setDuration, setMeteringLevels, showToast, showDialog]);
 
-  // Determine if we should show the continue draft card (highest priority)
-  const showContinueDraftCard =
-    !isRecording &&
-    !isPaused &&
-    lastDraftId !== null &&
-    lastDraftId !== undefined;
-
   // Determine if we should show the recording ready card (recording done, waiting for keyword)
   const showRecordingReadyCard =
-    !isRecording && !isPaused && audioUri !== null && !showContinueDraftCard;
+    !isRecording && !isPaused && audioUri !== null;
 
   // Determine if we should show the resume card
   const showResumeCard =
@@ -824,7 +752,6 @@ export default function RecordingScreen() {
     (savedRecordingUri !== null || hasExistingRecording) &&
     duration > 0 &&
     !audioUri &&
-    !showContinueDraftCard &&
     !showRecordingReadyCard;
 
   const handleRecordPress = useCallback(() => {
@@ -836,9 +763,6 @@ export default function RecordingScreen() {
   }, [isRecording, handleStartRecording, handlePauseResume]);
 
   const getTipText = () => {
-    if (showContinueDraftCard) {
-      return getContinueDraftMessage("subtitles");
-    }
     if (showRecordingReadyCard) {
       return "Your recording is saved!";
     }
@@ -949,7 +873,6 @@ export default function RecordingScreen() {
             {!isRecording &&
               !isPaused &&
               !showResumeCard &&
-              !showContinueDraftCard &&
               !showRecordingReadyCard && (
                 <FadeIn delay={100}>
                   <View style={styles.messageContainer}>
@@ -1011,18 +934,6 @@ export default function RecordingScreen() {
             />
           )}
 
-          {showContinueDraftCard && (
-            <StateCard
-              type="continueDraft"
-              duration={duration}
-              lastDraftTitle={lastDraftTitle}
-              lastDraftKeyword={lastDraftKeyword}
-              onPrimaryAction={handleContinueDraft}
-              onSecondaryAction={handleDiscardDraft}
-              colors={colors}
-            />
-          )}
-
           {showRecordingReadyCard && (
             <StateCard
               type="recordingReady"
@@ -1038,9 +949,7 @@ export default function RecordingScreen() {
             <View
               style={[
                 styles.controls,
-                (showResumeCard ||
-                  showContinueDraftCard ||
-                  showRecordingReadyCard) &&
+                (showResumeCard || showRecordingReadyCard) &&
                   styles.controlsHidden,
               ]}
               accessibilityLabel="Recording controls"
@@ -1186,19 +1095,6 @@ const styles = StyleSheet.create({
     lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
     includeFontPadding: false,
   },
-  waveformContainer: {
-    width: "100%",
-    borderRadius: BorderRadius["2xl"],
-    overflow: "hidden",
-    marginBottom: Spacing[10],
-    padding: Spacing[4],
-  },
-  timerContainer: {
-    marginBottom: Spacing[4],
-    minHeight: 80,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   tip: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.normal,
@@ -1289,20 +1185,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.normal,
     textAlign: "center",
-    includeFontPadding: false,
-    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
-  },
-  keywordTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing[1],
-    paddingHorizontal: Spacing[3],
-    paddingVertical: Spacing[1],
-    borderRadius: BorderRadius.lg,
-  },
-  keywordText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
     includeFontPadding: false,
     lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
   },

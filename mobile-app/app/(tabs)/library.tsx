@@ -167,7 +167,7 @@ export default function LibraryTab() {
   return (
     <>
       <ThemedView style={styles.container}>
-        <SafeAreaView edges={['top']} style={{ flex: 1 } as any}>
+        <SafeAreaView edges={['top']}>
           <View style={styles.safeArea}>
             {/* Header */}
             <LibraryHeader

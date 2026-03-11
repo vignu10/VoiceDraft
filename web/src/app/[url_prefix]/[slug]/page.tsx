@@ -121,33 +121,36 @@ export default async function BlogPostPage({ params }: PageProps) {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
       <BlogHeader journal={post.journals as JournalWithAuthor} />
 
-      {/* Delight-themed gradient header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent" />
+      {/* Bold-themed gradient header with decorative elements */}
+      <div className="relative overflow-hidden border-b border-neutral-200 dark:border-neutral-800">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-accent-500/5 to-transparent" />
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4">
-          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-accent/20 to-transparent blur-3xl" />
+          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-primary-500/20 to-transparent blur-3xl" />
+        </div>
+        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4">
+          <div className="h-64 w-64 rounded-full bg-gradient-to-tr from-accent-500/15 to-transparent blur-3xl" />
         </div>
       </div>
 
       <main className="container-wide relative py-8">
-        {/* Breadcrumb navigation */}
-        <nav className="mb-6" aria-label="Breadcrumb">
+        {/* Bold breadcrumb navigation */}
+        <nav className="mb-8" aria-label="Breadcrumb">
           <Link
             href={`/${params.url_prefix}`}
-            className="inline-flex items-center gap-1 text-sm text-neutral-600 transition-colors hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/50 dark:text-neutral-400"
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 rounded-lg dark:text-neutral-400"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span>{post.journals.display_name}</span>
+            <span>Back to {post.journals.display_name}</span>
           </Link>
         </nav>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
+        <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
           {/* Main content */}
           <article className="min-w-0">
             <PostMeta post={post} urlPrefix={params.url_prefix} />
-            <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <div className="blog-content max-w-none">
               <MarkdownRenderer content={post.content || ''} />
             </div>
             <RelatedPosts
@@ -164,7 +167,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         </div>
 
         {/* Mobile TOC */}
-        <div className="lg:hidden mt-8">
+        <div className="lg:hidden mt-12">
           <TableOfContentsWrapper headings={headings} urlPrefix={params.url_prefix} />
         </div>
       </main>

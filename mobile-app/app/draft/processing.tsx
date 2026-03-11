@@ -246,8 +246,8 @@ export default function ProcessingScreen() {
   const recordDraftCreated = useAchievementsStore((state) => state.recordDraftCreated);
   const recordWordsWritten = useAchievementsStore((state) => state.recordWordsWritten);
 
-  // Recording store for Continue Draft feature
-  const { setLastDraft } = useRecordingStore();
+  // Recording store cleanup - clear recording state after draft is created
+  const { setAudioUri, setDuration, setSavedRecordingUri, setMeteringLevels } = useRecordingStore();
 
   // Guest draft store and trial hook
   const { setGuestDraft } = useGuestDraftStore();
@@ -338,6 +338,12 @@ export default function ProcessingScreen() {
           markTrialCompleted();
           decrementRemainingDrafts();
 
+          // Clear recording state since draft is now saved in library
+          setAudioUri(null);
+          setDuration(0);
+          setSavedRecordingUri(null);
+          setMeteringLevels([]);
+
           setCelebrationMessage(getSuccessMessage('draftCreated'));
           setShowCelebration(true);
           setStep('complete');
@@ -393,8 +399,11 @@ export default function ProcessingScreen() {
         recordDraftCreated();
         recordWordsWritten(draft.wordCount || 0);
 
-        // Save draft to recording store for Continue Draft feature
-        setLastDraft(id, draft.title || null, draft.targetKeyword || null, draft.content || null);
+        // Clear recording state since draft is now saved in library
+        setAudioUri(null);
+        setDuration(0);
+        setSavedRecordingUri(null);
+        setMeteringLevels([]);
 
         // Set celebration message for first draft
         if (isFirstDraft) {
@@ -500,6 +509,12 @@ export default function ProcessingScreen() {
           markTrialCompleted();
           decrementRemainingDrafts();
 
+          // Clear recording state since draft is now saved in library
+          setAudioUri(null);
+          setDuration(0);
+          setSavedRecordingUri(null);
+          setMeteringLevels([]);
+
           setCelebrationMessage(getSuccessMessage('draftCreated'));
           setShowCelebration(true);
           setStep('complete');
@@ -555,8 +570,11 @@ export default function ProcessingScreen() {
         recordDraftCreated();
         recordWordsWritten(draft.wordCount || 0);
 
-        // Save draft to recording store for Continue Draft feature
-        setLastDraft(id, draft.title || null, draft.targetKeyword || null, draft.content || null);
+        // Clear recording state since draft is now saved in library
+        setAudioUri(null);
+        setDuration(0);
+        setSavedRecordingUri(null);
+        setMeteringLevels([]);
 
         // Set celebration message for first draft
         if (isFirstDraft) {
