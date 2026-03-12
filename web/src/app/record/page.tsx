@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { WaveformVisualizer } from '@/components/recording/WaveformVisualizer';
@@ -8,11 +8,13 @@ import { Card } from '@/components/ui/Card';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useRecordingStore } from '@/stores/recording-store';
 import { useDraftStore } from '@/stores/draft-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { WithBottomNav, BottomNav } from '@/components/layout/BottomNav';
 import { Mic, Square, RefreshCw } from 'lucide-react';
 
 export default function RecordPage() {
   const router = useRouter();
+  const { accessToken } = useAuthStore();
   const { state, startRecording, stopRecording, requestPermission } = useAudioRecorder(
     (duration) => useRecordingStore.getState().setDuration(duration),
     (audioLevel) => useRecordingStore.getState().setAudioLevel(audioLevel)
@@ -40,19 +42,24 @@ export default function RecordPage() {
       useRecordingStore.getState().stopRecording();
       useRecordingStore.getState().setAudioBlob(audioBlob);
 
+      // Check if user is authenticated
+      if (!accessToken) {
+        throw new Error('You must be signed in to save recordings');
+      }
+
       // Create draft with audio
       const formData = new FormData();
       formData.append('audio', audioBlob, `recording-${Date.now()}.webm`);
 
-      const token = localStorage.getItem('access_token');
       const response = await fetch('/api/drafts', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create draft');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to create draft');
       }
 
       const draft = await response.json();
@@ -75,7 +82,7 @@ export default function RecordPage() {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
               transcript: text,
@@ -92,7 +99,8 @@ export default function RecordPage() {
       router.push(`/draft/${draft.id}`);
     } catch (error) {
       console.error('Failed to save recording:', error);
-      alert('Failed to save recording. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save recording. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -108,9 +116,9 @@ export default function RecordPage() {
   };
 
   // Check permission on mount
-  useState(() => {
+  useEffect(() => {
     requestPermission().then(setHasPermission);
-  });
+  }, [requestPermission]);
 
   return (
     <WithBottomNav>

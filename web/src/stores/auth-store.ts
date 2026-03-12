@@ -11,6 +11,7 @@ interface User {
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
+  accessToken: string | null;
   isLoading: boolean;
   error: string | null;
 
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       isAuthenticated: false,
       user: null,
+      accessToken: null,
       isLoading: false,
       error: null,
 
@@ -52,8 +54,13 @@ export const useAuthStore = create<AuthState>()(
             throw new Error(data.error || 'Sign in failed');
           }
 
-          const { user } = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false });
+          const { user, session } = await response.json();
+          set({
+            user,
+            accessToken: session?.access_token || null,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : 'Sign in failed',
@@ -77,8 +84,13 @@ export const useAuthStore = create<AuthState>()(
             throw new Error(data.error || 'Sign up failed');
           }
 
-          const { user } = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false });
+          const { user, session } = await response.json();
+          set({
+            user,
+            accessToken: session?.access_token || null,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : 'Sign up failed',
@@ -92,7 +104,13 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           await fetch('/api/auth/signout', { method: 'POST' });
-          set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+          set({
+            user: null,
+            accessToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
         } catch (error) {
           set({ isLoading: false, error: 'Sign out failed' });
           throw error;
@@ -103,19 +121,35 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await fetch('/api/auth/session');
           if (response.ok) {
-            const { user } = await response.json();
-            set({ user, isAuthenticated: true });
+            const { user, session } = await response.json();
+            set({
+              user,
+              accessToken: session?.access_token || null,
+              isAuthenticated: true,
+            });
           } else {
-            set({ user: null, isAuthenticated: false });
+            set({
+              user: null,
+              accessToken: null,
+              isAuthenticated: false,
+            });
           }
         } catch (error) {
-          set({ user: null, isAuthenticated: false });
+          set({
+            user: null,
+            accessToken: null,
+            isAuthenticated: false,
+          });
         }
       },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+      }),
     }
   )
 );

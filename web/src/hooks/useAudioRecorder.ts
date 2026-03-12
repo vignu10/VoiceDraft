@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 
 export interface AudioRecorderState {
   isRecording: boolean;
@@ -26,25 +26,43 @@ export function useAudioRecorder(
   const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isRecordingRef = useRef(false); // Separate ref for tracking recording state
 
-  const stateRef = useRef<AudioRecorderState>({
+  // Use useState to trigger re-renders - only update when values actually change
+  const [state, setState] = useState<AudioRecorderState>({
     isRecording: false,
     duration: 0,
     audioLevel: 0,
   });
 
+  // Use ref to avoid dependency on state in callbacks
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const callbacksRef = useRef({
+    onDurationChange,
+    onAudioLevelChange,
+  });
+  callbacksRef.current = { onDurationChange, onAudioLevelChange };
+
   const updateState = useCallback((updates: Partial<AudioRecorderState>) => {
-    stateRef.current = { ...stateRef.current, ...updates };
-    if (updates.duration !== undefined) {
-      onDurationChange?.(updates.duration);
-    }
-    if (updates.audioLevel !== undefined) {
-      onAudioLevelChange?.(updates.audioLevel);
-    }
-  }, [onDurationChange, onAudioLevelChange]);
+    setState((prev) => {
+      const newState = { ...prev, ...updates };
+
+      // Only call callbacks when values actually change
+      if (updates.duration !== undefined && updates.duration !== prev.duration) {
+        callbacksRef.current.onDurationChange?.(updates.duration);
+      }
+      if (updates.audioLevel !== undefined && updates.audioLevel !== prev.audioLevel) {
+        callbacksRef.current.onAudioLevelChange?.(updates.audioLevel);
+      }
+
+      return newState;
+    });
+  }, []);
 
   const measureAudioLevel = useCallback(() => {
-    if (!analyserRef.current) return;
+    if (!analyserRef.current || !isRecordingRef.current) return;
 
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
@@ -56,7 +74,7 @@ export function useAudioRecorder(
 
     updateState({ audioLevel: normalizedLevel });
 
-    if (stateRef.current.isRecording) {
+    if (isRecordingRef.current) {
       animationFrameRef.current = requestAnimationFrame(measureAudioLevel);
     }
   }, [updateState]);
@@ -67,7 +85,10 @@ export function useAudioRecorder(
       if (startTimeRef.current) {
         const elapsed = Date.now() - startTimeRef.current;
         const seconds = Math.floor(elapsed / 1000);
-        updateState({ duration: seconds });
+        const currentDuration = stateRef.current.duration;
+        if (seconds !== currentDuration) {
+          updateState({ duration: seconds });
+        }
       }
     }, 100);
   }, [updateState]);
@@ -113,9 +134,16 @@ export function useAudioRecorder(
       };
 
       mediaRecorder.start(100); // Collect data every 100ms
+
+      // Update refs first
+      isRecordingRef.current = true;
+
+      // Then update state
       updateState({ isRecording: true, duration: 0, audioLevel: 0 });
       startTimer();
-      measureAudioLevel();
+
+      // Start measuring audio level
+      animationFrameRef.current = requestAnimationFrame(measureAudioLevel);
     } catch (error) {
       console.error('Error starting recording:', error);
       throw new Error('Failed to access microphone');
@@ -141,8 +169,14 @@ export function useAudioRecorder(
         // Clean up
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
         }
         stopTimer();
+
+        // Update refs
+        isRecordingRef.current = false;
+
+        // Update state
         updateState({ isRecording: false, audioLevel: 0 });
 
         // Close audio context
@@ -165,8 +199,14 @@ export function useAudioRecorder(
 
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     stopTimer();
+
+    // Update refs
+    isRecordingRef.current = false;
+
+    // Update state
     updateState({ isRecording: false, duration: 0, audioLevel: 0 });
   }, [updateState, stopTimer]);
 
@@ -188,7 +228,7 @@ export function useAudioRecorder(
   }, [cancelRecording]);
 
   return {
-    state: stateRef.current,
+    state,
     startRecording,
     stopRecording,
     requestPermission,

@@ -1,0 +1,3 @@
+[   20074ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3000/api/drafts:0
+[   20075ms] [ERROR] Failed to save recording: Error: Failed to create draft
+    at handleStopRecording (webpack-internal:///(app-pages-browser)/./src/app/record/page.tsx:65:23) @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:32

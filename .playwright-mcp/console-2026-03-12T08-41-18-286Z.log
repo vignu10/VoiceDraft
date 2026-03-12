@@ -1,0 +1,5 @@
+[    1185ms] [ERROR] Error: <path> attribute d: Expected number, "…05.22 1.41.59.41L13 9H7v1l4-4 4z". @ http://localhost:3000/analytics:0
+[    1593ms] [WARNING] No default component was found for a parallel route rendered on this page. Falling back to nearest NotFound boundary.
+Learn more: https://nextjs.org/docs/app/building-your-application/routing/parallel-routes#defaultjs
+
+ @ webpack-internal:///(app-pages-browser)/./node_modules/next/dist/shared/lib/utils/warn-once.js:15

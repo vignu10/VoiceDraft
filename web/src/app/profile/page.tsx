@@ -119,8 +119,37 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.push('/auth/signin');
-    return null;
+    return (
+      <WithBottomNav>
+        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+          <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                Profile
+              </h1>
+            </div>
+          </header>
+
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+            <Card>
+              <CardBody className="p-8 text-center">
+                <User className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
+                  Sign In Required
+                </h2>
+                <p className="text-neutral-600 dark:text-neutral-400 mb-6">
+                  Please sign in to view and edit your profile.
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button href="/auth/signin">Sign In</Button>
+                  <Button variant="secondary" href="/auth/signup">Sign Up</Button>
+                </div>
+              </CardBody>
+            </Card>
+          </main>
+        </div>
+      </WithBottomNav>
+    );
   }
 
   const memberSince = new Date(user.created_at).toLocaleDateString('en-US', {

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Outfit } from 'next/font/google';
-import Link from 'next/link';
 import { ThemeProvider } from '@/components/theme-provider';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { Navigation } from '@/components/layout/Navigation';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { AppUpdateNotification } from '@/components/ui/AppUpdateNotification';
@@ -56,53 +55,8 @@ export default function RootLayout({
               Skip to main content
             </a>
 
-            {/* Bold Navigation Bar - Dramatic and Distinctive */}
-            <nav className="sticky top-0 z-50 border-b-2 border-neutral-200/80 bg-white/95 backdrop-blur-md dark:border-neutral-800/80 dark:bg-neutral-950/95" aria-label="Main navigation">
-              <div className="container-wide">
-                <div className="flex h-20 items-center justify-between">
-                  {/* VoiceDraft brand/logo - Bold and confident */}
-                  <Link
-                    href="/"
-                    className="group flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
-                  >
-                    {/* Bold logo mark */}
-                    <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-lg shadow-primary-500/25 transition-all group-hover:shadow-xl group-hover:shadow-primary-500/35 group-hover:scale-105">
-                      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="23" />
-                        <line x1="8" y1="23" x2="16" y2="23" />
-                      </svg>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 transition-colors group-hover:text-primary-500 font-[family:var(--font-display)]">
-                        VoiceDraft
-                      </span>
-                      <span className="text-[10px] font-medium tracking-wide text-neutral-500 dark:text-neutral-400 uppercase">
-                        Speak. Create.
-                      </span>
-                    </div>
-                  </Link>
-
-                  {/* Right side navigation items */}
-                  <div className="flex items-center gap-4">
-                    <Link
-                      href="/#featured-blogs"
-                      className="text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg px-3 py-2 dark:text-neutral-400"
-                    >
-                      Explore
-                    </Link>
-                    <Link
-                      href="/api/auth/signin"
-                      className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/35 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                    >
-                      Get Started
-                    </Link>
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </div>
-            </nav>
+            {/* Navigation */}
+            <Navigation />
 
             {/* Main content */}
             <main id="main" tabIndex={-1}>

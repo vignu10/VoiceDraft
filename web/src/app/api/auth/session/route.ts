@@ -7,14 +7,14 @@ export async function GET(req: NextRequest) {
     const authHeader = req.headers.get('authorization');
 
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ user: null }, { status: 401 });
+      return NextResponse.json({ user: null, session: null }, { status: 401 });
     }
 
     const token = authHeader.substring(7);
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user, session }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      return NextResponse.json({ user: null }, { status: 401 });
+      return NextResponse.json({ user: null, session: null }, { status: 401 });
     }
 
     // Get user profile from our database
@@ -30,6 +30,11 @@ export async function GET(req: NextRequest) {
         email: user.email,
         ...profile,
       },
+      session: session ? {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_at: session.expires_at,
+      } : null,
     });
   } catch (error) {
     return handleError(error);
