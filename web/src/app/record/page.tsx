@@ -39,8 +39,53 @@ export default function RecordPage() {
       useRecordingStore.getState().stopRecording();
       useRecordingStore.getState().setAudioBlob(audioBlob);
 
-      // Create draft
-      const draft = await createDraft(audioBlob);
+      // Create draft with audio
+      const formData = new FormData();
+      formData.append('audio', audioBlob, `recording-${Date.now()}.webm`);
+
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/drafts', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create draft');
+      }
+
+      const draft = await response.json();
+
+      // Transcribe audio
+      try {
+        const transcribeFormData = new FormData();
+        transcribeFormData.append('file', audioBlob, `recording-${Date.now()}.webm`);
+
+        const transcribeResponse = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: transcribeFormData,
+        });
+
+        if (transcribeResponse.ok) {
+          const { text } = await transcribeResponse.json();
+
+          // Update draft with transcript
+          await fetch(`/api/drafts/${draft.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              transcript: text,
+              content: text,
+            }),
+          });
+        }
+      } catch (transcribeError) {
+        console.error('Transcription failed:', transcribeError);
+        // Continue anyway - draft is created
+      }
 
       // Navigate to draft editor
       router.push(`/draft/${draft.id}`);
