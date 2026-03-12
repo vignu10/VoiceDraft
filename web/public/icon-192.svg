@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with violet gradient -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="96" cy="96" r="67.19999999999999" fill="url(#grad)" />
+  <!-- Microphone waveform -->
+  <rect x="61.44" y="84.48" width="15.36" height="23.04" rx="3.84" fill="white" />
+  <rect x="82.56" y="76.8" width="15.36" height="38.400000000000006" rx="3.84" fill="white" />
+  <rect x="103.68" y="80.64" width="15.36" height="30.72" rx="3.84" fill="white" />
+  <rect x="124.8" y="88.32" width="15.36" height="15.36" rx="3.84" fill="white" />
+  <!-- Mic base -->
+  <rect x="80.64" y="124.8" width="30.72" height="7.68" rx="1.92" fill="white" />
+</svg>
