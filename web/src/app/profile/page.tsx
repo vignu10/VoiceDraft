@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { Card, CardBody } from '@/components/ui/Card';
+import { WithBottomNav } from '@/components/layout/BottomNav';
 import { User, Mail, Calendar, LogOut, Key } from 'lucide-react';
 
 interface UserProfile {
@@ -128,17 +129,18 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-            Profile
-          </h1>
-        </div>
-      </header>
+    <WithBottomNav>
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+        {/* Header */}
+        <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+              Profile
+            </h1>
+          </div>
+        </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="grid gap-6">
           {/* Profile Card */}
           <Card>
@@ -290,5 +292,6 @@ export default function ProfilePage() {
         </div>
       </Modal>
     </div>
+    </WithBottomNav>
   );
 }
