@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ToastProvider } from '@/components/providers/ToastProvider';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
+import { AppUpdateNotification } from '@/components/ui/AppUpdateNotification';
 import './globals.css';
 
 // Bold, distinctive typography pairing for tech-savvy creators
@@ -40,6 +42,12 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <ToastProvider>
           <ThemeProvider>
+            {/* Offline indicator */}
+            <OfflineIndicator />
+
+            {/* App update notification */}
+            <AppUpdateNotification />
+
             {/* Skip to main content link for accessibility */}
             <a
               href="#main"
