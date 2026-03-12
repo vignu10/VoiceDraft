@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { DraftCard } from '@/components/drafts/DraftCard';
+import { DraftCardSkeleton } from '@/components/ui/Skeleton';
 import { useDraftStore } from '@/stores/draft-store';
 import { WithBottomNav } from '@/components/layout/BottomNav';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefresh';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PostStatus } from '@/lib/types';
 import {
   Search,
@@ -50,6 +53,14 @@ export default function DraftsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Pull-to-refresh
+  const { isPulling, isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
+    onRefresh: async () => {
+      await fetchDrafts();
+    },
+    threshold: 80,
+  });
+
   useEffect(() => {
     fetchDrafts();
   }, [fetchDrafts]);
@@ -69,6 +80,12 @@ export default function DraftsPage() {
 
   return (
     <WithBottomNav>
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+      />
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
         {/* Header */}
         <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
@@ -158,10 +175,7 @@ export default function DraftsPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 h-48 animate-pulse"
-              />
+              <DraftCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredAndSearchedDrafts.length === 0 ? (

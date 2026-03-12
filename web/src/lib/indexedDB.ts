@@ -107,6 +107,8 @@ export async function markDraftSynced(id: string) {
 export async function queueRequest(request: QueuedRequest) {
   const db = await initDB();
   await db.put(STORES.QUEUED_REQUESTS, request);
+  // Trigger storage event for cross-tab updates
+  localStorage.setItem('queued_requests_updated', Date.now().toString());
 }
 
 export async function getQueuedRequests() {
@@ -117,6 +119,8 @@ export async function getQueuedRequests() {
 export async function removeQueuedRequest(id: string) {
   const db = await initDB();
   await db.delete(STORES.QUEUED_REQUESTS, id);
+  // Trigger storage event for cross-tab updates
+  localStorage.setItem('queued_requests_updated', Date.now().toString());
 }
 
 export async function incrementRequestRetries(id: string) {
@@ -127,6 +131,8 @@ export async function incrementRequestRetries(id: string) {
       ...request,
       retries: request.retries + 1,
     });
+    // Trigger storage event for cross-tab updates
+    localStorage.setItem('queued_requests_updated', Date.now().toString());
   }
 }
 
