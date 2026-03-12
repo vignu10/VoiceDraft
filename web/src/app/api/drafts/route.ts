@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
         audioFormat = audio.type.includes('webm') ? 'webm' :
                       audio.type.includes('wav') ? 'wav' :
                       audio.type.includes('mp3') ? 'mp3' : 'm4a';
+        audioDuration = parseInt(formData.get('audio_duration_seconds') as string) || 0;
       }
     } else {
       // JSON body

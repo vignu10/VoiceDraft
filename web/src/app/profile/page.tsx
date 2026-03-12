@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
+import { useAuthStore } from '@/stores/auth-store';
 import { User, Mail, Calendar, LogOut, Key } from 'lucide-react';
 
 interface UserProfile {
@@ -21,6 +22,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { user: authUser, accessToken, signOut } = useAuthStore();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,38 +33,33 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('/api/auth/session', {
-        headers: { Authorization: `Bearer ${token}` },
+    // Use auth store user directly if available
+    if (authUser && accessToken) {
+      setUser({
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.full_name,
+        bio: authUser.bio,
+        avatar_url: authUser.avatar_url,
+        created_at: '', // Will be fetched from profile if needed
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        setFullName(data.user.full_name || '');
-        setBio(data.user.bio || '');
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
+      setFullName(authUser.full_name || '');
+      setBio(authUser.bio || '');
+      setIsLoading(false);
+    } else {
       setIsLoading(false);
     }
-  };
+  }, [authUser, accessToken]);
 
   const handleSave = async () => {
+    if (!accessToken) return;
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('access_token');
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ full_name: fullName, bio }),
       });
@@ -82,8 +79,7 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      await signOut();
       router.push('/auth/signin');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -91,15 +87,15 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (!accessToken) return;
     try {
-      const token = localStorage.getItem('access_token');
       const response = await fetch('/api/profile', {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (response.ok) {
-        localStorage.clear();
+        await signOut();
         router.push('/auth/signup');
       }
     } catch (error) {

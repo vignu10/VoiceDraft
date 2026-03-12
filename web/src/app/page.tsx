@@ -1,52 +1,43 @@
+'use client';
+
 import { HeroSection } from '@/components/discover/HeroSection';
 import { DiscoverySearch } from '@/components/discover/DiscoverySearch';
 import { FeaturedBlogsGrid } from '@/components/discover/FeaturedBlogsGrid';
 import { RecentPostsFeed } from '@/components/discover/RecentPostsFeed';
+import { useEffect, useState } from 'react';
 import type { DiscoveryResponse } from '@/types/discover';
-import { headers } from 'next/headers';
 
-// Fetch initial data server-side
-async function getDiscoveryData(): Promise<DiscoveryResponse> {
-  try {
-    // Get the host and protocol from headers to construct absolute URL
-    const headersList = headers();
-    const host = headersList.get('host') || 'localhost:3000';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
+export default function HomePage() {
+  const [initialData, setInitialData] = useState<DiscoveryResponse>({
+    blogs: [],
+    posts: [],
+    blogsTotal: 0,
+    postsTotal: 0,
+    hasMoreBlogs: false,
+    hasMorePosts: false,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-    const res = await fetch(`${baseUrl}/api/discover?blogsLimit=12&postsLimit=12`, {
-      cache: 'no-store',
-    });
+  useEffect(() => {
+    async function fetchDiscoveryData() {
+      try {
+        const res = await fetch('/api/discover?blogsLimit=12&postsLimit=12', {
+          cache: 'no-store',
+        });
 
-    if (!res.ok) {
-      console.error('Failed to fetch discovery data, status:', res.status);
-      return {
-        blogs: [],
-        posts: [],
-        blogsTotal: 0,
-        postsTotal: 0,
-        hasMoreBlogs: false,
-        hasMorePosts: false,
-      };
+        if (res.ok) {
+          const data = await res.json();
+          setInitialData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch discovery data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('getDiscoveryData error:', error);
-    return {
-      blogs: [],
-      posts: [],
-      blogsTotal: 0,
-      postsTotal: 0,
-      hasMoreBlogs: false,
-      hasMorePosts: false,
-    };
-  }
-}
-
-export default async function HomePage() {
-  const initialData = await getDiscoveryData();
+    fetchDiscoveryData();
+  }, []);
 
   return (
     <main className="min-h-screen">
@@ -64,14 +55,3 @@ export default async function HomePage() {
     </main>
   );
 }
-
-// SEO metadata
-export const metadata = {
-  title: 'VoiceDraft - Discover Blogs & Stories',
-  description: 'Explore a community of writers, thinkers, and creators sharing their perspectives through voice and text.',
-  openGraph: {
-    title: 'VoiceDraft - Discover Blogs & Stories',
-    description: 'Explore a community of writers, thinkers, and creators.',
-    type: 'website',
-  },
-};

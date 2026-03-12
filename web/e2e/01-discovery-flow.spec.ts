@@ -33,8 +33,8 @@ test.describe('Discovery / Home Page Flow', () => {
     // Click get started button - it's a link not a button
     await page.getByRole('link', { name: /get started/i }).click();
 
-    // Should navigate to auth
-    await expect(page).toHaveURL(/\/api\/auth\/signin/);
+    // Should navigate to auth signin page
+    await expect(page).toHaveURL(/\/auth\/signin/);
   });
 
   test('should have working theme toggle', async ({ page }) => {

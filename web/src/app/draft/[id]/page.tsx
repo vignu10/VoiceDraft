@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { useDraftStore } from '@/stores/draft-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { Post, PostStatus } from '@/lib/types';
 import {
   Save,
@@ -26,6 +27,7 @@ export default function DraftEditorPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { accessToken } = useAuthStore();
 
   const [draft, setDraft] = useState<Post | null>(null);
   const [title, setTitle] = useState('');
@@ -42,8 +44,8 @@ export default function DraftEditorPage() {
       try {
         const response = await fetch(`/api/drafts/${id}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
+          Authorization: `Bearer ${accessToken}`,
+        },
         });
 
         if (response.ok) {

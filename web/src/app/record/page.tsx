@@ -5,51 +5,69 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { WaveformVisualizer } from '@/components/recording/WaveformVisualizer';
 import { Card } from '@/components/ui/Card';
+import { TranscribingScreen } from '@/components/recording/TranscribingScreen';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useRecordingStore } from '@/stores/recording-store';
 import { useDraftStore } from '@/stores/draft-store';
 import { useAuthStore } from '@/stores/auth-store';
+import { useToast } from '@/components/providers/ToastProvider';
 import { WithBottomNav, BottomNav } from '@/components/layout/BottomNav';
-import { Mic, Square, RefreshCw } from 'lucide-react';
+import { Mic, Square, RefreshCw, AlertCircle } from 'lucide-react';
 
 export default function RecordPage() {
   const router = useRouter();
   const { accessToken } = useAuthStore();
-  const { state, startRecording, stopRecording, requestPermission } = useAudioRecorder(
+  const { success, error: showError } = useToast();
+  const { state, startRecording, stopRecording, cancelRecording, requestPermission } = useAudioRecorder(
     (duration) => useRecordingStore.getState().setDuration(duration),
     (audioLevel) => useRecordingStore.getState().setAudioLevel(audioLevel)
   );
   const { isRecording, duration, audioLevel } = state;
-  const { createDraft } = useDraftStore();
+  const recordingStore = useRecordingStore();
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string | undefined>(undefined);
 
   const handleStartRecording = async () => {
+    setErrorMessage(null);
     try {
       await startRecording();
-      useRecordingStore.getState().startRecording();
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      alert('Failed to access microphone. Please grant permission and try again.');
+      recordingStore.startRecording();
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+      const msg = 'Failed to access microphone. Please grant permission and try again.';
+      setErrorMessage(msg);
+      showError(msg);
     }
   };
 
   const handleStopRecording = async () => {
+    setErrorMessage(null);
     setIsProcessing(true);
     try {
       const audioBlob = await stopRecording();
-      useRecordingStore.getState().stopRecording();
-      useRecordingStore.getState().setAudioBlob(audioBlob);
+      recordingStore.stopRecording();
+      recordingStore.setAudioBlob(audioBlob);
 
       // Check if user is authenticated
       if (!accessToken) {
         throw new Error('You must be signed in to save recordings');
       }
 
+      // Get duration from recording store
+      const recordingDuration = recordingStore.duration;
+
+      // Validate recording has content
+      if (recordingDuration === 0) {
+        throw new Error('Recording is too short. Please record for at least 1 second.');
+      }
+
       // Create draft with audio
       const formData = new FormData();
       formData.append('audio', audioBlob, `recording-${Date.now()}.webm`);
+      formData.append('audio_duration_seconds', Math.floor(recordingDuration).toString());
 
       const response = await fetch('/api/drafts', {
         method: 'POST',
@@ -64,6 +82,8 @@ export default function RecordPage() {
 
       const draft = await response.json();
 
+      success('Recording saved successfully!');
+
       // Transcribe audio
       try {
         const transcribeFormData = new FormData();
@@ -76,6 +96,7 @@ export default function RecordPage() {
 
         if (transcribeResponse.ok) {
           const { text } = await transcribeResponse.json();
+          setTranscript(text);
 
           // Update draft with transcript
           await fetch(`/api/drafts/${draft.id}`, {
@@ -97,21 +118,26 @@ export default function RecordPage() {
 
       // Navigate to draft editor
       router.push(`/draft/${draft.id}`);
-    } catch (error) {
-      console.error('Failed to save recording:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save recording. Please try again.';
-      alert(errorMessage);
+    } catch (err) {
+      console.error('Failed to save recording:', err);
+      const msg = err instanceof Error ? err.message : 'Failed to save recording. Please try again.';
+      setErrorMessage(msg);
+      showError(msg);
+
+      // Reset recording state on error so user can try again
+      recordingStore.reset();
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleCancelRecording = async () => {
+  const handleCancelRecording = () => {
+    setErrorMessage(null);
     try {
-      await stopRecording();
-      useRecordingStore.getState().reset();
-    } catch (error) {
-      console.error('Failed to cancel recording:', error);
+      cancelRecording();
+      recordingStore.reset();
+    } catch (err) {
+      console.error('Failed to cancel recording:', err);
     }
   };
 
@@ -123,6 +149,9 @@ export default function RecordPage() {
   return (
     <WithBottomNav>
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+        {/* Transcribing overlay */}
+        {isProcessing && <TranscribingScreen transcript={transcript} />}
+
         {/* Header */}
         <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -148,6 +177,18 @@ export default function RecordPage() {
                 className="mb-12"
               />
 
+              {/* Error message */}
+              {errorMessage && (
+                <div className="mb-8 p-4 bg-red-50 dark:bg-red-950/50 rounded-xl flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      {errorMessage}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Record button */}
               <div className="flex justify-center">
                 <button
@@ -165,14 +206,16 @@ export default function RecordPage() {
                   )}
                   aria-label={isRecording ? 'Stop recording' : 'Start recording'}
                 >
-                  {isRecording ? (
+                  {isProcessing ? (
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : isRecording ? (
                     <div className="w-16 h-16 bg-white rounded-md" />
                   ) : (
                     <Mic className="w-20 h-20 text-white" strokeWidth={1.5} />
                   )}
 
                   {/* Pulse animation when recording */}
-                  {isRecording && (
+                  {isRecording && !isProcessing && (
                     <>
                       <span className="absolute inset-0 rounded-full bg-accent-500 animate-ping opacity-20" />
                       <span className="absolute inset-0 rounded-full bg-accent-500 animate-ping opacity-40 animation-delay-100" />
@@ -182,12 +225,11 @@ export default function RecordPage() {
               </div>
 
               {/* Action buttons */}
-              {isRecording && (
+              {isRecording && !isProcessing && (
                 <div className="flex justify-center gap-4 mt-8">
                   <Button
                     variant="ghost"
                     onClick={handleCancelRecording}
-                    disabled={isProcessing}
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Cancel
@@ -201,15 +243,6 @@ export default function RecordPage() {
                   <p className="text-sm text-accent-600 dark:text-accent-400 text-center">
                     Microphone access is required to record. Please grant permission in your
                     browser settings.
-                  </p>
-                </div>
-              )}
-
-              {/* Processing notice */}
-              {isProcessing && (
-                <div className="mt-8 p-4 bg-primary-50 dark:bg-primary-950 rounded-xl">
-                  <p className="text-sm text-primary-600 dark:text-primary-400 text-center">
-                    Processing your recording...
                   </p>
                 </div>
               )}

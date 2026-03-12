@@ -83,7 +83,7 @@ export function HeroSection() {
               ) : (
                 <>
                   <Link
-                    href="/api/auth/signin"
+                    href="/auth/signin"
                     className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-10 py-4 text-base font-bold text-white shadow-xl shadow-primary-500/30 transition-all hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                   >
                     Start Creating

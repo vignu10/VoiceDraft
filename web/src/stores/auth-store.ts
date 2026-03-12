@@ -22,12 +22,11 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       isAuthenticated: false,
       user: null,
       accessToken: null,
@@ -114,32 +113,6 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           set({ isLoading: false, error: 'Sign out failed' });
           throw error;
-        }
-      },
-
-      refreshSession: async () => {
-        try {
-          const response = await fetch('/api/auth/session');
-          if (response.ok) {
-            const { user, session } = await response.json();
-            set({
-              user,
-              accessToken: session?.access_token || null,
-              isAuthenticated: true,
-            });
-          } else {
-            set({
-              user: null,
-              accessToken: null,
-              isAuthenticated: false,
-            });
-          }
-        } catch (error) {
-          set({
-            user: null,
-            accessToken: null,
-            isAuthenticated: false,
-          });
         }
       },
     }),
