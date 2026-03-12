@@ -142,3 +142,59 @@ export async function PUT(req: NextRequest) {
     return handleError(error);
   }
 }
+
+// PATCH update user profile (alias for PUT)
+export async function PATCH(req: NextRequest) {
+  return PUT(req);
+}
+
+// DELETE user account
+export async function DELETE(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Get user's journal
+    const { data: journal } = await supabaseAdmin
+      .from('journals')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    // Delete all posts
+    if (journal) {
+      await supabaseAdmin
+        .from('posts')
+        .delete()
+        .eq('journal_id', journal.id);
+
+      // Delete journal
+      await supabaseAdmin
+        .from('journals')
+        .delete()
+        .eq('id', journal.id);
+    }
+
+    // Delete profile
+    await supabaseAdmin
+      .from('user_profiles')
+      .delete()
+      .eq('auth_user_id', user.id);
+
+    // Delete user from Supabase Auth
+    await supabaseAdmin.auth.admin.deleteUser(user.id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return handleError(error);
+  }
+}

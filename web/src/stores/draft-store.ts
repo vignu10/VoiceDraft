@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Post, PostStatus } from '@/lib/types';
+import * as idb from '@/lib/indexedDB';
 
 interface DraftState {
   drafts: Post[];
@@ -77,39 +78,87 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   fetchDrafts: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('/api/drafts');
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/drafts', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
       if (!response.ok) throw new Error('Failed to fetch drafts');
       const drafts = await response.json();
+
+      // Also get offline drafts
+      const offlineDrafts = await idb.getOfflineDrafts();
+
       set({ drafts, isLoading: false });
     } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to fetch drafts',
-        isLoading: false,
-      });
+      // On error, try to load from offline storage
+      const offlineDrafts = await idb.getOfflineDrafts();
+      if (offlineDrafts.length > 0) {
+        set({ drafts: offlineDrafts, isLoading: false });
+      } else {
+        set({
+          error: error instanceof Error ? error.message : 'Failed to fetch drafts',
+          isLoading: false,
+        });
+      }
     }
   },
 
   createDraft: async (audioBlob, title) => {
     set({ isLoading: true, error: null });
+    const tempId = `temp-${Date.now()}`;
+
     try {
+      const token = localStorage.getItem('access_token');
       const formData = new FormData();
       formData.append('audio', audioBlob);
       if (title) formData.append('title', title);
 
       const response = await fetch('/api/drafts', {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData,
       });
 
       if (!response.ok) throw new Error('Failed to create draft');
       const draft = await response.json();
       set((state) => ({ drafts: [draft, ...state.drafts], isLoading: false }));
+
+      // Save to IndexedDB
+      await idb.saveDraftOffline({
+        id: draft.id,
+        title: draft.title,
+        content: draft.content || '',
+        transcript: draft.transcript,
+        status: draft.status,
+        word_count: draft.word_count,
+        created_at: draft.created_at,
+        updated_at: draft.updated_at,
+        synced: true,
+      });
+
       return draft;
     } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to create draft',
+      // Save offline
+      const offlineDraft = {
+        id: tempId,
+        title: title || 'Untitled Draft',
+        content: '',
+        status: 'draft' as const,
+        word_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        synced: false,
+        audio_blob: audioBlob,
+      };
+
+      await idb.saveDraftOffline(offlineDraft);
+      set((state) => ({
+        drafts: [{ ...offlineDraft, id: tempId } as Post, ...state.drafts],
         isLoading: false,
-      });
+        error: 'Draft saved locally. Will sync when online.',
+      }));
+
       throw error;
     }
   },
@@ -117,9 +166,13 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   updateDraft: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`/api/drafts/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(updates),
       });
 
@@ -141,7 +194,11 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   deleteDraft: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/drafts/${id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (!response.ok) throw new Error('Failed to delete draft');
       set((state) => ({
         drafts: state.drafts.filter((d) => d.id !== id),
