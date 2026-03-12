@@ -68,7 +68,10 @@ export default function RootLayout({
                     {/* Bold logo mark */}
                     <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-lg shadow-primary-500/25 transition-all group-hover:shadow-xl group-hover:shadow-primary-500/35 group-hover:scale-105">
                       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3h-1c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h1c.55 0 1.05.22 1.41.59.41L13 9H7v1l4-4 4z" />
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
                       </svg>
                     </div>
                     <div className="flex flex-col">
