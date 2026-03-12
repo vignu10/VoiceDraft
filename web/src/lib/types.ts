@@ -58,6 +58,7 @@ export interface Post {
   processing_meta?: Record<string, any>;
   created_at: string;
   updated_at: string;
+  tags?: string[]; // Array of tag IDs
 }
 
 // API Response types

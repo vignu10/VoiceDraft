@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Select } from '@/components/ui/Select';
-import { Moon, Sun, Bell, Lock, Globe } from 'lucide-react';
+import { Moon, Sun, Bell, Lock, Globe, Download, Upload, Database } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 type ThemePreference = 'light' | 'dark' | 'system';
@@ -23,6 +23,9 @@ export default function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [language, setLanguage] = useState('en');
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
 
   const themeOptions = [
     { value: 'light', label: 'Light' },
@@ -97,6 +100,77 @@ export default function SettingsPage() {
       console.error('Error saving settings:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setImportResult(null);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/user/backup', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `voicedraft-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setImportResult('Backup exported successfully!');
+      } else {
+        setImportResult('Failed to export backup');
+      }
+    } catch (error) {
+      console.error('Error exporting backup:', error);
+      setImportResult('Error exporting backup');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+    try {
+      const token = localStorage.getItem('access_token');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/user/backup', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setImportResult(
+          `Import successful! ${result.posts_count || 0} posts, ${result.tags_count || 0} tags restored.`
+        );
+      } else {
+        const error = await response.json();
+        setImportResult(error.error || 'Failed to import backup');
+      }
+    } catch (error) {
+      console.error('Error importing backup:', error);
+      setImportResult('Error importing backup');
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -275,6 +349,66 @@ export default function SettingsPage() {
                   >
                     Manage Profile Data
                   </Button>
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Data & Backup */}
+            <Card>
+              <CardBody className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Database className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                    Data & Backup
+                  </h3>
+                </div>
+
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+                  Export your data as a backup or import from a previous backup file.
+                </p>
+
+                <div className="space-y-3">
+                  <Button
+                    fullWidth
+                    variant="secondary"
+                    className="justify-start"
+                    onClick={handleExport}
+                    isLoading={isExporting}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Backup
+                  </Button>
+
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImport}
+                      disabled={isImporting}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <Button
+                      fullWidth
+                      variant="secondary"
+                      className="justify-start w-full"
+                      isLoading={isImporting}
+                      disabled={isImporting}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import Backup
+                    </Button>
+                  </div>
+
+                  {importResult && (
+                    <div className={cn(
+                      'text-sm p-3 rounded-lg border',
+                      importResult.includes('success')
+                        ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                    )}>
+                      {importResult}
+                    </div>
+                  )}
                 </div>
               </CardBody>
             </Card>
