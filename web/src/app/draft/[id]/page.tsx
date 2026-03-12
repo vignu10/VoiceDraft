@@ -2,13 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
-import { Modal } from '@/components/ui/Modal';
-import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
-import { useDraftStore } from '@/stores/draft-store';
-import { Post, PostStatus } from '@/lib/types';
 import {
   Save,
   Eye,
@@ -18,7 +11,17 @@ import {
   Archive,
   ArrowLeft,
   Check,
+  Download,
 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { Modal } from '@/components/ui/Modal';
+import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
+import { TagInput } from '@/components/tags/TagInput';
+import { useDraftStore } from '@/stores/draft-store';
+import { useTagStore } from '@/stores/tag-store';
+import { Post, PostStatus } from '@/lib/types';
 
 type ViewMode = 'edit' | 'preview';
 
@@ -27,9 +30,12 @@ export default function DraftEditorPage() {
   const params = useParams();
   const id = params.id as string;
 
+  const { fetchTags } = useTagStore();
+
   const [draft, setDraft] = useState<Post | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
@@ -51,6 +57,7 @@ export default function DraftEditorPage() {
           setDraft(data);
           setTitle(data.title || '');
           setContent(data.content || '');
+          setTags(data.tags || []);
         } else {
           console.error('Failed to fetch draft');
         }
@@ -62,11 +69,16 @@ export default function DraftEditorPage() {
     fetchDraft();
   }, [id]);
 
+  // Fetch tags on mount
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
   // Auto-save with debounce
   const debouncedSave = useCallback(
     (() => {
       let timeout: NodeJS.Timeout;
-      return async (newTitle: string, newContent: string) => {
+      return async (newTitle: string, newContent: string, newTags: string[]) => {
         clearTimeout(timeout);
         setSaveStatus('unsaved');
 
@@ -84,6 +96,7 @@ export default function DraftEditorPage() {
               body: JSON.stringify({
                 title: newTitle,
                 content: newContent,
+                tags: newTags,
               }),
             });
 
@@ -110,16 +123,23 @@ export default function DraftEditorPage() {
   // Auto-save on title change
   useEffect(() => {
     if (draft && title !== draft.title) {
-      debouncedSave(title, content);
+      debouncedSave(title, content, tags);
     }
-  }, [title, content, draft, debouncedSave]);
+  }, [title, content, tags, draft, debouncedSave]);
 
   // Auto-save on content change
   useEffect(() => {
     if (draft && content !== draft.content) {
-      debouncedSave(title, content);
+      debouncedSave(title, content, tags);
     }
-  }, [content, title, draft, debouncedSave]);
+  }, [content, title, tags, draft, debouncedSave]);
+
+  // Auto-save on tags change
+  useEffect(() => {
+    if (draft && tags !== draft.tags) {
+      debouncedSave(title, content, tags);
+    }
+  }, [tags, title, content, draft, debouncedSave]);
 
   const handleDelete = async () => {
     try {
@@ -180,6 +200,32 @@ export default function DraftEditorPage() {
       }
     } catch (error) {
       console.error('Error archiving draft:', error);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch(`/api/drafts/${id}/export`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${draft?.title || 'draft'}.md`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error('Failed to export draft');
+      }
+    } catch (error) {
+      console.error('Error exporting draft:', error);
     }
   };
 
@@ -289,6 +335,17 @@ export default function DraftEditorPage() {
                   className="text-2xl font-semibold"
                 />
 
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Tags
+                  </label>
+                  <TagInput
+                    selectedTags={tags}
+                    onTagsChange={setTags}
+                    placeholder="Add tags to organize your draft..."
+                  />
+                </div>
+
                 <Textarea
                   placeholder="Start writing your draft... (Markdown supported)"
                   value={content}
@@ -375,6 +432,15 @@ export default function DraftEditorPage() {
                 >
                   <Edit3 className="w-4 h-4 mr-2" />
                   Generate Blog
+                </Button>
+                <Button
+                  fullWidth
+                  variant="ghost"
+                  onClick={handleExport}
+                  className="justify-start"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Markdown
                 </Button>
               </div>
             </div>
