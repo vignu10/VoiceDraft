@@ -10,9 +10,9 @@ export interface CardProps {
 }
 
 const variantStyles = {
-  default: 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800',
-  draft: 'bg-white dark:bg-neutral-900 border-primary-200 dark:border-primary-800',
-  featured: 'bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-950 dark:to-accent-950 border-primary-300 dark:border-primary-700',
+  default: 'bg-frosted border-neutral-200/50 dark:border-neutral-800/50',
+  draft: 'bg-frosted border-neutral-300/50 dark:border-neutral-700/50',
+  featured: 'bg-gradient-card border-neutral-400/50 dark:border-neutral-600/50',
 };
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -55,7 +55,7 @@ export const CardFooter: React.FC<{ className?: string; children: React.ReactNod
   className,
   children,
 }) => (
-  <div className={cn('px-4 sm:px-6 pb-4 sm:pb-6 pt-0 border-t border-neutral-100 dark:border-neutral-800', className)}>
+  <div className={cn('px-4 sm:px-6 pb-4 sm:pb-6 pt-0 border-t border-neutral-200/50 dark:border-neutral-800/50', className)}>
     {children}
   </div>
 );

@@ -350,8 +350,7 @@ export default function RecordingScreen() {
             setPaused(true);
           })
           .catch(() => {
-            // If save fails, just log and continue
-            console.log("[Recording] Failed to save temporary recording");
+            // If save fails, just continue
           });
       }
 

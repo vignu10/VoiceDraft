@@ -18,15 +18,15 @@ export default function NotFound() {
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent to-accent-light blur-xl opacity-50 animate-pulse" />
             <div className="relative rounded-full bg-gradient-to-br from-accent to-accent-dark px-8 py-6">
-              <span className="text-6xl font-bold text-white">404</span>
+              <span className="text-4xl font-bold text-white">404</span>
             </div>
           </div>
         </div>
 
-        <h1 className="mb-3 text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+        <h1 className="mb-3 text-xl font-bold text-neutral-900 dark:text-white sm:text-2xl">
           Post not found
         </h1>
-        <p className="mb-2 max-w-md mx-auto text-lg text-neutral-600 dark:text-neutral-400">
+        <p className="mb-2 max-w-md mx-auto text-base text-neutral-600 dark:text-neutral-400 sm:text-lg">
           This post doesn't exist or isn't published yet.
         </p>
         <p className="mb-8 text-sm text-neutral-500 dark:text-neutral-500">

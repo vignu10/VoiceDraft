@@ -179,11 +179,11 @@ export function PublishSuccessToast({
           </Text>
         </View>
         <View style={styles.actions}>
-          <PressableScale onPress={onViewPress} style={styles.actionButton}>
+          <PressableScale onPress={onViewPress} style={[styles.actionButton, { backgroundColor: colors.primaryLight }]}>
             <Ionicons name="open-outline" size={18} color={colors.primary} />
             <Text style={[styles.actionButtonText, { color: colors.primary }]}>View</Text>
           </PressableScale>
-          <PressableScale onPress={onSharePress} style={styles.actionButton}>
+          <PressableScale onPress={onSharePress} style={[styles.actionButton, { backgroundColor: colors.primaryLight }]}>
             <Ionicons name="share-social-outline" size={18} color={colors.primary} />
             <Text style={[styles.actionButtonText, { color: colors.primary }]}>Share</Text>
           </PressableScale>
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     gap: Spacing[1],
     paddingHorizontal: Spacing[3],
     paddingVertical: Spacing[2],
-    backgroundColor: '#EFF6FF',
+    // backgroundColor uses theme colors from inline style
     borderRadius: BorderRadius.lg,
   },
   actionButtonText: {

@@ -1,12 +1,16 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Mic, FileText, LogOut, User } from 'lucide-react';
+import { Mic, FileText, LogOut, User, ChevronDown } from 'lucide-react';
 
 export function Navigation() {
   const { isAuthenticated, user, signOut } = useAuthStore();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     try {
@@ -14,6 +18,35 @@ export function Navigation() {
       window.location.href = '/';
     } catch (error) {
       console.error('Sign out failed:', error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node) &&
+        userMenuButtonRef.current &&
+        !userMenuButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle keyboard interaction for user menu
+  const handleUserMenuKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsUserMenuOpen((prev) => !prev);
+    } else if (e.key === 'Escape' && isUserMenuOpen) {
+      e.preventDefault();
+      setIsUserMenuOpen(false);
+      userMenuButtonRef.current?.focus();
     }
   };
 
@@ -28,7 +61,7 @@ export function Navigation() {
           >
             {/* Bold logo mark */}
             <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-lg shadow-primary-500/25 transition-all group-hover:shadow-xl group-hover:shadow-primary-500/35 group-hover:scale-105">
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                 <line x1="12" y1="19" x2="12" y2="23" />
@@ -46,7 +79,7 @@ export function Navigation() {
           </Link>
 
           {/* Right side navigation items */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 sm:gap-6">
             {isAuthenticated ? (
               <>
                 {/* Authenticated user navigation */}
@@ -54,14 +87,14 @@ export function Navigation() {
                   href="/record"
                   className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
-                  <Mic className="h-4 w-4" />
+                  <Mic className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Record</span>
                 </Link>
                 <Link
                   href="/drafts"
                   className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Drafts</span>
                 </Link>
                 <Link
@@ -71,37 +104,61 @@ export function Navigation() {
                   Explore
                 </Link>
 
-                {/* User menu */}
-                <div className="relative group">
-                  <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-300 dark:hover:bg-neutral-800">
-                    <User className="h-5 w-5" />
+                {/* User menu - with keyboard support and ARIA */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    ref={userMenuButtonRef}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                    onKeyDown={handleUserMenuKeyDown}
+                    aria-haspopup="true"
+                    aria-expanded={isUserMenuOpen}
+                    aria-label="User menu"
+                  >
+                    <User className="h-5 w-5" aria-hidden="true" />
                     <span className="hidden lg:inline truncate max-w-[120px]">
                       {user?.full_name || user?.email?.split('@')[0] || 'Account'}
                     </span>
+                    <ChevronDown
+                      className="h-4 w-4 transition-transform duration-200"
+                      style={{ transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      aria-hidden="true"
+                    />
                   </button>
 
                   {/* Dropdown menu */}
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <div
+                    className={`absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 transition-all ${
+                      isUserMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                    }`}
+                    role="menu"
+                    aria-label="User menu items"
+                  >
                     <div className="p-2">
                       <Link
                         href="/profile"
-                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
                       >
-                        <User className="h-4 w-4" />
+                        <User className="h-4 w-4" aria-hidden="true" />
                         Profile
                       </Link>
                       <Link
                         href="/settings"
-                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
                       >
                         Settings
                       </Link>
                       <hr className="my-1 border-neutral-200 dark:border-neutral-700" />
                       <button
                         onClick={handleSignOut}
-                        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                        role="menuitem"
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4" aria-hidden="true" />
                         Sign out
                       </button>
                     </div>

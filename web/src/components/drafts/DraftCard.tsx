@@ -4,26 +4,72 @@ import Link from 'next/link';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Post } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
+import { useDialog } from '@/components/ui/dialog';
 
 interface DraftCardProps {
   draft: Post;
   onDelete?: (id: string) => void;
   onPublish?: (id: string) => void;
+  onUnpublish?: (id: string) => void;
 }
 
 const statusStyles = {
   draft: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
-  published: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  published: 'bg-success-100 text-success-700 dark:bg-success-950/50 dark:text-success-300',
   archived: 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
 };
 
-export function DraftCard({ draft, onDelete, onPublish }: DraftCardProps) {
+export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCardProps) {
+  const { showDialog } = useDialog();
   const excerpt = draft.content?.slice(0, 120) + (draft.content?.length > 120 ? '...' : '');
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // If post is published, warn user to unpublish first (like Medium)
+    if (draft.status === 'published') {
+      const shouldUnpublish = await showDialog({
+        title: 'Published Post Detected',
+        message: 'This post is currently published. Please unpublish it first before deleting.',
+        variant: 'default',
+        confirmText: 'Unpublish Now',
+        cancelText: 'Cancel',
+      });
+
+      if (shouldUnpublish && onUnpublish) {
+        try {
+          await onUnpublish(draft.id);
+        } catch (error) {
+          console.error('[DraftCard] Failed to unpublish:', error);
+          await showDialog({
+            title: 'Unpublish Failed',
+            message: 'Failed to unpublish this post. Please try again.',
+            variant: 'destructive',
+            confirmText: 'OK',
+            cancelText: 'Cancel',
+          });
+        }
+      }
+      return; // Exit without deleting - user must explicitly delete again
+    }
+
+    // Normal delete flow for unpublished drafts
+    const confirmed = await showDialog({
+      title: 'Delete Draft',
+      message: `Are you sure you want to delete "${draft.title || 'Untitled Draft'}"? This action cannot be undone.`,
+      variant: 'destructive',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+    });
+    if (confirmed && onDelete) {
+      onDelete(draft.id);
+    }
+  };
 
   return (
     <Card variant="draft" interactive className="overflow-hidden">
       <CardBody className="p-0">
-        <Link href={`/draft/${draft.id}`}>
+        <Link href={`/draft/${draft.id}?mode=preview`}>
           {/* Header */}
           <div className="p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4">
@@ -39,7 +85,7 @@ export function DraftCard({ draft, onDelete, onPublish }: DraftCardProps) {
                 </span>
 
                 {/* Title */}
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2">
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 line-clamp-2 sm:text-2xl">
                   {draft.title}
                 </h3>
 
@@ -73,22 +119,19 @@ export function DraftCard({ draft, onDelete, onPublish }: DraftCardProps) {
 
             {/* Excerpt */}
             {draft.content && (
-              <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3">
+              <p className="mt-3 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3 sm:text-base">
                 {excerpt}
               </p>
             )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between px-4 py-3 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-100 dark:border-neutral-800">
-            <Link
-              href={`/draft/${draft.id}`}
-              className="text-sm font-medium text-primary-600 hover:text-primary-500"
-            >
-              Edit draft
-            </Link>
+          <div className="flex items-center justify-between px-4 py-3 bg-frosted border-t border-neutral-100/50 dark:border-neutral-800/50">
+            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+              View draft
+            </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {draft.status === 'draft' && onPublish && (
                 <button
                   onClick={(e) => {
@@ -105,14 +148,26 @@ export function DraftCard({ draft, onDelete, onPublish }: DraftCardProps) {
                 </button>
               )}
 
-              {onDelete && (
+              {draft.status === 'published' && onUnpublish && (
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    if (confirm(`Delete "${draft.title}"?`)) {
-                      onDelete(draft.id);
-                    }
+                    onUnpublish(draft.id);
                   }}
+                  className="p-2 text-neutral-600 hover:text-accent-600 transition-colors"
+                  aria-label={`Unpublish ${draft.title}`}
+                  title="Unpublish"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.825 0 1.63-.09 2.404-.249m-3.397-3.397A3 3 0 009.5 12.002c0-1.452.986-2.677 2.334-3.03M14.938 14.938A9.962 9.962 0 0112 15c-4.638 0-8.573-3.007-9.963-7.178a10.48 10.48 0 011.858-2.654m4.065-4.065A9.957 9.957 0 0112 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 2.25l19.5 19.5" />
+                  </svg>
+                </button>
+              )}
+
+              {onDelete && (
+                <button
+                  onClick={handleDelete}
                   className="p-2 text-neutral-600 hover:text-accent-600 transition-colors"
                   aria-label={`Delete ${draft.title}`}
                 >

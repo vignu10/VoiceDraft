@@ -11,6 +11,7 @@ import { WithBottomNav } from '@/components/layout/BottomNav';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefresh';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PostStatus } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import {
   Search,
   Grid3x3,
@@ -48,6 +49,7 @@ export default function DraftsPage() {
     toggleSortOrder,
     deleteDraft,
     publishDraft,
+    unpublishDraft,
   } = useDraftStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +65,8 @@ export default function DraftsPage() {
 
   useEffect(() => {
     fetchDrafts();
-  }, [fetchDrafts]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSortChange = (value: string) => {
     const [field, order] = value.split('-') as [typeof sortBy, typeof sortOrder];
@@ -86,54 +89,56 @@ export default function DraftsPage() {
         isPulling={isPulling}
         isRefreshing={isRefreshing}
       />
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen">
         {/* Header */}
-        <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+        <header className="relative z-30 bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100 truncate">
                 My Drafts
               </h1>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              <p
+                className="text-sm text-neutral-600 dark:text-neutral-400"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 {filteredAndSearchedDrafts.length}{' '}
                 {filteredAndSearchedDrafts.length === 1 ? 'draft' : 'drafts'}
               </p>
             </div>
 
-            <Button href="/record">
-              <Plus className="w-5 h-5 mr-2" />
-              New Recording
+            <Button href="/record" size="sm" className="flex-shrink-0">
+              <Plus className="w-5 h-5 mr-0 sm:mr-2" />
+              <span className="hidden sm:inline">New Recording</span>
             </Button>
           </div>
 
           {/* Search and filters */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search drafts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search className="w-5 h-5" />}
-              />
-            </div>
+          <div className="mt-4 sm:mt-6 flex flex-col gap-3">
+            <Input
+              placeholder="Search drafts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={<Search className="w-5 h-5" />}
+            />
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Select
                 options={filterOptions}
                 value={filter}
                 onChange={(v) => setFilter(v as PostStatus | 'all')}
-                className="w-40"
+                className="flex-1 min-w-[140px]"
               />
 
               <Select
                 options={sortOptions}
                 value={`${sortBy}-${sortOrder}`}
                 onChange={handleSortChange}
-                className="w-40"
+                className="flex-1 min-w-[140px]"
               />
 
-              <div className="flex items-center border border-neutral-300 dark:border-neutral-700 rounded-xl overflow-hidden">
+              <div className="flex items-center border border-neutral-300 dark:border-neutral-700 rounded-xl overflow-hidden flex-shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={cn(
@@ -223,6 +228,7 @@ export default function DraftsPage() {
                 draft={draft}
                 onDelete={deleteDraft}
                 onPublish={publishDraft}
+                onUnpublish={unpublishDraft}
               />
             ))}
           </div>
@@ -231,8 +237,4 @@ export default function DraftsPage() {
       </div>
     </WithBottomNav>
   );
-}
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ');
 }

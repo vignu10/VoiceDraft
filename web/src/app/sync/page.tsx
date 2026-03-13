@@ -7,6 +7,7 @@ import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { OfflineStatusCompact } from '@/components/ui/OfflineIndicator';
 import * as idb from '@/lib/indexedDB';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   Cloud,
   CloudOff,
@@ -27,6 +28,7 @@ interface QueuedRequest {
 
 export default function SyncStatusPage() {
   const router = useRouter();
+  const { accessToken } = useAuthStore();
   const [isOnline, setIsOnline] = useState(true);
   const [queuedRequests, setQueuedRequests] = useState<QueuedRequest[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -71,7 +73,7 @@ export default function SyncStatusPage() {
     setIsSyncing(true);
     setSyncResults(null);
 
-    const token = localStorage.getItem('access_token');
+    const token = accessToken;
     if (!token) {
       setIsSyncing(false);
       return;
@@ -121,7 +123,7 @@ export default function SyncStatusPage() {
       return <Clock className="w-4 h-4 text-neutral-500" />;
     }
     if (retries < 3) {
-      return <Clock className="w-4 h-4 text-amber-500" />;
+      return <Clock className="w-4 h-4 text-warning-500" />;
     }
     return <XCircle className="w-4 h-4 text-accent-500" />;
   };
@@ -154,8 +156,8 @@ export default function SyncStatusPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {isOnline ? (
-                      <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <div className="w-10 h-10 rounded-full bg-success-100 dark:bg-success-950 flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-success-600 dark:text-success-400" />
                       </div>
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-accent-100 dark:bg-accent-950 flex items-center justify-center">
@@ -193,7 +195,7 @@ export default function SyncStatusPage() {
                 className={
                   syncResults.failed > 0
                     ? 'border-accent-500'
-                    : 'border-green-500'
+                    : 'border-success-500'
                 }
               >
                 <CardBody className="p-6">
@@ -201,7 +203,7 @@ export default function SyncStatusPage() {
                     {syncResults.failed > 0 ? (
                       <XCircle className="w-6 h-6 text-accent-600 dark:text-accent-400" />
                     ) : (
-                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      <CheckCircle className="w-6 h-6 text-success-600 dark:text-success-400" />
                     )}
                     <div>
                       <div className="font-semibold text-neutral-900 dark:text-neutral-100">
@@ -264,7 +266,7 @@ export default function SyncStatusPage() {
                             idb.removeQueuedRequest(request.id);
                             loadQueuedRequests();
                           }}
-                          className="p-1.5 text-neutral-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
+                          className="p-2 text-neutral-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Remove from queue"
                         >
                           <XCircle className="w-4 h-4" />
@@ -284,19 +286,19 @@ export default function SyncStatusPage() {
                 </h3>
                 <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-success-600 dark:text-success-400" />
                     <span>
                       Changes made offline are automatically saved to your device
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-success-600 dark:text-success-400" />
                     <span>
                       When you reconnect, changes sync automatically in the background
                     </span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-success-600 dark:text-success-400" />
                     <span>
                       Failed syncs are retried up to 3 times before giving up
                     </span>

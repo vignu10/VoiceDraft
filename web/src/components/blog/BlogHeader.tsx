@@ -42,18 +42,18 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
                   </div>
                 )}
                 {/* Online indicator */}
-                <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-neutral-900" />
+                <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-white bg-success-500 dark:border-neutral-900" />
               </div>
             </Link>
 
             {/* Journal Info - Bold typography */}
             <div className="flex-1">
-              <h1 className="text-balance text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl lg:text-5xl">
+              <div className="text-balance text-xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-2xl lg:text-3xl">
                 {display_name}
-              </h1>
+              </div>
 
               {description && (
-                <p className="mt-4 text-lg leading-relaxed text-neutral-600 dark:text-neutral-400 lg:text-xl">
+                <p className="mt-4 text-base leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-lg">
                   {description}
                 </p>
               )}

@@ -36,7 +36,7 @@ export function OfflineIndicator() {
           ? 'bg-accent-500 text-white'
           : pendingCount > 0
           ? 'bg-primary-500 text-white'
-          : 'bg-green-500 text-white'
+          : 'bg-success-500 text-white'
       )}
       role="status"
       aria-live="polite"

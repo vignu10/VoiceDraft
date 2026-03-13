@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '@/lib/api-client';
 
 export interface Tag {
   id: string;
@@ -51,10 +52,7 @@ export const useTagStore = create<TagState>()((set, get) => ({
   fetchTags: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch('/api/tags', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await api.get('/api/tags');
 
       if (!response.ok) throw new Error('Failed to fetch tags');
       const tags = await response.json();
@@ -67,15 +65,7 @@ export const useTagStore = create<TagState>()((set, get) => ({
   createTag: async (name, color) => {
     set({ isLoading: true, error: null });
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ name, color }),
-      });
+      const response = await api.post('/api/tags', { name, color });
 
       if (!response.ok) throw new Error('Failed to create tag');
       const tag = await response.json();
@@ -90,15 +80,7 @@ export const useTagStore = create<TagState>()((set, get) => ({
   updateTag: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch(`/api/tags/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(updates),
-      });
+      const response = await api.patch(`/api/tags/${id}`, updates);
 
       if (!response.ok) throw new Error('Failed to update tag');
       const updatedTag = await response.json();
@@ -115,11 +97,7 @@ export const useTagStore = create<TagState>()((set, get) => ({
   deleteTag: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch(`/api/tags/${id}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await api.delete(`/api/tags/${id}`);
 
       if (!response.ok) throw new Error('Failed to delete tag');
       set((state) => ({

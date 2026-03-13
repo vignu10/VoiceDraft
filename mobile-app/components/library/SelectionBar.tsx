@@ -10,19 +10,20 @@ import { FadeIn, PressableScale } from '@/components/ui/animated';
 import { BorderRadius, Shadows, Spacing, Typography, withOpacity } from '@/constants/design-system';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 export interface SelectionBarProps {
   selectedCount: number;
   selectAllText: string;
   onSelectAll: () => void;
   onDelete: () => void;
+  isDeleting?: boolean;
 }
 
 /**
  * Selection bar shown when in selection mode
  */
-export function SelectionBar({ selectedCount, selectAllText, onSelectAll, onDelete }: SelectionBarProps) {
+export function SelectionBar({ selectedCount, selectAllText, onSelectAll, onDelete, isDeleting = false }: SelectionBarProps) {
   const colors = useThemeColors();
 
   return (
@@ -48,14 +49,24 @@ export function SelectionBar({ selectedCount, selectAllText, onSelectAll, onDele
           </ThemedText>
         </PressableScale>
 
-        <PressableScale
-          onPress={onDelete}
-          haptic={false}
-          style={[styles.deleteButton, { backgroundColor: colors.error }]}
-          accessibilityLabel="Delete selected drafts"
-        >
-          <Ionicons name="trash" size={20} color={colors.textInverse} />
-        </PressableScale>
+        <View style={[styles.deleteButtonWrapper]}>
+          <PressableScale
+            onPress={isDeleting ? undefined : onDelete}
+            haptic={false}
+            style={[
+              styles.deleteButton,
+              { backgroundColor: colors.error, opacity: isDeleting ? 0.7 : 1 },
+            ]}
+            accessibilityLabel="Delete selected drafts"
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <ActivityIndicator size="small" color={colors.textInverse} />
+            ) : (
+              <Ionicons name="trash" size={20} color={colors.textInverse} />
+            )}
+          </PressableScale>
+        </View>
       </View>
     </FadeIn>
   );
@@ -112,5 +123,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.sm,
+  },
+  deleteButtonWrapper: {
+    width: 44,
+    height: 44,
   },
 });

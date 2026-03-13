@@ -14,10 +14,10 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
     <div className="mb-8">
       {/* Title with gradient underline effect */}
       <div className="relative">
-        <h1 className="mb-4 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 bg-clip-text text-4xl font-bold text-transparent dark:from-white dark:via-neutral-100 dark:to-white sm:text-5xl">
+        <h1 className="mb-4 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 bg-clip-text text-xl font-bold text-transparent dark:from-white dark:via-neutral-100 dark:to-white sm:text-2xl lg:text-3xl">
           {title}
         </h1>
-        <div className="absolute -bottom-2 left-0 h-1 w-32 rounded-full bg-gradient-to-r from-accent to-accent-light" />
+        <div className="absolute -bottom-2 left-0 h-1 w-32 rounded-full bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
       </div>
 
       {/* Share buttons */}
@@ -53,7 +53,7 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
 
         {/* Tags with gradient styling */}
         {target_keyword && (
-          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-accent/10 to-accent/5 px-3 py-1 text-sm font-semibold text-accent ring-1 ring-accent/20">
+          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-neutral-800/10 to-neutral-600/5 px-3 py-1 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-300 dark:from-neutral-200/10 dark:to-neutral-400/5 dark:text-neutral-300 dark:ring-neutral-700">
             {target_keyword}
           </span>
         )}
@@ -61,10 +61,10 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
 
       {/* Author info with delight styling */}
       {journals?.user_profiles && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-neutral-50 to-white p-4 shadow-sm dark:from-neutral-800/50 dark:to-neutral-900/50">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-neutral-50 to-white p-4 shadow-sm dark:from-neutral-800/50 dark:to-neutral-900/50 border border-neutral-200/30 dark:border-neutral-700/30">
           {journals.user_profiles.avatar_url ? (
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-accent to-accent-light blur-sm" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-neutral-300 to-neutral-100 blur-sm dark:from-neutral-700 dark:to-neutral-500" />
               <img
                 src={journals.user_profiles.avatar_url}
                 alt={journals.user_profiles.full_name || 'Author'}
@@ -72,7 +72,7 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
               />
             </div>
           ) : (
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-dark text-white shadow-lg">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-neutral-800 to-neutral-600 text-white shadow-lg dark:from-neutral-200 dark:to-neutral-400 dark:text-neutral-900">
               <span className="text-lg font-bold">
                 {journals.user_profiles.full_name?.[0] || '?'}
               </span>

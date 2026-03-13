@@ -6,11 +6,34 @@ import { BlogHeader } from '@/components/blog/BlogHeader';
 import { TableOfContentsWrapper } from '@/components/blog-post/TableOfContentsWrapper';
 import { PostMeta } from '@/components/blog-post/PostMeta';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
-import { RelatedPosts } from '@/components/blog-post/RelatedPosts';
 import { extractHeadings } from '@/lib/markdown-utils';
 import type { BlogPost, Heading } from '@/types/blog-post';
 import type { JournalWithAuthor } from '@/types/blog';
 import 'react-syntax-highlighter/dist/esm/styles/prism';
+
+// Strip the title from the content if it appears as an h1 at the start
+function stripTitleFromContent(content: string, title: string): string {
+  if (!content || !title) return content;
+
+  // Remove h1 heading that matches the title (with or without #)
+  const titleVariants = [
+    `# ${title}`,
+    `# ${title.replace(/[#*_\[\]]/g, '\\$&')}`, // Escape special markdown chars
+  ];
+
+  let cleanedContent = content;
+  for (const variant of titleVariants) {
+    const regex = new RegExp(`^${escapeRegExp(variant)}\\s*\\n`, 'im');
+    cleanedContent = cleanedContent.replace(regex, '');
+  }
+
+  return cleanedContent.trim();
+}
+
+// Helper to escape regex special characters
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 interface PageProps {
   params: {
@@ -115,20 +138,23 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
-  const headings = extractHeadings(post.content || '');
+  // Strip title from content to avoid duplication
+  const contentWithoutTitle = stripTitleFromContent(post.content || '', post.title || '');
+
+  const headings = extractHeadings(contentWithoutTitle);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white dark:from-neutral-950 dark:to-neutral-900">
+    <div className="min-h-screen">
       <BlogHeader journal={post.journals as JournalWithAuthor} />
 
       {/* Bold-themed gradient header with decorative elements */}
-      <div className="relative overflow-hidden border-b border-neutral-200 dark:border-neutral-800">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-accent-500/5 to-transparent" />
+      <div className="relative overflow-hidden border-b border-neutral-200/50 dark:border-neutral-800/50">
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-200/30 via-neutral-100/20 to-transparent dark:from-neutral-800/30 dark:via-neutral-700/20" />
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4">
-          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-primary-500/20 to-transparent blur-3xl" />
+          <div className="h-96 w-96 rounded-full bg-gradient-to-br from-neutral-300/20 to-transparent blur-3xl dark:from-neutral-700/20" />
         </div>
         <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4">
-          <div className="h-64 w-64 rounded-full bg-gradient-to-tr from-accent-500/15 to-transparent blur-3xl" />
+          <div className="h-64 w-64 rounded-full bg-gradient-to-tr from-neutral-200/15 to-transparent blur-3xl dark:from-neutral-800/15" />
         </div>
       </div>
 
@@ -151,13 +177,8 @@ export default async function BlogPostPage({ params }: PageProps) {
           <article className="min-w-0">
             <PostMeta post={post} urlPrefix={params.url_prefix} />
             <div className="blog-content max-w-none">
-              <MarkdownRenderer content={post.content || ''} />
+              <MarkdownRenderer content={contentWithoutTitle} />
             </div>
-            <RelatedPosts
-              currentPostId={post.id}
-              journalId={post.journal_id}
-              urlPrefix={params.url_prefix}
-            />
           </article>
 
           {/* TOC Sidebar */}

@@ -38,6 +38,8 @@ export default function SettingsTab() {
     defaultLength,
     setDefaultTone,
     setDefaultLength,
+    colorScheme,
+    setColorScheme,
   } = useSettingsStore();
 
   const { signOutUser, user, isAuthenticated } = useAuthStore();
@@ -178,7 +180,7 @@ export default function SettingsTab() {
             </SlideIn>
 
             {/* Default Tone */}
-            <SlideIn direction="up" delay={Duration.fast}>
+            <SlideIn direction="up" delay={Duration.fastest}>
               <View style={styles.section}>
                 <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
                   DEFAULT TONE
@@ -287,6 +289,59 @@ export default function SettingsTab() {
               </View>
             </SlideIn>
 
+            {/* Appearance - Dark Mode Toggle */}
+            <SlideIn direction="up" delay={Duration.fastest}>
+              <View style={styles.section}>
+                <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                  APPEARANCE
+                </ThemedText>
+                <AnimatedCard variant="outlined" animateEntry={false} style={styles.card}>
+                  {(['light', 'dark', 'auto'] as const).map((scheme, index) => {
+                    const isSelected = colorScheme === scheme;
+                    const schemeConfig = {
+                      light: { icon: 'sunny-outline' as const, label: 'Light', desc: 'Light theme' },
+                      dark: { icon: 'moon-outline' as const, label: 'Dark', desc: 'Dark theme' },
+                      auto: { icon: 'contrast-outline' as const, label: 'Auto', desc: 'Match system' },
+                    }[scheme];
+
+                    return (
+                      <PressableScale
+                        key={scheme}
+                        onPress={() => setColorScheme(scheme)}
+                        hapticStyle="light"
+                        accessibilityLabel={`${schemeConfig.label} theme: ${schemeConfig.desc}${isSelected ? ', selected' : ''}`}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: isSelected }}
+                        style={[
+                          styles.optionRow,
+                          index < 2 && styles.optionRowBorder,
+                          { borderBottomColor: colors.border },
+                          isSelected && { backgroundColor: withOpacity(colors.primary, 0.08) },
+                        ]}
+                      >
+                        <View style={[styles.optionIcon, { backgroundColor: colors.primaryLight }]}>
+                          <Ionicons name={schemeConfig.icon} size={22} color={colors.primary} />
+                        </View>
+                        <View style={styles.optionText}>
+                          <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
+                            {schemeConfig.label}
+                          </ThemedText>
+                          <ThemedText style={[styles.optionDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                            {schemeConfig.desc}
+                          </ThemedText>
+                        </View>
+                        {isSelected && (
+                          <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                            <Ionicons name="checkmark" size={14} color={colors.textInverse} />
+                          </View>
+                        )}
+                      </PressableScale>
+                    );
+                  })}
+                </AnimatedCard>
+              </View>
+            </SlideIn>
+
             {/* Data Management */}
             <SlideIn direction="up" delay={Duration.moderate}>
               <View style={styles.section}>
@@ -382,7 +437,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 160,
   },
   // Playful gradient header
   header: {

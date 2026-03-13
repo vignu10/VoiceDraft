@@ -15,9 +15,9 @@ import {
   View,
   Text,
   Pressable,
-  ScrollView,
   Platform,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -36,11 +36,13 @@ import { FadeIn } from '@/components/ui/animated/animated-wrappers';
 import { BorderRadius, Shadows, Spacing, Typography } from '@/constants/design-system';
 import { Duration, Springs } from '@/constants/animations';
 import { generateBlogUrl } from '@/utils/url-utils';
+import { countWords } from '@/utils/formatters';
 import { publishPost } from '@/services/api/posts';
 import type { Draft } from '@/types/draft';
 import { MIN_WORD_COUNT_WARNING } from '@/constants/config';
 
 const AnimatedView = Animated.View;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
  * Props for the PublishModal component
@@ -155,18 +157,18 @@ export function PublishModal({
     // Early return: empty content
     const hasContent = draft.content && draft.content.trim().length > 0;
     if (!hasContent) {
-      return { type: 'error', message: 'Error: Post is empty' };
+      return { type: 'error', message: 'Post is empty' };
     }
 
     // Early return: missing title
     if (!draft.title || draft.title.trim().length === 0) {
-      return { type: 'warning', message: 'Warning: No title set' };
+      return { type: 'warning', message: 'No title set' };
     }
 
-    // Early return: very short content
-    const wordCount = draft.wordCount || 0;
+    // Early return: very short content - calculate from content directly
+    const wordCount = countWords(draft.content);
     if (wordCount < MIN_WORD_COUNT_WARNING) {
-      return { type: 'warning', message: 'Warning: Post is very short' };
+      return { type: 'warning', message: `Post is very short (${wordCount}/${MIN_WORD_COUNT_WARNING} words)` };
     }
 
     // No warnings
@@ -250,6 +252,7 @@ export function PublishModal({
 
   const validationWarning = getValidationWarning();
   const blogUrl = getBlogUrl();
+  const wordCount = draft?.content ? countWords(draft.content) : 0;
 
   if (!visible) return null;
 
@@ -285,20 +288,20 @@ export function PublishModal({
                   {/* Header */}
                   <View style={styles.header}>
                     <Text style={[styles.title, { color: colors.text }]}>Publish to Blog</Text>
+                    {draft && (
+                      <View style={styles.headerMeta}>
+                        <Text style={[styles.headerMetaText, { color: colors.textTertiary }]}>
+                          {wordCount} words · {draft.title || 'Untitled'}
+                        </Text>
+                      </View>
+                    )}
                     <View style={[styles.divider, { backgroundColor: colors.divider }]} />
                   </View>
 
-                  {/* Content */}
-                  <ScrollView
-                    style={styles.content}
-                    contentContainerStyle={styles.contentContainer}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {/* URL Preview Section */}
-                    <View style={styles.section}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>
-                        Your post will be published at:
-                      </Text>
+                  {/* Main Content */}
+                  <View style={styles.mainContent}>
+                    {/* URL Preview */}
+                    <View style={styles.urlSection}>
                       <View
                         style={[
                           styles.urlPreview,
@@ -310,11 +313,10 @@ export function PublishModal({
                       >
                         <Ionicons
                           name="link-outline"
-                          size={20}
+                          size={18}
                           color={colors.textTertiary}
-                          style={styles.urlIcon}
                         />
-                        <Text style={[styles.urlText, { color: colors.text }]} numberOfLines={2}>
+                        <Text style={[styles.urlText, { color: colors.text }]} numberOfLines={1}>
                           {blogUrl}
                         </Text>
                       </View>
@@ -339,7 +341,7 @@ export function PublishModal({
                       >
                         <Ionicons
                           name={validationWarning.type === 'error' ? 'alert-circle' : 'warning'}
-                          size={20}
+                          size={18}
                           color={
                             validationWarning.type === 'error' ? colors.error : colors.warning
                           }
@@ -359,7 +361,7 @@ export function PublishModal({
                         </Text>
                       </View>
                     )}
-                  </ScrollView>
+                  </View>
 
                   {/* Footer with buttons */}
                   <View style={[styles.footer, { borderTopColor: colors.divider }]}>
@@ -440,22 +442,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing[6],
+    padding: Spacing[4],
   },
   modalContainer: {
     width: '100%',
-    maxWidth: 400, // Max width for better readability on larger screens
+    maxWidth: SCREEN_WIDTH * 0.92,
     alignSelf: 'center',
   },
   modal: {
+    width: '100%',
     borderRadius: BorderRadius['2xl'],
     borderWidth: 1,
     overflow: 'hidden',
-    maxHeight: '80%', // Ensure modal doesn't exceed viewport height
   },
   header: {
-    paddingTop: Spacing[6],
-    paddingHorizontal: Spacing[6],
+    paddingTop: Spacing[5],
+    paddingHorizontal: Spacing[5],
     paddingBottom: Spacing[4],
   },
   title: {
@@ -464,35 +466,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     includeFontPadding: false,
   },
+  headerMeta: {
+    alignItems: 'center',
+    marginTop: Spacing[2],
+  },
+  headerMetaText: {
+    fontSize: Typography.fontSize.sm,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
   divider: {
     height: 1,
     marginTop: Spacing[4],
   },
-  content: {
-    flex: 1,
+  mainContent: {
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[4],
+    gap: Spacing[4],
   },
-  contentContainer: {
-    paddingHorizontal: Spacing[6],
-    paddingBottom: Spacing[6],
-  },
-  section: {
-    marginBottom: Spacing[5],
-  },
-  label: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
-    marginBottom: Spacing[3],
-    includeFontPadding: false,
+  urlSection: {
+    gap: Spacing[2],
   },
   urlPreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing[4],
+    padding: Spacing[3],
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-  },
-  urlIcon: {
-    marginRight: Spacing[3],
+    gap: Spacing[2],
   },
   urlText: {
     flex: 1,
@@ -503,10 +504,10 @@ const styles = StyleSheet.create({
   warningBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing[4],
+    padding: Spacing[3],
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    gap: Spacing[3],
+    gap: Spacing[2],
   },
   warningText: {
     flex: 1,
@@ -517,7 +518,9 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     gap: Spacing[3],
-    padding: Spacing[6],
+    padding: Spacing[5],
+    paddingTop: Spacing[4],
+    paddingBottom: Spacing[5],
     borderTopWidth: 1,
   },
   button: {
@@ -525,10 +528,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing[4],
+    paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[4],
     borderRadius: BorderRadius.lg,
-    minHeight: 52,
+    minHeight: 48,
     gap: Spacing[2],
   },
   cancelButton: {
@@ -536,7 +539,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   publishButton: {
-    backgroundColor: '#8B5CF6',
+    // backgroundColor uses theme colors from inline style
   },
   buttonText: {
     fontSize: Typography.fontSize.base,

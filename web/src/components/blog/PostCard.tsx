@@ -25,9 +25,9 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
   const postUrl = `/${urlPrefix}/${slug}`;
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-neutral-800/50">
       {/* Gradient accent on hover - hidden by default, shows on group hover */}
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
 
       {/* Featured Media - Bold and distinctive */}
       {audio_file_url && (
@@ -101,7 +101,7 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
         </Link>
 
         {/* Excerpt - Clear and readable */}
-        <p className="mb-5 flex-1 text-base leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-3">
+        <p className="mb-5 flex-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-3 sm:text-base">
           {excerpt}
         </p>
 

@@ -21,9 +21,9 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
           />
         </svg>
       </div>
-      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">Oops! Something went wrong</h3>
+      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">We couldn't load that content</h3>
       <p className="mt-2 text-base text-neutral-600 dark:text-neutral-400">
-        {message || 'Failed to load posts. Please try again.'}
+        {message || 'Please check your connection and try again.'}
       </p>
       {onRetry && (
         <button

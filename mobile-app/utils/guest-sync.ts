@@ -44,14 +44,15 @@ export async function syncGuestDrafts(): Promise<{
       }
     }
 
-    // Clear synced drafts from AsyncStorage and stores
-    if (synced > 0) {
-      await AsyncStorage.removeItem('guest-drafts');
-      // Clear the GuestDraftStore (current guest flow draft)
-      useGuestDraftStore.getState().clearGuestDraft();
-      // Reset guest trial state so they start fresh as authenticated user
-      useGuestStore.getState().resetAll();
-    }
+    // Always clear guest drafts from AsyncStorage after sync attempt
+    // This prevents stale guest data from leaking into authenticated user's view
+    await AsyncStorage.removeItem('guest-drafts');
+    await AsyncStorage.removeItem('drafts'); // Also clear legacy key
+
+    // Clear the GuestDraftStore (current guest flow draft)
+    useGuestDraftStore.getState().clearGuestDraft();
+    // Reset guest trial state so they start fresh as authenticated user
+    useGuestStore.getState().resetAll();
 
     return { synced, failed };
   } catch (error) {

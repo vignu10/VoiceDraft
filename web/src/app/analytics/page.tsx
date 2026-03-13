@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { useAnalytics } from '@/stores/analytics-store';
+import { useAuthStore } from '@/stores/auth-store';
+import { api } from '@/lib/api-client';
 import {
   BarChart,
   TrendingUp,
@@ -26,6 +28,7 @@ interface AnalyticsData {
 
 export default function AnalyticsPage() {
   const { isConsent, setConsent, trackPageView } = useAnalytics();
+  const { accessToken } = useAuthStore();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,10 +45,7 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch('/api/user/analytics', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await api.get('/api/user/analytics');
 
       if (response.ok) {
         const data = await response.json();
@@ -61,8 +61,8 @@ export default function AnalyticsPage() {
   if (isConsent === null) {
     return (
       <WithBottomNav>
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-          <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="min-h-screen">
+          <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                 Analytics
@@ -100,8 +100,8 @@ export default function AnalyticsPage() {
   if (!isConsent) {
     return (
       <WithBottomNav>
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-          <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="min-h-screen">
+          <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                 Analytics
@@ -132,9 +132,9 @@ export default function AnalyticsPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen">
         {/* Header */}
-        <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+        <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Analytics
@@ -173,7 +173,7 @@ export default function AnalyticsPage() {
 
                 <Card>
                   <CardBody className="p-6">
-                  <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400 mb-2" />
+                  <TrendingUp className="w-8 h-8 text-success-600 dark:text-success-400 mb-2" />
                     <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                       {analytics.totalWords.toLocaleString()}
                     </div>
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
 
                 <Card>
                   <CardBody className="p-6">
-                    <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" />
+                    <Clock className="w-8 h-8 text-info-600 dark:text-info-400 mb-2" />
                     <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                       {Math.floor(analytics.totalRecordingTime / 60)}h
                     </div>

@@ -1,8 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { ToastContainer, type ToastType } from '@/components/ui/Toast';
 import { syncManager } from '@/lib/sync-manager';
+import { useAuthStore } from '@/stores/auth-store';
+import { useRouter } from 'next/navigation';
 
 interface Toast {
   id: string;
@@ -34,7 +36,9 @@ interface ToastProviderProps {
 }
 
 export function ToastProvider({ children }: ToastProviderProps) {
+  const router = useRouter();
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const { sessionExpired } = useAuthStore();
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -50,17 +54,28 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const warning = useCallback((message: string) => showToast('warning', message), [showToast]);
   const info = useCallback((message: string) => showToast('info', message), [showToast]);
 
+  // Handle session expiration - redirect to signin and show toast
+  useEffect(() => {
+    if (sessionExpired) {
+      error('Your session has expired. Please log in again.');
+      // Use replace to prevent going back to the protected page
+      router.replace('/auth/signin');
+    }
+  }, [sessionExpired, error, router]);
+
   // Auto-sync when coming online
-  React.useEffect(() => {
+  useEffect(() => {
     const handleOnline = async () => {
-      const token = localStorage.getItem('access_token');
+      const token = useAuthStore.getState().accessToken;
       if (token) {
         const results = await syncManager.processQueue(token);
-        if (results.successful.length > 0) {
-          success(`Synced ${results.successful.length} item(s)`);
-        }
-        if (results.failed.length > 0) {
-          warning(`${results.failed.length} item(s) failed to sync`);
+        if (results) {
+          if (results.successful.length > 0) {
+            success(`Synced ${results.successful.length} item(s)`);
+          }
+          if (results.failed.length > 0) {
+            warning(`${results.failed.length} item(s) failed to sync`);
+          }
         }
       }
     };

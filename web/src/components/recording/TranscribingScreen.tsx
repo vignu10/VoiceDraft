@@ -1,137 +1,264 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Mic, FileText, TrendingUp, Check, X, AlertCircle, RefreshCw, ArrowRight, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+
+type Step = 'transcribing' | 'generating' | 'complete' | 'error';
 
 interface TranscribingScreenProps {
-  progress?: number;
+  step: Step;
   transcript?: string;
+  generatedBlog?: {
+    title: string;
+    content: string;
+    wordCount?: number;
+  };
+  error?: string | null;
+  onRetry?: () => void;
+  onCancel?: () => void;
+  onContinue?: () => void;
 }
 
-export function TranscribingScreen({ progress = 0, transcript }: TranscribingScreenProps) {
-  const [displayProgress, setDisplayProgress] = useState(0);
+const PROCESSING_MESSAGES = {
+  transcribing: [
+    'Converting your voice to text...',
+    'Analyzing speech patterns...',
+    'Capturing your words...',
+  ],
+  generating: [
+    'Structuring your blog post...',
+    'Polishing the content...',
+    'Adding finishing touches...',
+  ],
+};
 
+const STEP_TITLES = {
+  transcribing: 'Transcribing your audio',
+  generating: 'Generating your blog post',
+  complete: 'All done!',
+  error: 'Something went wrong',
+};
+
+export function TranscribingScreen({
+  step,
+  transcript,
+  generatedBlog,
+  error,
+  onRetry,
+  onCancel,
+  onContinue,
+}: TranscribingScreenProps) {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  // Rotate processing messages
   useEffect(() => {
-    const timer = setInterval(() => {
-      setDisplayProgress((prev) => {
-        if (prev >= 95) return 95;
-        return prev + Math.random() * 3;
-      });
-    }, 500);
+    if (step === 'error' || step === 'complete') return;
 
-    return () => clearInterval(timer);
-  }, []);
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % PROCESSING_MESSAGES[step].length);
+    }, 2500);
 
-  const finalProgress = transcript ? 100 : displayProgress;
+    return () => clearInterval(interval);
+  }, [step]);
+
+  const getStepStatus = (targetStep: Step): 'complete' | 'active' | 'pending' | 'error' => {
+    const order: Step[] = ['transcribing', 'generating', 'complete'];
+    const currentIndex = order.indexOf(step);
+    const targetIndex = order.indexOf(targetStep);
+
+    if (step === 'error') {
+      return targetIndex <= order.indexOf('transcribing') ? 'error' : 'pending';
+    }
+    if (targetIndex < currentIndex) return 'complete';
+    if (targetIndex === currentIndex) return 'active';
+    return 'pending';
+  };
+
+  const StepIndicator = ({
+    label,
+    targetStep,
+    icon: Icon,
+  }: {
+    label: string;
+    targetStep: Step;
+    icon: React.ComponentType<{ className?: string }>;
+  }) => {
+    const status = getStepStatus(targetStep);
+
+    const getBgColor = () => {
+      switch (status) {
+        case 'complete':
+          return 'bg-success-500';
+        case 'active':
+          return 'bg-white/20';
+        case 'error':
+          return 'bg-error-500';
+        default:
+          return 'bg-white/10';
+      }
+    };
+
+    const getTextColor = () => {
+      switch (status) {
+        case 'complete':
+        case 'active':
+          return 'text-white font-medium';
+        default:
+          return 'text-white/70 font-medium';
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getBgColor()} shadow-sm`}>
+          {status === 'complete' && <Check className="w-5 h-5 text-white" />}
+          {status === 'active' && (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          )}
+          {status === 'error' && <X className="w-5 h-5 text-white" />}
+          {status === 'pending' && <Icon className="w-5 h-5 text-white/50" />}
+        </div>
+        <span className={`text-sm ${getTextColor()}`}>{label}</span>
+      </div>
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-cyan-900 via-cyan-800 to-teal-900">
-      {/* Floating orbs */}
-      <div
-        className="absolute top-0 left-0 w-64 h-64 bg-cyan-400/30 rounded-full blur-3xl animate-float"
-        style={{ animationDelay: '0s' }}
-      />
-      <div
-        className="absolute bottom-0 right-0 w-48 h-48 bg-cyan-300/30 rounded-full blur-3xl animate-float"
-        style={{ animationDelay: '-2s' }}
-      />
-
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/15 to-teal-500/15" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-violet-900 via-violet-800 to-fuchsia-900" role="dialog" aria-modal="true" aria-labelledby="transcribing-title">
+      {/* Animated background orbs */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-primary-400/30 rounded-full blur-3xl animate-float" aria-hidden="true" />
+      <div className="absolute bottom-0 right-0 w-48 h-48 bg-accent-300/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '-2s' }} aria-hidden="true" />
+      <div className="absolute top-1/2 right-0 w-32 h-32 bg-success-300/20 rounded-full blur-2xl animate-float" style={{ animationDelay: '-4s' }} aria-hidden="true" />
 
       {/* Content */}
-      <div className="relative z-10 text-center max-w-lg mx-auto px-6">
-        {/* Mic icon with glow */}
-        <div className="mb-6">
-          <div className="w-20 h-20 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)]">
-            <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <rect x="8" y="4" width="8" height="12" rx={4} />
-              <path d="M6 16a4 4 0 0 0 12 0" strokeLinecap="round" />
-              <line x1="12" y1="16" x2="12" y2="20" strokeLinecap="round" />
-            </svg>
-          </div>
+      <div className="relative z-10 w-full max-w-lg mx-auto px-6">
+        {/* Icon container with pulse animation for active states */}
+        <div className="mb-8">
+          <div className={`relative mx-auto w-28 h-28 rounded-xl flex items-center justify-center shadow-2xl transition-all duration-500 ${
+            step === 'error'
+              ? 'bg-error-500/20'
+              : step === 'complete'
+              ? 'bg-success-500/20'
+              : step === 'generating'
+              ? 'bg-accent-500/20'
+              : 'bg-primary-500/20'
+          } ${step === 'transcribing' || step === 'generating' ? 'animate-pulse-gentle' : ''}`}>
+            {/* Inner glow */}
+            <div className={`absolute inset-2 rounded-xl opacity-50 ${
+              step === 'error'
+                ? 'bg-error-500/30'
+                : step === 'complete'
+                ? 'bg-success-500/30'
+                : step === 'generating'
+                ? 'bg-accent-500/30'
+                : 'bg-primary-500/30'
+            }`} aria-hidden="true" />
 
-          {/* Sound wave bars */}
-          <div className="flex justify-center gap-1.5 h-10 items-center">
-            {[...Array(7)].map((_, i) => (
-              <div
-                key={i}
-                className="w-1 bg-white rounded-full animate-sound-bar"
-                style={{ animationDelay: `${i * 0.1}s` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Status text */}
-        <h3 className="text-white text-2xl font-semibold mb-2">Transcribing your audio...</h3>
-        <p className="text-cyan-100 text-sm">This usually takes about 30 seconds</p>
-
-        {/* Progress bar */}
-        <div className="max-w-[300px] mx-auto mt-6">
-          <div className="flex justify-between text-cyan-50 text-sm mb-2">
-            <span>Processing</span>
-            <span>{Math.round(finalProgress)}%</span>
-          </div>
-          <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-400 rounded-full animate-progress-shimmer"
-              style={{ width: `${finalProgress}%` }}
-            />
+            {step === 'error' ? (
+              <AlertCircle className="w-14 h-14 text-error-400" aria-hidden="true" />
+            ) : step === 'complete' ? (
+              <Check className="w-14 h-14 text-success-400" aria-hidden="true" />
+            ) : step === 'generating' ? (
+              <Sparkles className="w-14 h-14 text-accent-300 animate-spin-slow" aria-hidden="true" />
+            ) : (
+              <Mic className="w-14 h-14 text-primary-300" aria-hidden="true" />
+            )}
           </div>
         </div>
 
-        {/* Live transcript preview */}
-        <div className="max-w-[500px] mx-auto mt-6">
-          <div className="bg-cyan-950/50 border border-cyan-400/20 rounded-lg p-4 text-left">
-            <p className="text-cyan-200 text-xs mb-2 font-medium">LIVE TRANSCRIPT</p>
-            <p className="text-white text-base leading-relaxed">
-              {transcript || (
-                <span className="animate-pulse">Processing your voice recording...</span>
-              )}
+        {/* Title with better typography */}
+        <h3 id="transcribing-title" className="text-white text-3xl font-bold text-center mb-3 tracking-tight">
+          {STEP_TITLES[step]}
+        </h3>
+
+        {/* Processing message with better styling */}
+        {step !== 'error' && step !== 'complete' && (
+          <p className="text-violet-200 text-base text-center mb-8 font-medium" aria-live="polite" aria-atomic="true">
+            {PROCESSING_MESSAGES[step][messageIndex]}
+          </p>
+        )}
+
+        {/* Step indicators with improved design */}
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 border border-white/10 shadow-2xl" role="list" aria-label="Processing steps">
+          <div className="space-y-5">
+            <StepIndicator label="Transcribing audio" targetStep="transcribing" icon={Mic} />
+            <div className="w-0.5 h-7 bg-gradient-to-b from-violet-300/50 to-transparent ml-5" aria-hidden="true" />
+            <StepIndicator label="Generating blog post" targetStep="generating" icon={FileText} />
+            <div className="w-0.5 h-7 bg-gradient-to-b from-violet-300/50 to-transparent ml-5" aria-hidden="true" />
+            <StepIndicator label="Ready to view" targetStep="complete" icon={TrendingUp} />
+          </div>
+        </div>
+
+        {/* Error message with improved design */}
+        {error && step === 'error' && (
+          <div className="bg-error-500/20 border border-error-400/40 rounded-xl p-5 mb-8 backdrop-blur-sm" role="alert">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-error-300 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-error-100 text-sm leading-relaxed">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Transcript preview with improved design */}
+        {transcript && step !== 'error' && (
+          <div className="bg-violet-950/60 border border-violet-400/30 rounded-xl p-5 mb-6 backdrop-blur-sm">
+            <p className="text-violet-300 text-xs mb-3 font-semibold tracking-wide uppercase">Your Transcript</p>
+            <p className="text-white text-sm leading-relaxed line-clamp-4">
+              {transcript}
             </p>
           </div>
-        </div>
+        )}
 
-        {/* Processing steps */}
-        <div className="flex justify-center gap-3 flex-wrap mt-6">
-          {/* Audio uploaded - complete */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full">
-            <svg className="w-4 h-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010-1.414l-8 8a1 1 0 01-1.414 0l-8-8a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 1.414l-8 8a1 1 0 01-1.414 0l-4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-cyan-50 text-sm">Audio uploaded</span>
+        {/* Generated blog preview with improved design */}
+        {generatedBlog && (step === 'generating' || step === 'complete') && (
+          <div className="bg-success-950/60 border border-success-400/40 rounded-xl p-5 mb-6 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-success-400 rounded-full animate-pulse" aria-hidden="true" />
+              <p className="text-success-300 text-xs font-semibold tracking-wide uppercase">Blog Post Ready</p>
+            </div>
+            <p className="text-white text-lg font-bold mb-2">{generatedBlog.title}</p>
+            <div className="flex items-center gap-3 text-success-200 text-xs">
+              <span>{generatedBlog.wordCount} words</span>
+              <span className="w-1 h-1 bg-success-400/50 rounded-full" aria-hidden="true" />
+              <span>Ready to edit</span>
+            </div>
           </div>
+        )}
 
-          {/* Transcribing - in progress or complete */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full">
-            {transcript ? (
-              <svg className="w-4 h-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010-1.414l-8 8a1 1 0 01-1.414 0l-8-8a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 1.414l-8 8a1 1 0 01-1.414 0l-4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-transparent rounded-full animate-spin" />
-            )}
-            <span className="text-cyan-50 text-sm">Transcribing</span>
+        {/* Action buttons with improved design */}
+        {step === 'error' && (
+          <div className="flex gap-3">
+            <Button
+              onClick={onCancel}
+              variant="secondary"
+              className="flex-1 !bg-white/10 hover:!bg-white/20 !text-white !border-white/10 backdrop-blur-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={onRetry}
+              variant="primary"
+              className="flex-1"
+            >
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
+              Try Again
+            </Button>
           </div>
+        )}
 
-          {/* Generating - pending or in progress */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full">
-            {transcript ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <div className="w-4 h-4 border-2 border-white/20 border-t-transparent rounded-full" />
-            )}
-            <span className="text-cyan-50 text-sm">Generating</span>
-          </div>
-        </div>
+        {/* View Blog button - show immediately when generation is complete */}
+        {generatedBlog && onContinue && (step === 'generating' || step === 'complete') && (
+          <Button
+            onClick={onContinue}
+            fullWidth
+            size="lg"
+            className="!bg-gradient-to-r !from-success-500 !to-emerald-500 hover:!from-success-600 hover:!to-emerald-600 !shadow-lg !shadow-success-500/30 hover:!shadow-xl hover:!shadow-success-500/40"
+          >
+            View Blog Post
+            <ArrowRight className="w-5 h-5" aria-hidden="true" />
+          </Button>
+        )}
       </div>
 
       <style>{`
@@ -139,23 +266,22 @@ export function TranscribingScreen({ progress = 0, transcript }: TranscribingScr
           0%, 100% { transform: translate(0, 0); }
           50% { transform: translate(20px, -20px); }
         }
-        @keyframes sound-bar {
-          0%, 100% { height: 8px; }
-          50% { height: 32px; }
-        }
-        @keyframes progress-shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
         .animate-float {
           animation: float 4s ease-in-out infinite;
         }
-        .animate-sound-bar {
-          animation: sound-bar 0.6s ease-in-out infinite;
+        @keyframes pulse-gentle {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
         }
-        .animate-progress-shimmer {
-          background-size: 200% 100%;
-          animation: progress-shimmer 2s infinite;
+        .animate-pulse-gentle {
+          animation: pulse-gentle 3s ease-in-out infinite;
+        }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
         }
       `}</style>
     </div>

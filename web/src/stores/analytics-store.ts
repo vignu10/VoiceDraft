@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '@/lib/api-client';
 
 interface AnalyticsEvent {
   id: string;
@@ -86,15 +87,7 @@ export const useAnalytics = create<AnalyticsState>()((set, get) => ({
     if (state.events.length === 0) return;
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch('/api/analytics/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ events: state.events }),
-      });
+      const response = await api.post('/api/analytics/events', { events: state.events });
 
       if (response.ok) {
         set({ events: [] });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BlogDiscoveryCard } from './BlogDiscoveryCard';
 import { BlogCardSkeleton } from './BlogCardSkeleton';
 import type { BlogDiscoveryCard as BlogCardType, DiscoverySort } from '@/types/discover';
@@ -20,6 +20,16 @@ export function FeaturedBlogsGrid({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
   const [currentSort, setCurrentSort] = useState<DiscoverySort>('newest');
+  const hasLoadedMore = useRef(false);
+
+  // Sync state when props change (after initial fetch)
+  // Only update from props if we haven't loaded more data manually
+  useEffect(() => {
+    if (!hasLoadedMore.current) {
+      setBlogs(initialBlogs);
+      setHasMore(initialHasMore);
+    }
+  }, [initialBlogs, initialHasMore]);
 
   const handleLoadMore = async () => {
     if (isLoading || !hasMore) return;
@@ -33,6 +43,7 @@ export function FeaturedBlogsGrid({
 
       setBlogs((prev) => [...prev, ...data.blogs]);
       setHasMore(data.hasMoreBlogs);
+      hasLoadedMore.current = true;
     } catch (error) {
       console.error('Failed to load more blogs:', error);
     } finally {

@@ -427,7 +427,6 @@ class RecordingService {
         // Clear state
         await this.cleanup();
 
-        console.log("[RecordingService] Saved temporary recording:", destUri);
         return destUri;
       } catch (error) {
         console.error(

@@ -30,6 +30,8 @@ export interface UseDraftActionsProps {
     confirmText: string;
     onConfirm: () => void | Promise<void>;
   }) => Promise<boolean>;
+  isAuthenticated: boolean;
+  onRefresh?: () => Promise<void>;
 }
 
 export interface UseDraftActionsReturn {
@@ -46,7 +48,7 @@ export interface UseDraftActionsReturn {
  * @returns Draft action handlers
  */
 export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsReturn {
-  const { drafts, setDrafts, menuDraftId, setShowMenu, showDialog } = props;
+  const { drafts, setDrafts, menuDraftId, setShowMenu, showDialog, isAuthenticated, onRefresh } = props;
   const { journal } = useAuthStore();
   const [publishedPostUrl, setPublishedPostUrl] = useState<string | null>(null);
 
@@ -63,6 +65,38 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
 
       switch (action) {
         case 'delete': {
+          // If post is published, warn user to unpublish first (like Medium)
+          if (draft.status === 'published') {
+            const shouldUnpublish = await showDialog({
+              title: 'Published Post Detected',
+              message: 'This post is currently published. Please unpublish it first before deleting.',
+              variant: 'default',
+              confirmText: 'Unpublish Now',
+              onConfirm: async () => {
+                try {
+                  await unpublishPost(draft.serverId!);
+                  // Update local state to reflect unpublished status
+                  setDrafts((prev) =>
+                    prev.map((d) =>
+                      d.id === draft.id
+                        ? { ...d, status: ('ready' as const) }
+                        : d
+                    )
+                  );
+                  // Refresh from server to get latest state
+                  if (onRefresh) {
+                    await onRefresh();
+                  }
+                } catch (error) {
+                  console.error('[useDraftActions] Failed to unpublish:', error);
+                  throw error;
+                }
+              },
+            });
+            return; // Exit without deleting - user must explicitly delete again
+          }
+
+          // Normal delete flow for unpublished drafts
           const confirmed = await showDialog({
             title: 'Delete Draft',
             message: 'Are you sure you want to delete this draft?',
@@ -70,8 +104,18 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
             confirmText: 'Delete',
             onConfirm: async () => {
               try {
-                await deletePost(draft.id);
+                // For authenticated users with server posts, use serverId to delete from API
+                // For guest users, draft.id is used but there's no server deletion
+                if (isAuthenticated && draft.serverId) {
+                  await deletePost(draft.serverId);
+                }
+                // Remove from local state regardless of authentication
                 setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
+
+                // Refresh data from server for authenticated users
+                if (isAuthenticated && onRefresh) {
+                  await onRefresh();
+                }
               } catch (error) {
                 console.error('Failed to delete draft:', error);
                 throw error;
@@ -80,11 +124,14 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
           });
 
           if (confirmed) {
-            // Clear old AsyncStorage
-            try {
-              await AsyncStorage.removeItem('drafts');
-            } catch (error) {
-              console.error('Failed to clear drafts from storage:', error);
+            // Only clear AsyncStorage for non-authenticated users (guest flow)
+            // Authenticated users' data comes from API, not AsyncStorage
+            if (!isAuthenticated) {
+              try {
+                await AsyncStorage.multiRemove(['drafts', 'guest-drafts']);
+              } catch (error) {
+                console.error('Failed to clear drafts from storage:', error);
+              }
             }
           }
           break;
@@ -124,7 +171,7 @@ export function useDraftActions(props: UseDraftActionsProps): UseDraftActionsRet
         }
       }
     },
-    [drafts, menuDraftId, setDrafts, setShowMenu, showDialog]
+    [drafts, menuDraftId, setDrafts, setShowMenu, showDialog, isAuthenticated, onRefresh]
   );
 
   /**

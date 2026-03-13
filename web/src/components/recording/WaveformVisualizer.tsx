@@ -68,14 +68,11 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         const x = i * (barWidth + 4);
         const y = (rect.height - height) / 2;
 
-        // Create gradient
-        const gradient = ctx.createLinearGradient(x, y, x, y + height);
-        gradient.addColorStop(0, 'oklch(0.60 0.24 285)');
-        gradient.addColorStop(1, 'oklch(0.45 0.26 285)');
-
-        ctx.fillStyle = gradient;
+        // Clean neutral fill with dark mode support
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        ctx.fillStyle = isDark ? 'rgb(255, 255, 255)' : 'rgb(24, 24, 24)';
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, height, 4);
+        ctx.roundRect(x, y, barWidth, height, 2);
         ctx.fill();
       });
 
@@ -100,22 +97,17 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
 
   return (
     <div className={cn('flex flex-col items-center justify-center', className)}>
-      {/* Duration display */}
-      <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
-        {formatDuration(duration)}
-      </div>
-
       {/* Canvas waveform */}
       <canvas
         ref={canvasRef}
-        className="w-full h-24"
+        className="w-full h-20"
         style={{ imageRendering: 'crisp-edges' }}
       />
 
-      {/* Audio level indicator */}
-      <div className="w-full max-w-xs h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden mt-4">
+      {/* Audio level indicator - clean, minimalist */}
+      <div className="w-full max-w-xs h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden mt-3">
         <div
-          className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-75 ease-out"
+          className="h-full bg-neutral-900 dark:bg-neutral-100 transition-all duration-75 ease-out"
           style={{ width: `${audioLevel}%` }}
         />
       </div>

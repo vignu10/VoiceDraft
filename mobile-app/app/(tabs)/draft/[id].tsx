@@ -6,12 +6,12 @@ import { ContentGate } from "@/components/ui/content-gate";
 import { MiniCelebration, useDelightToast } from "@/components/ui/delight";
 import { GuestDraftScrollGate } from "@/components/ui/guest-draft-scroll-gate";
 import { PublishModal } from "@/components/publish/PublishModal";
-import { PublishSuccessToast } from "@/components/publish/PublishSuccessToast";
+import { PublishSuccessModal } from "@/components/publish/PublishSuccessModal";
 import { BorderRadius, Spacing, Typography } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
 import { useAchievementsStore, useAuthStore, useGuestDraftStore } from "@/stores";
-import { getPost } from "@/services/api/posts";
+import { getPost, unpublishPost } from "@/services/api/posts";
 import { getJournal } from "@/services/api/journal";
 import { mapPostToDraft } from "@/services/mappers/post-to-draft.mapper";
 import type { Draft } from "@/types/draft";
@@ -20,7 +20,6 @@ import { getWordCountMilestone } from "@/utils/delight-messages";
 import { countWords } from "@/utils/formatters";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -73,8 +72,10 @@ export default function DraftEditorScreen() {
 
   // Publish state
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedPostUrl, setPublishedPostUrl] = useState<string | null>(null);
+  const [isPublished, setIsPublished] = useState(false);
   const [journal, setJournal] = useState<Journal | null>(null);
 
   // Content gating state
@@ -86,9 +87,28 @@ export default function DraftEditorScreen() {
 
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   // Scroll threshold for showing gate (30%)
   const SCROLL_THRESHOLD = 0.3;
+
+  // Trigger content gate for guest users (not for guest flow - GuestDraftScrollGate handles that)
+  const triggerContentGate = useCallback(() => {
+    // Guard against state updates after unmount
+    if (!isMountedRef.current) return;
+
+    // Only show gate if:
+    // 1. User is NOT authenticated
+    // 2. User has completed a draft (trial completed successfully)
+    // 3. Gate is not already showing
+    // 4. This is NOT a guest flow (guest flow uses GuestDraftScrollGate instead)
+    // 5. This is NOT a guest draft (id doesn't start with "guest-")
+    const isGuestDraftId = id?.startsWith("guest-") || id === "guest";
+
+    if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow && !isGuestDraftId) {
+      setShowContentGate(true);
+    }
+  }, [isAuthenticated, trialCompletedSuccessfully, showContentGate, isGuestFlow, id]);
 
   // Handle scroll position for content gating
   const handleScroll = useAnimatedScrollHandler({
@@ -117,22 +137,7 @@ export default function DraftEditorScreen() {
         }
       }
     },
-  });
-
-  // Trigger content gate for guest users (not for guest flow - GuestDraftScrollGate handles that)
-  const triggerContentGate = useCallback(() => {
-    // Only show gate if:
-    // 1. User is NOT authenticated
-    // 2. User has completed a draft (trial completed successfully)
-    // 3. Gate is not already showing
-    // 4. This is NOT a guest flow (guest flow uses GuestDraftScrollGate instead)
-    // 5. This is NOT a guest draft (id doesn't start with "guest-")
-    const isGuestDraftId = id?.startsWith("guest-") || id === "guest";
-
-    if (!isAuthenticated && trialCompletedSuccessfully && !showContentGate && !isGuestFlow && !isGuestDraftId) {
-      setShowContentGate(true);
-    }
-  }, [isAuthenticated, trialCompletedSuccessfully, showContentGate, isGuestFlow, id]);
+  }, [triggerContentGate]);
 
   // Navigation handlers for content gate
   const handleSignIn = useCallback(() => {
@@ -147,6 +152,7 @@ export default function DraftEditorScreen() {
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (celebrationTimerRef.current)
         clearTimeout(celebrationTimerRef.current);
       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
@@ -222,16 +228,30 @@ export default function DraftEditorScreen() {
       return;
     }
 
-    // Try loading from AsyncStorage first (for local drafts)
+    // For authenticated users, try fetching from API directly (skip AsyncStorage to avoid stale data)
+    if (authStore.isAuthenticated) {
+      try {
+        const post = await getPost(id);
+        const mappedDraft = mapPostToDraft(post);
+        setDraft(mappedDraft);
+        setTitle(mappedDraft.title || "");
+        setMetaDescription(mappedDraft.metaDescription || "");
+        setContent(mappedDraft.content || "");
+        setPreviousWordCount(mappedDraft.wordCount || 0);
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error("Error loading draft from API:", error);
+        setLoadError("Failed to load draft. Please try again.");
+      }
+    }
+
+    // For non-authenticated users, try loading from AsyncStorage
     try {
-      // For non-authenticated users, check 'guest-drafts' key first
-      // Then fall back to 'drafts' key for backwards compatibility
-      let data = await AsyncStorage.getItem("drafts");
-      if (!authStore.isAuthenticated) {
-        const guestDraftsData = await AsyncStorage.getItem("guest-drafts");
-        if (guestDraftsData) {
-          data = guestDraftsData;
-        }
+      // Check 'guest-drafts' key first, then fall back to 'drafts' key for backwards compatibility
+      let data = await AsyncStorage.getItem("guest-drafts");
+      if (!data) {
+        data = await AsyncStorage.getItem("drafts");
       }
 
       if (data) {
@@ -251,8 +271,8 @@ export default function DraftEditorScreen() {
       console.error("Error loading draft from AsyncStorage:", error);
     }
 
-    // If not found locally and user is authenticated, try fetching from API
-    if (authStore.isAuthenticated) {
+    // Draft not found
+    if (!authStore.isAuthenticated) {
       try {
         const post = await getPost(id);
         const mappedDraft = mapPostToDraft(post);
@@ -303,6 +323,15 @@ export default function DraftEditorScreen() {
     }
     fetchJournal();
   }, [authStore.isAuthenticated]);
+
+  // Track published status based on draft status
+  useEffect(() => {
+    if (draft?.status === 'published') {
+      setIsPublished(true);
+    } else {
+      setIsPublished(false);
+    }
+  }, [draft?.status]);
 
   const saveDraft = useCallback(async () => {
     if (!draft) return;
@@ -362,13 +391,14 @@ export default function DraftEditorScreen() {
   ]);
 
   useEffect(() => {
-    // Guest drafts are read-only — skip auto-save
-    if (isGuestFlow) return;
+    // Skip auto-save for guest drafts (read-only) and authenticated users (use API instead)
+    // Auto-save only for non-authenticated users using AsyncStorage
+    if (isGuestFlow || authStore.isAuthenticated) return;
     const timer = setTimeout(() => {
       if (draft) saveDraft();
     }, 1000);
     return () => clearTimeout(timer);
-  }, [title, metaDescription, content, saveDraft, draft, isGuestFlow]);
+  }, [title, metaDescription, content, saveDraft, draft, isGuestFlow, authStore.isAuthenticated]);
 
   const handleExport = () => {
     Alert.alert("Export", "Choose format", [
@@ -406,15 +436,56 @@ export default function DraftEditorScreen() {
   };
 
   const handlePublishPress = () => {
-    setShowPublishModal(true);
+    if (isPublished) {
+      handleUnpublish();
+    } else {
+      setShowPublishModal(true);
+    }
   };
 
   const handlePublishSuccess = (postUrl: string) => {
     setPublishedPostUrl(postUrl);
     setShowPublishModal(false);
+    setShowSuccessModal(true);
+    setIsPublished(true);
+    // Update draft status
+    setDraft(prev => prev ? { ...prev, status: 'published' } : null);
   };
 
-  const handleToastDismiss = () => {
+  const handleUnpublish = async () => {
+    if (!draft?.serverId) return;
+
+    Alert.alert(
+      'Unpublish Post',
+      'This post will no longer be visible on your blog. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unpublish',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsPublishing(true);
+              await unpublishPost(draft.serverId);
+              setIsPublished(false);
+              // Update draft status
+              setDraft(prev => prev ? { ...prev, status: 'ready' } : null);
+              // Show feedback
+              showToast('Post unpublished', 'success');
+            } catch (error) {
+              console.error('Failed to unpublish:', error);
+              showToast('Failed to unpublish', 'error');
+            } finally {
+              setIsPublishing(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSuccessModalDismiss = () => {
+    setShowSuccessModal(false);
     setPublishedPostUrl(null);
   };
 
@@ -565,33 +636,37 @@ export default function DraftEditorScreen() {
                   </PressableScale>
                 )}
 
-                {/* Publish button - hide for guest flow */}
+                {/* Publish/Unpublish button - hide for guest flow */}
                 {!isGuestFlow && (
                   <PressableScale
                     onPress={handlePublishPress}
                     disabled={!draft?.serverId || isPublishing}
                     style={[
                       styles.iconBtn,
+                      styles.iconBtnOutline,
                       {
+                        borderColor: colors.border,
                         backgroundColor: !draft?.serverId
-                          ? colors.backgroundTertiary
+                          ? colors.surface
+                          : isPublished
+                          ? colors.warning
                           : colors.primary,
-                        opacity: !draft?.serverId ? 0.5 : 1,
+                        opacity: !draft?.serverId ? 0.6 : 1,
                       },
                     ]}
-                    accessibilityLabel="Publish draft"
+                    accessibilityLabel={isPublished ? "Unpublish draft" : "Publish draft"}
                     hapticStyle="light"
                   >
                     {isPublishing ? (
                       <ActivityIndicator
                         size="small"
-                        color={colors.textInverse}
+                        color={!draft?.serverId ? colors.textMuted : colors.textInverse}
                       />
                     ) : (
                       <Ionicons
-                        name="rocket-outline"
+                        name={isPublished ? "arrow-undo" : "rocket-outline"}
                         size={20}
-                        color={colors.textInverse}
+                        color={!draft?.serverId ? colors.textMuted : colors.textInverse}
                       />
                     )}
                   </PressableScale>
@@ -820,19 +895,12 @@ export default function DraftEditorScreen() {
         onPublishEnd={() => setIsPublishing(false)}
       />
 
-      {/* Publish Success Toast */}
-      <PublishSuccessToast
-        visible={publishedPostUrl !== null}
+      {/* Publish Success Modal */}
+      <PublishSuccessModal
+        visible={showSuccessModal}
         postUrl={publishedPostUrl || ''}
-        onViewPress={() => {
-          // TODO: Will implement with web browser in later task
-          console.log('View post:', publishedPostUrl);
-        }}
-        onSharePress={() => {
-          // TODO: Will implement with share in later task
-          console.log('Share post:', publishedPostUrl);
-        }}
-        onDismiss={handleToastDismiss}
+        postTitle={draft?.title}
+        onDismiss={handleSuccessModalDismiss}
       />
     </ThemedView>
   );

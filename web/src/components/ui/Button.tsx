@@ -12,11 +12,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantStyles = {
-  primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-lg shadow-primary-500/30',
-  secondary: 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700',
-  danger: 'bg-accent-500 text-white hover:bg-accent-600 active:bg-accent-700 shadow-lg shadow-accent-500/30',
-  ghost: 'bg-transparent text-primary-600 hover:bg-primary-50 active:bg-primary-100 dark:text-primary-400 dark:hover:bg-primary-950',
-  'danger-outline': 'bg-transparent text-accent-500 border border-accent-500 hover:bg-accent-50 active:bg-accent-100 dark:hover:bg-accent-950',
+  primary: 'bg-gradient-to-r from-neutral-800 via-neutral-900 to-neutral-800 text-white hover:from-neutral-700 hover:via-neutral-800 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-100 dark:to-neutral-200 dark:text-neutral-900 shadow-lg',
+  secondary: 'bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 text-neutral-900 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 active:from-neutral-300 active:via-neutral-200 active:to-neutral-300 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 dark:text-neutral-100',
+  danger: 'bg-gradient-to-r from-neutral-700 via-neutral-800 to-neutral-700 text-white hover:from-neutral-600 hover:via-neutral-700 hover:to-neutral-600 dark:from-neutral-300 dark:via-neutral-200 dark:to-neutral-300 dark:text-neutral-900 shadow-lg',
+  ghost: 'bg-transparent text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800',
+  'danger-outline': 'bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 dark:text-neutral-300 dark:border-neutral-300 dark:hover:bg-neutral-800',
 };
 
 const sizeStyles = {

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Post, PostStatus } from '@/lib/types';
 import * as idb from '@/lib/indexedDB';
+import { api, ApiError } from '@/lib/api-client';
 
 interface DraftState {
   drafts: Post[];
@@ -24,6 +25,7 @@ interface DraftState {
   updateDraft: (id: string, updates: Partial<Post>) => Promise<void>;
   deleteDraft: (id: string) => Promise<void>;
   publishDraft: (id: string) => Promise<void>;
+  unpublishDraft: (id: string) => Promise<void>;
   archiveDraft: (id: string) => Promise<void>;
 
   // Computed
@@ -78,12 +80,7 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   fetchDrafts: async () => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('/api/drafts', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch drafts');
+      const response = await api.get('/api/drafts');
       const drafts = await response.json();
 
       // Also get offline drafts
@@ -91,6 +88,11 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
 
       set({ drafts, isLoading: false });
     } catch (error) {
+      // Handle ApiError specifically
+      if (error instanceof ApiError) {
+        console.error('[Draft Store] API Error:', error.status, error.message);
+      }
+
       // On error, try to load from offline storage
       const offlineDrafts = await idb.getOfflineDrafts();
       if (offlineDrafts.length > 0) {
@@ -109,18 +111,11 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
     const tempId = `temp-${Date.now()}`;
 
     try {
-      const token = localStorage.getItem('access_token');
       const formData = new FormData();
       formData.append('audio', audioBlob);
       if (title) formData.append('title', title);
 
-      const response = await fetch('/api/drafts', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error('Failed to create draft');
+      const response = await api.post('/api/drafts', formData);
       const draft = await response.json();
       set((state) => ({ drafts: [draft, ...state.drafts], isLoading: false }));
 
@@ -166,17 +161,7 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   updateDraft: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/api/drafts/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (!response.ok) throw new Error('Failed to update draft');
+      const response = await api.patch(`/api/drafts/${id}`, updates);
       const updatedDraft = await response.json();
       set((state) => ({
         drafts: state.drafts.map((d) => (d.id === id ? updatedDraft : d)),
@@ -194,12 +179,7 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   deleteDraft: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/api/drafts/${id}`, {
-        method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (!response.ok) throw new Error('Failed to delete draft');
+      await api.delete(`/api/drafts/${id}`);
       set((state) => ({
         drafts: state.drafts.filter((d) => d.id !== id),
         isLoading: false,
@@ -215,6 +195,28 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
 
   publishDraft: async (id) => {
     await get().updateDraft(id, { status: 'published' });
+  },
+
+  unpublishDraft: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post(`/api/posts/${id}/unpublish`, {});
+      const unpublishedPost = await response.json();
+
+      // Update local state to reflect unpublished status
+      set((state) => ({
+        drafts: state.drafts.map((d) =>
+          d.id === id ? { ...d, status: 'draft' as PostStatus } : d
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to unpublish draft',
+        isLoading: false,
+      });
+      throw error;
+    }
   },
 
   archiveDraft: async (id) => {

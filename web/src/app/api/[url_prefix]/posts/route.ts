@@ -50,11 +50,13 @@ export async function GET(
     }
 
     // Build query with filters
+    // Must have BOTH status='published' AND published_at IS NOT NULL
     let query = supabase
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('journal_id', journal.id)
-      .eq('status', 'published');
+      .eq('status', 'published')
+      .not('published_at', 'is', null);
 
     // Add search filter if provided
     if (search) {

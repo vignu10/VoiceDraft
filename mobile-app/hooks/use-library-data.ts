@@ -9,7 +9,7 @@ import { listPosts } from '@/services/api/posts';
 import { mapPostsToDrafts } from '@/services/mappers/post-to-draft.mapper';
 import { useAuthStore } from '@/stores/auth-store';
 import type { Draft } from '@/types/draft';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface UseLibraryDataReturn {
@@ -41,12 +41,12 @@ export function useLibraryData(): UseLibraryDataReturn {
   /**
    * Load posts from API or AsyncStorage (for guest flow)
    */
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     setIsLoading(true);
     setSyncError(null);
 
     try {
-      // Get current auth state directly from store
+      // Get current auth state directly from store to ensure we have the latest value
       const authState = useAuthStore.getState().isAuthenticated;
 
       if (authState) {
@@ -91,14 +91,17 @@ export function useLibraryData(): UseLibraryDataReturn {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // Empty deps - loadPosts reads auth state directly from store
 
-  // Initial load - only run once on mount
+  // Initial load and reload when auth state changes
   useEffect(() => {
     let isMounted = true;
 
-    // Set loading state immediately when mounting
+    // Set loading state immediately when mounting or auth changes
     setIsLoading(true);
+    // Clear drafts immediately to prevent stale data from being visible
+    // This is especially important when switching between guest/authenticated states
+    setDrafts([]);
 
     loadPosts().finally(() => {
       // Cleanup reference
@@ -108,8 +111,7 @@ export function useLibraryData(): UseLibraryDataReturn {
     return () => {
       isMounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, [isAuthenticated, loadPosts]); // Reload when authentication state changes
 
   // Memoized filtered and sorted drafts
   const filteredDrafts = useMemo(() => {

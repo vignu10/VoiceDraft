@@ -60,3 +60,31 @@ MD's/
 
 # Claude settings
 .claude/settings.json
+
+# Playwright test artifacts
+.playwright/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Playwright MCP server artifacts
+.playwright-mcp/
+
+# Test screenshots and logs
+*.log
+playwright-screenshots/
+
+# Test documentation files
+record-mobile-*.md
+record-page-*.md
+
+# Screenshot files (testing)
+discover-page-*.png
+draft-editor-*.png
+homepage-*.png
+record-page*.png
+record-tablet-*.png
+record-mobile-*.png
+theme-*.png
+console-test-*.log
+network-requests-*.log

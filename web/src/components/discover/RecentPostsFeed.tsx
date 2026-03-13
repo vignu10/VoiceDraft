@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PostCard } from '../blog/PostCard';
 import { PostCardSkeleton } from '../blog/PostCardSkeleton';
 import type { PostCardData } from '@/types/blog';
@@ -17,6 +17,16 @@ export function RecentPostsFeed({
   const [posts, setPosts] = useState<PostCardData[]>(initialPosts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
+  const hasLoadedMore = useRef(false);
+
+  // Sync state when props change (after initial fetch)
+  // Only update from props if we haven't loaded more data manually
+  useEffect(() => {
+    if (!hasLoadedMore.current) {
+      setPosts(initialPosts);
+      setHasMore(initialHasMore);
+    }
+  }, [initialPosts, initialHasMore]);
 
   const handleLoadMore = async () => {
     if (isLoading || !hasMore) return;
@@ -30,6 +40,7 @@ export function RecentPostsFeed({
 
       setPosts((prev) => [...prev, ...data.posts]);
       setHasMore(data.hasMorePosts);
+      hasLoadedMore.current = true;
     } catch (error) {
       console.error('Failed to load more posts:', error);
     } finally {

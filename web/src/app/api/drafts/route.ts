@@ -34,7 +34,32 @@ export async function GET(req: NextRequest) {
 
     let query = supabaseAdmin
       .from('posts')
-      .select('*')
+      .select(`
+        id,
+        journal_id,
+        title,
+        slug,
+        content,
+        meta_description,
+        target_keyword,
+        status,
+        published_at,
+        word_count,
+        reading_time_minutes,
+        view_count,
+        audio_s3_key,
+        audio_file_url,
+        audio_file_size_bytes,
+        audio_duration_seconds,
+        audio_format,
+        audio_mime_type,
+        audio_is_processed,
+        style_used,
+        transcript,
+        processing_meta,
+        created_at,
+        updated_at
+      `)
       .eq('journal_id', journal.id);
 
     if (statusFilter && statusFilter !== 'all') {
@@ -47,7 +72,13 @@ export async function GET(req: NextRequest) {
       return handleError(error, 'Failed to fetch drafts');
     }
 
-    return NextResponse.json(posts || []);
+    // Ensure all posts have a status field - derive from published_at if missing
+    const postsWithStatus = (posts || []).map((post: any) => ({
+      ...post,
+      status: post.status || (post.published_at ? 'published' : 'draft'),
+    }));
+
+    return NextResponse.json(postsWithStatus);
   } catch (error) {
     return handleError(error);
   }
@@ -79,10 +110,18 @@ export async function POST(req: NextRequest) {
     let audioDuration = 0;
     let audioFormat: 'm4a' | 'mp3' | 'wav' | 'webm' = 'webm';
 
+    let content = '';
+    let metaDescription = '';
+    let targetKeyword = '';
+
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const audio = formData.get('audio') as File | null;
       title = formData.get('title') as string || 'Untitled Draft';
+      content = formData.get('content') as string || '';
+      transcript = formData.get('transcript') as string || '';
+      metaDescription = formData.get('meta_description') as string || '';
+      targetKeyword = formData.get('target_keyword') as string || '';
 
       if (audio) {
         // TODO: Upload to S3
@@ -98,7 +137,10 @@ export async function POST(req: NextRequest) {
       // JSON body
       const body = await req.json();
       title = body.title || 'Untitled Draft';
+      content = body.content || '';
       transcript = body.transcript || '';
+      metaDescription = body.meta_description || '';
+      targetKeyword = body.target_keyword || '';
       audioFileUrl = body.audio_file_url || '';
       audioS3Key = body.audio_s3_key || '';
       audioFileSize = body.audio_file_size_bytes || 0;
@@ -141,7 +183,9 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') + '-' + Date.now();
 
-    const wordCount = transcript ? transcript.split(/\s+/).length : 0;
+    // Use generated content if available, otherwise fall back to transcript
+    const finalContent = content || transcript || '';
+    const wordCount = finalContent ? finalContent.split(/\s+/).length : 0;
 
     const { data: post, error } = await supabaseAdmin
       .from('posts')
@@ -149,8 +193,10 @@ export async function POST(req: NextRequest) {
         journal_id: journalId,
         title,
         slug,
-        content: transcript || '',
+        content: finalContent,
         transcript,
+        meta_description: metaDescription,
+        target_keyword: targetKeyword,
         audio_file_url: audioFileUrl,
         audio_s3_key: audioS3Key,
         audio_file_size_bytes: audioFileSize,

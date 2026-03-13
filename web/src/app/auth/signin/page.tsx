@@ -140,7 +140,7 @@ export default function SignInPage() {
 
           {/* Sign up link */}
           <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
-            Don't have an account?{' '}
+            New here?{' '}
             <Link
               href="/auth/signup"
               className="font-medium text-primary-600 hover:text-primary-500"

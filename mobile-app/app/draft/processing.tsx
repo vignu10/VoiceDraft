@@ -226,6 +226,8 @@ function TwinklingIcon({ name, size = 56 }: TwinklingIconProps) {
 export default function ProcessingScreen() {
   const params = useLocalSearchParams<{
     audioUri?: string;
+    audioFileUrl?: string;
+    audioS3Key?: string;
     duration: string;
     keyword?: string;
     tone: string;
@@ -241,6 +243,14 @@ export default function ProcessingScreen() {
   const hasStarted = useRef(false);
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
   const colors = useThemeColors();
+
+  // Validate required params on mount
+  useEffect(() => {
+    if (!params.audioUri && !params.audioS3Key) {
+      setError('Missing audio file. Please record again.');
+      setStep('error');
+    }
+  }, [params.audioUri, params.audioS3Key]);
 
   // Achievements tracking
   const recordDraftCreated = useAchievementsStore((state) => state.recordDraftCreated);
@@ -276,8 +286,18 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
 
-        // Transcribe from local audio file (base64 method)
-        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+        // Determine audio source: S3 (new flow) or local URI (legacy)
+        const transcribeOptions = {
+          audioUri: params.audioUri,
+          audioS3Key: params.audioS3Key,
+        };
+
+        if (!transcribeOptions.audioUri && !transcribeOptions.audioS3Key) {
+          throw new Error('No audio source provided. Please record again.');
+        }
+
+        // Transcribe from audio file
+        const transcription = await transcribeMutation.mutateAsync(transcribeOptions);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);
@@ -447,8 +467,18 @@ export default function ProcessingScreen() {
       try {
         setStep('transcribing');
 
-        // Transcribe from local audio file (base64 method)
-        const transcription = await transcribeMutation.mutateAsync(params.audioUri!);
+        // Determine audio source: S3 (new flow) or local URI (legacy)
+        const transcribeOptions = {
+          audioUri: params.audioUri,
+          audioS3Key: params.audioS3Key,
+        };
+
+        if (!transcribeOptions.audioUri && !transcribeOptions.audioS3Key) {
+          throw new Error('No audio source provided. Please record again.');
+        }
+
+        // Transcribe from audio file
+        const transcription = await transcribeMutation.mutateAsync(transcribeOptions);
 
         // Validate transcription before calling generate API
         const validation = validateTranscript(transcription.text);

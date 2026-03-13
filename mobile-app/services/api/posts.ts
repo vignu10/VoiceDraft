@@ -28,6 +28,11 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<Post[]>
   const status = options.status || 'draft';
   const response = await apiClient.get<Post[]>(`/api/posts?status=${status}`);
 
+  // Handle session expired - auth failed callback will trigger logout and redirect
+  if (!response.success && response.error === 'Session expired. Please sign in again.') {
+    return [];
+  }
+
   if (!response.success || !response.data) {
     throw new Error(response.error || 'Failed to fetch posts');
   }
@@ -38,7 +43,16 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<Post[]>
 export async function getPost(id: string): Promise<Post> {
   const response = await apiClient.get<Post>(`/api/posts/${id}`);
 
+  // Handle session expired - auth failed callback will trigger logout and redirect
+  if (!response.success && response.error === 'Session expired. Please sign in again.') {
+    throw new Error('Session expired');
+  }
+
   if (!response.success || !response.data) {
+    // Provide specific error for 404/not found
+    if (response.error?.includes('not found') || response.error?.includes('forbidden')) {
+      throw new Error('This draft does not exist or you do not have permission to view it.');
+    }
     throw new Error(response.error || 'Failed to fetch post');
   }
 

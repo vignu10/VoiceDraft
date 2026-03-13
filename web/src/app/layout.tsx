@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Outfit } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import { DialogProvider } from '@/components/ui/dialog';
 import { Navigation } from '@/components/layout/Navigation';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
@@ -37,10 +38,34 @@ export default function RootLayout({
       lang="en"
       className={`${spaceGrotesk.variable} ${outfit.variable}`}
       style={{ fontFamily: 'var(--font-body)' }}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen antialiased">
-        <ToastProvider>
-          <ThemeProvider>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('voiceDraft-theme');
+                  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  const resolvedTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : (theme || (systemDark ? 'dark' : 'light'));
+                  if (resolvedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.add('light');
+                  }
+                } catch (e) {
+                  console.error('Theme script error:', e);
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen antialiased" suppressHydrationWarning>
+        <DialogProvider>
+          <ToastProvider>
+            <ThemeProvider>
             {/* Offline indicator */}
             <OfflineIndicator />
 
@@ -64,6 +89,7 @@ export default function RootLayout({
             </main>
           </ThemeProvider>
         </ToastProvider>
+        </DialogProvider>
       </body>
     </html>
   );

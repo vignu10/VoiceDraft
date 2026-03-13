@@ -40,6 +40,16 @@ export async function GET(req: NextRequest) {
       .eq('status', statusFilter)
       .order('updated_at', { ascending: false });
 
+    // Double-check: ensure posts belong to the user's journal
+    // This prevents any potential data leak due to token issues
+    if (posts && posts.length > 0) {
+      const userJournalIds = posts.map(p => p.journal_id);
+      if (!userJournalIds.every(id => id === journal.id)) {
+        console.error('[Security] Post journal IDs mismatch! User:', user.id, 'Expected journal:', journal.id, 'Found journals:', userJournalIds);
+        return NextResponse.json([]);
+      }
+    }
+
     if (error) {
       return handleError(error, 'Failed to fetch posts');
     }

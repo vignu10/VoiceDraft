@@ -36,10 +36,10 @@ const toastIcons = {
 };
 
 const toastStyles = {
-  success: 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200',
-  error: 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
-  warning: 'bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200',
-  info: 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200',
+  success: 'bg-success-50 dark:bg-success-950 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200',
+  error: 'bg-error-50 dark:bg-error-950 border-error-200 dark:border-error-800 text-error-800 dark:text-error-200',
+  warning: 'bg-warning-50 dark:bg-warning-950 border-warning-200 dark:border-warning-800 text-warning-800 dark:text-warning-200',
+  info: 'bg-info-50 dark:bg-info-950 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200',
 };
 
 export const Toast: React.FC<ToastProps> = ({

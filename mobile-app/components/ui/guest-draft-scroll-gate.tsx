@@ -33,7 +33,9 @@ export function GuestDraftScrollGate({ children }: GuestDraftScrollGateProps) {
 
       if (maxScroll <= 0) return;
 
-      const scrollPercentage = contentOffset.y / maxScroll;
+      // Clamp percentage between 0 and 1 to handle overscroll/bounce
+      let scrollPercentage = contentOffset.y / maxScroll;
+      scrollPercentage = Math.max(0, Math.min(1, scrollPercentage));
 
       if (scrollPercentage > scrollThreshold) {
         hasTriggeredRef.current = true;

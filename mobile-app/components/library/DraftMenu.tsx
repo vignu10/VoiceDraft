@@ -163,7 +163,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuItemDestructive: {
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing[5],
+    paddingVertical: Spacing[4],
+    gap: Spacing[4],
     marginTop: Spacing[2],
   },
   menuText: {

@@ -27,7 +27,7 @@ import { useDraftActions } from '@/hooks/use-draft-actions';
 import type { Draft } from '@/types/draft';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -78,6 +78,19 @@ export default function LibraryTab() {
   const [showMenu, setShowMenu] = useState(false);
   const [menuDraftId, setMenuDraftId] = useState<string | null>(null);
 
+  // Deletion loading state
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Refresh data when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      // Only refresh if we're not already loading and user is authenticated
+      if (!isLoading && isAuthenticated) {
+        refresh();
+      }
+    }, [isAuthenticated])
+  );
+
   // Draft actions hook
   const {
     handleMenuAction,
@@ -90,6 +103,8 @@ export default function LibraryTab() {
     menuDraftId,
     setShowMenu,
     showDialog,
+    isAuthenticated,
+    onRefresh: refresh,
   });
 
   // Handler for toast dismissal
@@ -122,29 +137,53 @@ export default function LibraryTab() {
   const handleDeleteSelected = useCallback(async () => {
     if (selectedIds.size === 0) return;
 
+    // Check if any selected drafts are published - prevent bulk delete of published posts
+    const publishedDrafts = localDrafts.filter((d) =>
+      selectedIds.has(d.id) && d.status === 'published'
+    );
+
+    if (publishedDrafts.length > 0) {
+      await showDialog({
+        title: 'Cannot Delete Published Posts',
+        message: `${publishedDrafts.length} of your selected post${publishedDrafts.length > 1 ? 's are' : ' is'} published. Please unpublish ${publishedDrafts.length > 1 ? 'them' : 'it'} first before deleting.`,
+        variant: 'default',
+        confirmText: 'OK',
+        onConfirm: () => {},
+      });
+      return;
+    }
+
     const confirmed = await showDialog({
       title: `Delete ${selectedIds.size} Draft${selectedIds.size > 1 ? 's' : ''}`,
       message: `Are you sure you want to delete ${selectedIds.size} draft${selectedIds.size > 1 ? 's' : ''}?`,
       variant: 'destructive',
       confirmText: 'Delete',
       onConfirm: async () => {
-        // Delete each selected post from backend
-        for (const id of selectedIds) {
-          try {
-            await deletePost(id);
-          } catch (error) {
-            console.error('Failed to delete post:', id, error);
+        setIsDeleting(true);
+        try {
+          // Delete each selected post from backend (for authenticated users) or just local (for guests)
+          for (const id of selectedIds) {
+            const draft = localDrafts.find((d) => d.id === id);
+            if (isAuthenticated && draft?.serverId) {
+              try {
+                await deletePost(draft.serverId);
+              } catch (error) {
+                console.error('[Library] Failed to delete post from server:', id, error);
+              }
+            }
           }
+          // Refresh data to get updated list
+          await refresh();
+        } finally {
+          setIsDeleting(false);
         }
-        // Refresh data
-        refresh();
       },
     });
 
     if (confirmed) {
       exitSelectMode();
     }
-  }, [selectedIds, showDialog, refresh, exitSelectMode]);
+  }, [selectedIds, showDialog, refresh, exitSelectMode, localDrafts, isAuthenticated]);
 
   // Render draft card
   const renderDraft = useCallback(
@@ -167,7 +206,8 @@ export default function LibraryTab() {
   return (
     <>
       <ThemedView style={styles.container}>
-        <SafeAreaView edges={['top']}>
+        {/* @ts-ignore - SafeAreaView needs flex: 1 to expand */}
+        <SafeAreaView edges={['top']} style={{ flex: 1 }}>
           <View style={styles.safeArea}>
             {/* Header */}
             <LibraryHeader
@@ -182,6 +222,7 @@ export default function LibraryTab() {
                   selectAllText={selectAllText}
                   onSelectAll={selectAll}
                   onDelete={handleDeleteSelected}
+                  isDeleting={isDeleting}
                 />
               )}
             </LibraryHeader>

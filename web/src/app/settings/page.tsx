@@ -8,12 +8,16 @@ import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Select } from '@/components/ui/Select';
 import { Moon, Sun, Bell, Lock, Globe, Download, Upload, Database } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useAuthStore } from '@/stores/auth-store';
+import { api } from '@/lib/api-client';
+import { cn } from '@/lib/utils';
 
 type ThemePreference = 'light' | 'dark' | 'system';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { accessToken } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
 
   // Settings state
@@ -77,20 +81,12 @@ export default function SettingsPage() {
       setTheme(themePreference);
 
       // Simulate API call for server-side preferences
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        await fetch('/api/user/settings', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            theme_preference: themePreference,
-            notifications_enabled: notificationsEnabled,
-            email_notifications: emailNotifications,
-            language,
-          }),
+      if (accessToken) {
+        await api.patch('/api/user/settings', {
+          theme_preference: themePreference,
+          notifications_enabled: notificationsEnabled,
+          email_notifications: emailNotifications,
+          language,
         });
       }
 
@@ -112,10 +108,7 @@ export default function SettingsPage() {
     setIsExporting(true);
     setImportResult(null);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const response = await fetch('/api/user/backup', {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const response = await api.get('/api/user/backup');
 
       if (response.ok) {
         const blob = await response.blob();
@@ -146,15 +139,10 @@ export default function SettingsPage() {
     setIsImporting(true);
     setImportResult(null);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/user/backup', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      });
+      const response = await api.post('/api/user/backup', formData);
 
       if (response.ok) {
         const result = await response.json();
@@ -177,9 +165,9 @@ export default function SettingsPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen">
         {/* Header */}
-        <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+        <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
               Settings
@@ -399,8 +387,8 @@ export default function SettingsPage() {
                     <div className={cn(
                       'text-sm p-3 rounded-lg border',
                       importResult.includes('success')
-                        ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800'
-                        : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                        ? 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800'
+                        : 'bg-error-50 dark:bg-error-950 text-error-700 dark:text-error-300 border-error-200 dark:border-error-800'
                     )}>
                       {importResult}
                     </div>
@@ -420,8 +408,4 @@ export default function SettingsPage() {
       </div>
     </WithBottomNav>
   );
-}
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ');
 }

@@ -20,17 +20,17 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       components={{
         // Headings with anchor links
         h1: ({ children, id }) => (
-          <h1 id={id} className="scroll-mt-20 text-4xl font-bold text-neutral-900 dark:text-white">
+          <h1 id={id} className="scroll-mt-20 text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">
             {children}
           </h1>
         ),
         h2: ({ children, id }) => (
-          <h2 id={id} className="scroll-mt-20 mt-12 mb-4 text-3xl font-semibold text-neutral-900 dark:text-white">
+          <h2 id={id} className="scroll-mt-20 mt-10 mb-3 text-xl font-semibold text-neutral-900 dark:text-white sm:text-2xl">
             {children}
           </h2>
         ),
         h3: ({ children, id }) => (
-          <h3 id={id} className="scroll-mt-20 mt-8 mb-3 text-2xl font-semibold text-neutral-900 dark:text-white">
+          <h3 id={id} className="scroll-mt-20 mt-6 mb-2 text-lg font-semibold text-neutral-900 dark:text-white sm:text-xl">
             {children}
           </h3>
         ),
