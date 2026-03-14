@@ -8,6 +8,9 @@ import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { AppUpdateNotification } from '@/components/ui/AppUpdateNotification';
 import './globals.css';
 
+// Force dynamic rendering to avoid build-time prerendering issues
+export const dynamic = 'force-dynamic';
+
 // Bold, distinctive typography pairing for tech-savvy creators
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],

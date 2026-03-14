@@ -5,20 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { Download, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface ServiceWorkerRegistration extends ServiceWorkerRegistration {
+interface EnhancedEnhancedServiceWorkerRegistration extends EnhancedServiceWorkerRegistration {
   waiting?: ServiceWorker | null;
-}
-
-declare global {
-  interface Navigator {
-    serviceWorker: {
-      ready: Promise<ServiceWorkerRegistration>;
-      register: (
-        scriptURL: string,
-        options?: RegistrationOptions
-      ) => Promise<ServiceWorkerRegistration>;
-    };
-  }
+  addEventListener?: (
+    type: string,
+    listener: EventListenerOrEventListenerObject
+  ) => void;
 }
 
 export function AppUpdateNotification() {
@@ -29,7 +21,7 @@ export function AppUpdateNotification() {
     // Listen for service worker updates
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
-        const swRegistration = registration as ServiceWorkerRegistration;
+        const swRegistration = registration as EnhancedServiceWorkerRegistration;
 
         // Check if there's already a waiting SW
         if (swRegistration.waiting) {
@@ -66,7 +58,7 @@ export function AppUpdateNotification() {
     if ('serviceWorker' in navigator) {
       setIsUpdating(true);
       navigator.serviceWorker.ready.then((registration) => {
-        const swRegistration = registration as ServiceWorkerRegistration;
+        const swRegistration = registration as EnhancedServiceWorkerRegistration;
 
         // Tell the waiting SW to skip waiting and become active
         if (swRegistration.waiting) {

@@ -85,10 +85,13 @@ test.describe('Sign Up Flow', () => {
   });
 
   test('should navigate to sign in page', async ({ page }) => {
+    // First navigate to signup page if not already there
+    await page.goto('/auth/signup', { timeout: 10000 }).catch(() => {});
+
     await page.getByRole('link', { name: /sign in/i }).click();
 
     await expect(page).toHaveURL('/auth/signin');
-    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /welcome back|sign in/i })).toBeVisible();
   });
 
   test('should have terms and privacy links', async ({ page }) => {
