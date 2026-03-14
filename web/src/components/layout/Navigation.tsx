@@ -98,7 +98,7 @@ export function Navigation() {
                   <span className="hidden lg:inline">Drafts</span>
                 </Link>
                 <Link
-                  href="/#featured-blogs"
+                  href="/discover"
                   className="hidden sm:inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-400"
                 >
                   Explore
@@ -169,7 +169,7 @@ export function Navigation() {
               <>
                 {/* Non-authenticated navigation */}
                 <Link
-                  href="/#featured-blogs"
+                  href="/discover"
                   className="text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg px-3 py-2 dark:text-neutral-400"
                 >
                   Explore

@@ -38,7 +38,7 @@ export interface PostsResponse {
   offset: number;
 }
 
-export type SortOption = 'newest' | 'oldest' | 'views' | 'title';
+export type SortOption = 'newest' | 'oldest' | 'title';
 
 export interface BlogFilters {
   search: string;

@@ -6,7 +6,7 @@ type DiscoverySort = 'newest' | 'active' | 'posts';
 
 const sortOptions: { value: DiscoverySort; label: string }[] = [
   { value: 'newest', label: 'Newest' },
-  { value: 'active', label: 'Most Active' },
+  { value: 'active', label: 'Active' },
   { value: 'posts', label: 'Most Posts' },
 ];
 
@@ -29,14 +29,14 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
   };
 
   return (
-    <div className="sticky top-0 z-10 border-b-2 border-neutral-200/80 bg-white/95 backdrop-blur-md dark:border-neutral-800/80 dark:bg-neutral-950/95 shadow-sm">
-      <div className="container-wide py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Bold Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <label htmlFor="blogs-search" className="sr-only">Search blogs</label>
+    <div className="sticky top-0 z-10 border-b border-neutral-200/60 bg-white/90 backdrop-blur-sm dark:border-neutral-800/60 dark:bg-neutral-950/90">
+      <div className="container-wide">
+        <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:py-5">
+          {/* Search input - editorial style */}
+          <div className="relative flex-1 w-full max-w-md">
+            <label htmlFor="blogs-search" className="sr-only">Search</label>
             <svg
-              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 pointer-events-none"
+              className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 pointer-events-none"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -54,26 +54,25 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search blogs..."
-              className="w-full rounded-xl border-2 border-neutral-300 bg-white px-4 py-3 pl-11 text-sm font-medium text-neutral-900 placeholder-neutral-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500 dark:focus:border-primary-500"
+              placeholder="Find creators, topics..."
+              className="w-full rounded-lg border border-neutral-300 bg-white/50 px-4 py-2.5 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 transition-colors focus:border-accent-500 focus:bg-white focus:outline-none dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-white dark:focus:border-accent-400"
             />
           </div>
 
-          {/* Bold Sort Options with ARIA grouping */}
-          <div className="flex items-center gap-3" role="group" aria-label="Sort blogs by">
-            <span id="sort-label" className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Sort</span>
-            <div className="flex rounded-xl border-2 border-neutral-300 bg-white p-1 dark:border-neutral-700 dark:bg-neutral-800">
-              {sortOptions.map((option) => (
+          {/* Sort options - minimal pill design */}
+          <div className="flex items-center gap-2" role="group" aria-label="Sort by">
+            <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Sort</span>
+            <div className="flex rounded-lg border border-neutral-200 bg-white p-0.5 dark:border-neutral-800 dark:bg-neutral-900">
+              {sortOptions.map((option, index) => (
                 <button
                   key={option.value}
                   onClick={() => handleSortChange(option.value)}
                   aria-pressed={selectedSort === option.value}
-                  aria-describedby="sort-label"
-                  className={`rounded-lg px-4 py-2 text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/50 ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent-500/50 ${
                     selectedSort === option.value
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md'
-                      : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700'
-                  }`}
+                      ? 'bg-accent-500 text-white'
+                      : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'
+                  } ${index === 0 ? 'rounded-l-md' : index === sortOptions.length - 1 ? 'rounded-r-md' : ''}`}
                 >
                   {option.label}
                 </button>

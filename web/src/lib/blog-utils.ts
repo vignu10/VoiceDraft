@@ -16,15 +16,6 @@ export function formatDate(dateString: string): string {
 }
 
 /**
- * Format view count for display
- */
-export function formatViewCount(count: number): string {
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-  return count.toString();
-}
-
-/**
  * Format reading time
  */
 export function formatReadingTime(minutes: number): string {

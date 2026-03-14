@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { formatViewCount, formatDate, formatReadingTime } from '@/lib/blog-utils';
+import { formatDate, formatReadingTime } from '@/lib/blog-utils';
 import type { PostCardData } from '@/types/blog';
 
 interface PostCardProps {
@@ -17,7 +17,6 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
     target_keyword,
     published_at,
     reading_time_minutes,
-    view_count,
     audio_file_url,
     audio_duration_seconds,
   } = post;
@@ -115,9 +114,9 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
           </div>
           <div className="flex items-center gap-2 font-semibold text-neutral-600 dark:text-neutral-400">
             <svg className="h-4 w-4 text-primary-500" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
             </svg>
-            <span>{formatViewCount(view_count)} views</span>
+            <span>{formatReadingTime(reading_time_minutes)}</span>
           </div>
         </div>
       </div>

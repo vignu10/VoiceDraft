@@ -34,13 +34,7 @@ export async function GET(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    // Increment view count
-    await supabase
-      .from('posts')
-      .update({ view_count: (post.view_count || 0) + 1 })
-      .eq('id', post.id);
-
-    return NextResponse.json({ ...post, view_count: (post.view_count || 0) + 1 });
+    return NextResponse.json(post);
   } catch (error) {
     return handleError(error);
   }

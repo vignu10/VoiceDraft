@@ -178,11 +178,11 @@ export default function SettingsPage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
           <div className="space-y-6">
             {/* Appearance */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Sun className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -207,7 +207,7 @@ export default function SettingsPage() {
 
             {/* Notifications */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Bell className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -283,7 +283,7 @@ export default function SettingsPage() {
 
             {/* Language & Region */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Globe className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -308,7 +308,7 @@ export default function SettingsPage() {
 
             {/* Privacy */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Lock className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -339,7 +339,7 @@ export default function SettingsPage() {
 
             {/* Data & Backup */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Database className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">

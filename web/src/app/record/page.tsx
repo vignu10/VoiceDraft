@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useToast } from '@/components/providers/ToastProvider';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api-client';
+import { WithBottomNav } from '@/components/layout/BottomNav';
 import {
   MIN_RECORDING_DURATION,
   MAX_RECORDING_DURATION,
@@ -377,7 +378,8 @@ export default function RecordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col">
+    <WithBottomNav>
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col pb-16 lg:pb-0">
       {/* Header - matches app theme */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-frosted backdrop-blur-sm border-b border-neutral-200/50 dark:border-neutral-800/50">
         <div className="px-4 sm:px-6 lg:px-8 py-6 flex items-start justify-between">
@@ -871,5 +873,6 @@ export default function RecordPage() {
         </div>
       </main>
     </div>
+    </WithBottomNav>
   );
 }

@@ -35,7 +35,6 @@ export function BlogControls({
   const sortOptions: { value: SortOption; label: string }[] = [
     { value: 'newest', label: 'Newest' },
     { value: 'oldest', label: 'Oldest' },
-    { value: 'views', label: 'Most Viewed' },
     { value: 'title', label: 'A-Z' },
   ];
 

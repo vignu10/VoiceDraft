@@ -68,9 +68,6 @@ export async function GET(
       case 'oldest':
         query = query.order('published_at', { ascending: true });
         break;
-      case 'views':
-        query = query.order('view_count', { ascending: false });
-        break;
       case 'title':
         query = query.order('title', { ascending: true });
         break;

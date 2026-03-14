@@ -86,14 +86,20 @@ export function FeaturedBlogsGrid({
   }
 
   return (
-    <section id="featured-blogs" className="py-16">
+    <section id="featured-blogs" className="py-16 sm:py-20">
       <div className="container-wide">
-        <div className="mb-10 flex items-center gap-4">
-          <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-accent-500/50 to-transparent" />
-          <h2 className="text-center text-3xl font-bold text-neutral-900 dark:text-white">
-            Featured Blogs
-          </h2>
-          <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-accent-500/50 to-transparent" />
+        {/* Editorial section header - asymmetric */}
+        <div className="mb-12 flex items-start gap-6 sm:gap-8">
+          <div className="flex-1">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400">
+              Creators
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+              Featured Blogs
+            </h2>
+          </div>
+          {/* Geometric accent - right aligned */}
+          <div className="hidden sm:block h-12 w-px bg-accent-500/30 dark:opacity-40" />
         </div>
 
         <div className="grid grid-cols-1 card-grid-gap sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">

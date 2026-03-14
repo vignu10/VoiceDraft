@@ -148,12 +148,12 @@ export default function SyncStatusPage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
           <div className="space-y-6">
             {/* Connection Status Card */}
             <Card>
-              <CardBody className="p-6">
-                <div className="flex items-center justify-between">
+              <CardBody className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                   <div className="flex items-center gap-3">
                     {isOnline ? (
                       <div className="w-10 h-10 rounded-full bg-success-100 dark:bg-success-950 flex items-center justify-center">
@@ -198,7 +198,7 @@ export default function SyncStatusPage() {
                     : 'border-success-500'
                 }
               >
-                <CardBody className="p-6">
+                <CardBody className="p-4 sm:p-6">
                   <div className="flex items-center gap-4">
                     {syncResults.failed > 0 ? (
                       <XCircle className="w-6 h-6 text-accent-600 dark:text-accent-400" />
@@ -225,7 +225,7 @@ export default function SyncStatusPage() {
 
             {/* Queued Changes */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                     Pending Changes
@@ -280,7 +280,7 @@ export default function SyncStatusPage() {
 
             {/* Info Card */}
             <Card>
-              <CardBody className="p-6">
+              <CardBody className="p-4 sm:p-6">
                 <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">
                   About Offline Sync
                 </h3>

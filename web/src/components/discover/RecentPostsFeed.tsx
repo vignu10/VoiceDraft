@@ -67,14 +67,20 @@ export function RecentPostsFeed({
   }
 
   return (
-    <section className="border-t-2 border-neutral-200 bg-gradient-to-b from-neutral-50 to-white py-16 dark:border-neutral-800 dark:from-neutral-900 dark:to-neutral-950 @container card-grid">
+    <section className="border-t border-neutral-200/60 bg-gradient-to-b from-neutral-50/50 to-white py-16 sm:py-20 dark:border-neutral-800/60 dark:from-neutral-900/50 dark:to-neutral-950 @container card-grid">
       <div className="container-wide">
-        <div className="mb-10 flex items-center gap-4">
-          <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
-          <h2 className="text-center text-3xl font-bold text-neutral-900 dark:text-white">
-            Latest from the Community
-          </h2>
-          <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
+        {/* Editorial section header - asymmetric */}
+        <div className="mb-12 flex items-start gap-6 sm:gap-8">
+          <div className="flex-1">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">
+              Recent
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
+              Latest Posts
+            </h2>
+          </div>
+          {/* Geometric accent - right aligned */}
+          <div className="hidden sm:block h-12 w-px bg-primary-500/30 dark:opacity-40" />
         </div>
 
         <div className="grid grid-cols-1 card-grid-gap card-grid-cards-1 sm:grid-cols-2 lg:grid-cols-3">

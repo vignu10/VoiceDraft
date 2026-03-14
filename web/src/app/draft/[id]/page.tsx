@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { useDialog } from '@/components/ui/dialog';
 import { api } from '@/lib/api-client';
+import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Post } from '@/lib/types';
 import {
   Save,
@@ -435,7 +436,8 @@ export default function DraftEditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <WithBottomNav>
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 pb-16 lg:pb-0">
       {/* Error banner */}
       {error && saveStatus === 'error' && (
         <div className="bg-error-500/10 border-b border-error-500/20 px-4 py-3 bg-frosted" role="alert">
@@ -765,5 +767,6 @@ export default function DraftEditorPage() {
         </p>
       </Modal>
     </div>
+    </WithBottomNav>
   );
 }

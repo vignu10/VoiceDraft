@@ -20,6 +20,7 @@ import { getWordCountMilestone } from "@/utils/delight-messages";
 import { countWords } from "@/utils/formatters";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {

@@ -34,7 +34,7 @@ export function HeroSection() {
             </div>
 
             {/* Main headline - Extreme scale with bold accent color */}
-            <h1 className="animate-fade-in-up animate-delay-100 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-hero">
+            <h1 className="animate-fade-in-up animate-delay-100 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-4xl sm:text-5xl lg:text-6xl">
               Your voice,
               <br />
               <span className="text-neutral-600 dark:text-neutral-400">amplified.</span>
@@ -92,7 +92,7 @@ export function HeroSection() {
                     </svg>
                   </Link>
                   <Link
-                    href="/#featured-blogs"
+                    href="/discover"
                     className="group inline-flex items-center justify-center gap-2 rounded-xl border-2 border-neutral-300 bg-white px-10 py-4 text-base font-bold text-neutral-700 shadow-md transition-all hover:border-primary-500 hover:text-primary-600 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-primary-500 dark:hover:text-primary-400"
                   >
                     Explore Content
