@@ -41,7 +41,7 @@ export default function DiscoverPage() {
 
   return (
     <WithBottomNav>
-      <main className="min-h-screen pb-16 lg:pb-0">
+      <main className="min-h-screen pb-20 sm:pb-20 lg:pb-0">
         {/* Editorial header with asymmetric layout */}
         <header className="relative border-b border-neutral-200/80 dark:border-neutral-800/80">
           {/* Subtle geometric accent */}
@@ -52,14 +52,14 @@ export default function DiscoverPage() {
             {/* Asymmetric layout: content left, stats right */}
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
               {/* Main title section - left aligned */}
-              <div className="px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 lg:pb-16 lg:max-w-2xl">
+              <div className="px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 lg:pb-12 lg:max-w-2xl">
                 {/* Small label above title */}
                 <p className="mb-4 text-xs font-semibold tracking-widest uppercase text-accent-600 dark:text-accent-400">
                   Explore
                 </p>
 
                 {/* Dramatic editorial headline */}
-                <h1 className="text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-4xl sm:text-5xl lg:text-6xl">
+                <h1 className="text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
                   Voices from the<br />
                   <span className="text-accent-600 dark:text-accent-400">community</span>
                 </h1>

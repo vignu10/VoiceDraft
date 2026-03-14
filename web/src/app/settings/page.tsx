@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Select } from '@/components/ui/Select';
-import { Moon, Sun, Bell, Lock, Globe, Download, Upload, Database } from 'lucide-react';
+import { Moon, Sun, Bell, Lock, Globe, Download, Upload, Database, AlertTriangle } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api-client';
@@ -30,6 +30,8 @@ export default function SettingsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const themeOptions = [
     { value: 'light', label: 'Light' },
@@ -70,6 +72,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveMessage(null);
     try {
       // Save to localStorage
       localStorage.setItem('theme_preference', themePreference);
@@ -80,20 +83,27 @@ export default function SettingsPage() {
       // Apply theme
       setTheme(themePreference);
 
-      // Simulate API call for server-side preferences
+      // Try to save to server (may fail if endpoint doesn't exist yet)
       if (accessToken) {
-        await api.patch('/api/user/settings', {
-          theme_preference: themePreference,
-          notifications_enabled: notificationsEnabled,
-          email_notifications: emailNotifications,
-          language,
-        });
+        try {
+          await api.patch('/api/user/settings', {
+            theme_preference: themePreference,
+            notifications_enabled: notificationsEnabled,
+            email_notifications: emailNotifications,
+            language,
+          });
+        } catch (serverError) {
+          // Server save failed but local save succeeded - warn but don't fail
+          console.warn('Server settings save failed (endpoint may not exist):', serverError);
+        }
       }
 
-      // Wait a bit to show loading state
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      setSaveMessage({ type: 'success', text: 'Settings saved successfully!' });
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Error saving settings:', error);
+      setSaveMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
     } finally {
       setIsSaving(false);
     }
@@ -160,6 +170,34 @@ export default function SettingsPage() {
       setIsImporting(false);
       // Reset file input
       event.target.value = '';
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!accessToken) {
+      alert('You must be signed in to delete your account.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      const response = await api.delete('/api/profile');
+
+      if (response.ok) {
+        // Clear local storage and redirect
+        localStorage.clear();
+        alert('Your account has been permanently deleted.');
+        router.push('/auth/signin');
+        router.refresh();
+      } else {
+        const error = await response.json().catch(() => ({ error: 'Failed to delete account' }));
+        alert(error.error || 'Failed to delete account. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account. Please check your connection and try again.');
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -333,6 +371,21 @@ export default function SettingsPage() {
                   >
                     Manage Profile Data
                   </Button>
+                  <Button
+                    fullWidth
+                    variant="danger"
+                    className="justify-start"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete your account? This will permanently delete your account, all your drafts, and published posts. This action cannot be undone.')) {
+                        handleDeleteAccount();
+                      }
+                    }}
+                    isLoading={isDeletingAccount}
+                    disabled={isDeletingAccount}
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
                 </div>
               </CardBody>
             </Card>
@@ -398,7 +451,17 @@ export default function SettingsPage() {
             </Card>
 
             {/* Save Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end items-center gap-4 pt-4">
+              {saveMessage && (
+                <div className={cn(
+                  'text-sm px-4 py-2 rounded-lg',
+                  saveMessage.type === 'success'
+                    ? 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800'
+                    : 'bg-error-50 dark:bg-error-950 text-error-700 dark:text-error-300 border border-error-200 dark:border-error-800'
+                )}>
+                  {saveMessage.text}
+                </div>
+              )}
               <Button onClick={handleSave} isLoading={isSaving}>
                 Save Settings
               </Button>

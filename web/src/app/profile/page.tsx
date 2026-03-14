@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuthStore } from "@/stores/auth-store";
+import { api } from "@/lib/api-client";
 import { Calendar, Key, LogOut, Mail, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,6 +28,8 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
+  const [publishedCount, setPublishedCount] = useState(0);
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -49,7 +52,30 @@ export default function ProfilePage() {
     } else {
       setIsLoading(false);
     }
+
+    // Fetch post counts if authenticated
+    if (accessToken) {
+      fetchPostCounts();
+    }
   }, [authUser, accessToken]);
+
+  const fetchPostCounts = async () => {
+    if (!accessToken) return;
+
+    try {
+      // Fetch drafts (status='draft')
+      const draftsResponse = await api.get("/api/posts?status=draft");
+      const draftsData = await draftsResponse.json();
+      setDraftCount(draftsData.posts?.length || 0);
+
+      // Fetch published posts
+      const publishedResponse = await api.get("/api/posts?status=published");
+      const publishedData = await publishedResponse.json();
+      setPublishedCount(publishedData.posts?.length || 0);
+    } catch (error) {
+      console.error("Failed to fetch post counts:", error);
+    }
+  };
 
   const handleSave = async () => {
     if (!accessToken) return;
@@ -206,7 +232,7 @@ export default function ProfilePage() {
                     <div className="flex gap-6">
                       <div>
                         <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-                          0
+                          {draftCount}
                         </div>
                         <div className="text-xs text-neutral-600 dark:text-neutral-400">
                           Drafts
@@ -214,7 +240,7 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-                          0
+                          {publishedCount}
                         </div>
                         <div className="text-xs text-neutral-600 dark:text-neutral-400">
                           Published

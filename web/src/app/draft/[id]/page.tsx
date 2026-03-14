@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Modal } from '@/components/ui/Modal';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
+import { ContentGate } from '@/components/ui/ContentGate';
 import { useDialog } from '@/components/ui/dialog';
+import { useContentGate } from '@/hooks/useContentGate';
+import { useAuthStore } from '@/stores/auth-store';
+import { useGuestStore } from '@/stores/guest-store';
 import { api } from '@/lib/api-client';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Post } from '@/lib/types';
@@ -37,6 +41,23 @@ export default function DraftEditorPage() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   const { showDialog } = useDialog();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isGuestDraft, addGuestDraft } = useGuestStore();
+
+  // Content gate hook
+  const {
+    showContentGate,
+    scrollPercentage,
+    isImmediateGate,
+    setScrollPercentage,
+    handleSignIn: handleGateSignIn,
+    handleSignUp: handleGateSignUp,
+    markAsGuestTrialDraft,
+  } = useContentGate({
+    draftId: id,
+    onSignIn: () => router.push('/auth/signin'),
+    onSignUp: () => router.push('/auth/signup'),
+  });
 
   const [draft, setDraft] = useState<Post | null>(null);
   const [title, setTitle] = useState('');
@@ -99,6 +120,11 @@ export default function DraftEditorPage() {
           setTitle(data.title || '');
           setContent(data.content || '');
           setSaveStatus('saved');
+
+          // Check if this is a guest trial draft
+          if (!isAuthenticated && isGuestDraft(id)) {
+            markAsGuestTrialDraft();
+          }
         } else if (response.status === 404) {
           setError({
             message: 'Draft not found. It may have been deleted.',
@@ -367,6 +393,20 @@ export default function DraftEditorPage() {
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
   const readingTime = Math.ceil(wordCount / 200);
 
+  // Handle scroll for content gate (preview panel)
+  const handlePreviewScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const scrollTop = target.scrollTop;
+    const scrollHeight = target.scrollHeight;
+    const clientHeight = target.clientHeight;
+
+    const maxScroll = scrollHeight - clientHeight;
+    if (maxScroll > 0) {
+      const percentage = Math.round((scrollTop / maxScroll) * 100);
+      setScrollPercentage(percentage);
+    }
+  }, [setScrollPercentage]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -624,8 +664,11 @@ export default function DraftEditorPage() {
 
           {/* Preview Panel - Desktop */}
           <div className="flex flex-col">
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm">
-              <article className="blog-content p-4 sm:p-6 lg:p-8">
+            <div
+              className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
+              onScroll={mobileView === 'edit' ? undefined : handlePreviewScroll}
+            >
+              <article className="blog-content p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {title ? (
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-4 sm:mb-6 leading-tight">
                     {title}
@@ -696,8 +739,11 @@ export default function DraftEditorPage() {
 
           {/* Preview Panel - Mobile */}
           {mobileView === 'preview' && (
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm">
-              <article className="blog-content p-4">
+            <div
+              className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
+              onScroll={handlePreviewScroll}
+            >
+              <article className="blog-content p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {title ? (
                   <h1 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 leading-tight">
                     {title}
@@ -766,6 +812,15 @@ export default function DraftEditorPage() {
           Are you sure you want to delete "<span className="font-medium text-neutral-900 dark:text-neutral-100 line-clamp-1 inline-block max-w-[300px] align-bottom">{draft.title || 'Untitled Draft'}</span>"? This action cannot be undone.
         </p>
       </Modal>
+
+      {/* Content Gate for guest drafts */}
+      <ContentGate
+        visible={showContentGate}
+        onSignIn={handleGateSignIn}
+        onSignUp={handleGateSignUp}
+        scrollPercentage={scrollPercentage}
+        immediate={isImmediateGate}
+      />
     </div>
     </WithBottomNav>
   );

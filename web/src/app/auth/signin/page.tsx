@@ -1,19 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/auth-store';
-import { MailIcon, LockIcon } from 'lucide-react';
+import { MailIcon, LockIcon, AlertCircle } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    // Check if session expired flag is in URL
+    if (searchParams?.get('session') === 'expired') {
+      setSessionExpired(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +56,21 @@ export default function SignInPage() {
             Sign in to your account to continue
           </p>
         </div>
+
+        {/* Session expired message */}
+        {sessionExpired && (
+          <div className="rounded-lg bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-warning-900 dark:text-warning-100">
+                Session expired
+              </h3>
+              <p className="text-sm text-warning-700 dark:text-warning-300 mt-1">
+                Your session has expired. Please sign in again to continue.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

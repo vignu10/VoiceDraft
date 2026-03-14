@@ -7,6 +7,7 @@ interface GuestState {
   guestId: string | null;
   remainingDrafts: number;
   hasSeenOnboarding: boolean;
+  guestDrafts: string[]; // Track IDs of drafts created during guest trial
 
   // Actions
   setGuestId: (id: string) => void;
@@ -15,6 +16,9 @@ interface GuestState {
   setOnboardingSeen: () => void;
   canCreateDraft: () => boolean;
   isGuest: () => boolean;
+  addGuestDraft: (draftId: string) => void;
+  isGuestDraft: (draftId: string) => boolean;
+  clearGuestDrafts: () => void;
 }
 
 export const useGuestStore = create<GuestState>()(
@@ -23,6 +27,7 @@ export const useGuestStore = create<GuestState>()(
       guestId: null,
       remainingDrafts: MAX_FREE_DRAFTS,
       hasSeenOnboarding: false,
+      guestDrafts: [],
 
       setGuestId: (id) => set({ guestId: id }),
 
@@ -44,6 +49,18 @@ export const useGuestStore = create<GuestState>()(
         const { guestId } = get();
         return !!guestId;
       },
+
+      addGuestDraft: (draftId: string) =>
+        set((state) => ({
+          guestDrafts: [...state.guestDrafts, draftId],
+        })),
+
+      isGuestDraft: (draftId: string) => {
+        const { guestDrafts } = get();
+        return guestDrafts.includes(draftId);
+      },
+
+      clearGuestDrafts: () => set({ guestDrafts: [] }),
     }),
     {
       name: 'guest-storage',

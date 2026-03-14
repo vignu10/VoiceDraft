@@ -1104,8 +1104,8 @@ const styles = StyleSheet.create({
   },
   controls: {
     alignItems: "center",
-    paddingBottom: Spacing[14],
-    gap: Spacing[6],
+    paddingBottom: Spacing[10],
+    gap: Spacing[5],
   },
   controlsHidden: {
     display: "none",
@@ -1113,14 +1113,14 @@ const styles = StyleSheet.create({
   // Simplified Styles
   messageContainer: {
     alignItems: "center",
-    marginBottom: Spacing[8],
-    paddingHorizontal: Spacing[6],
+    marginBottom: Spacing[6],
+    paddingHorizontal: Spacing[5],
   },
   messageText: {
-    fontSize: Typography.fontSize["2xl"],
+    fontSize: Typography.fontSize["xl"],
     fontWeight: Typography.fontWeight.semibold,
     textAlign: "center",
-    lineHeight: Typography.fontSize["2xl"] * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize["xl"] * Typography.lineHeight.relaxed,
     includeFontPadding: false,
   },
   guestCounterSimple: {
@@ -1136,30 +1136,30 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    marginBottom: Spacing[8],
+    marginBottom: Spacing[5],
     padding: Spacing[3],
   },
   timerContainer: {
-    marginBottom: Spacing[6],
-    minHeight: 70,
+    marginBottom: Spacing[5],
+    minHeight: 60,
     justifyContent: "center",
     alignItems: "center",
   },
   // Unified State Card Styles - Simplified
   stateCard: {
-    marginHorizontal: Spacing[6],
-    padding: Spacing[4],
+    marginHorizontal: Spacing[5],
+    padding: Spacing[3.5],
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
   },
   stateCardIcon: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: BorderRadius.full,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
-    marginBottom: Spacing[3],
+    marginBottom: Spacing[2],
   },
   playButton: {
     width: 40,
@@ -1174,11 +1174,11 @@ const styles = StyleSheet.create({
     gap: Spacing[1],
   },
   stateCardTitle: {
-    fontSize: Typography.fontSize.lg,
+    fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold,
     textAlign: "center",
     includeFontPadding: false,
-    lineHeight: Typography.fontSize.lg * Typography.lineHeight.tight,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.tight,
   },
   stateCardSubtitle: {
     fontSize: Typography.fontSize.sm,

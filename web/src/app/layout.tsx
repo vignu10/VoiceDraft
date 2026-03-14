@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { DialogProvider } from '@/components/ui/dialog';
 import { Navigation } from '@/components/layout/Navigation';
 import { ToastProvider } from '@/components/providers/ToastProvider';
+import { SessionExpirationHandler } from '@/components/providers/SessionExpirationHandler';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { AppUpdateNotification } from '@/components/ui/AppUpdateNotification';
 import './globals.css';
@@ -69,6 +70,9 @@ export default function RootLayout({
         <DialogProvider>
           <ToastProvider>
             <ThemeProvider>
+            {/* Session expiration handler */}
+            <SessionExpirationHandler />
+
             {/* Offline indicator */}
             <OfflineIndicator />
 

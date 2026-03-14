@@ -2,6 +2,9 @@ export type DraftStatus = 'recording' | 'transcribing' | 'generating' | 'ready' 
 export type Tone = 'professional' | 'casual' | 'conversational';
 export type Length = 'short' | 'medium' | 'long';
 
+// Post status (note: 'archived' is not used)
+export type PostStatus = 'draft' | 'published';
+
 export interface Draft {
   id: string;
   status: DraftStatus;
@@ -34,7 +37,7 @@ export interface Post {
   content: string;
   meta_description?: string;
   target_keyword?: string;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published';
   published_at?: string;
   word_count: number;
   reading_time_minutes: number;

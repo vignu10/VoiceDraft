@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { WaveformVisualizer } from '@/components/recording/WaveformVisualizer';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAuthStore } from '@/stores/auth-store';
+import { useGuestStore } from '@/stores/guest-store';
 import { useToast } from '@/components/providers/ToastProvider';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api-client';
@@ -62,6 +63,7 @@ const LENGTHS: { value: Length; icon: typeof Zap; label: string; words: string; 
 export default function RecordPage() {
   const router = useRouter();
   const { accessToken } = useAuthStore();
+  const { addGuestDraft } = useGuestStore();
   const { success, warning } = useToast();
   const { state, startRecording, stopRecording, cancelRecording, requestPermission } = useAudioRecorder(
     (duration) => setDuration(duration),
@@ -392,9 +394,6 @@ export default function RecordPage() {
                 : viewState === 'complete' ? 'Complete'
                 : 'Error'}
             </p>
-            <h1 className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-              {viewState === 'options' ? 'Blog Options' : 'Voice to Blog'}
-            </h1>
           </div>
           {viewState === 'options' && (
             <button
@@ -611,7 +610,7 @@ export default function RecordPage() {
                   {/* Generate button */}
                   <button
                     onClick={handleStartProcessing}
-                    className="w-full mt-6 min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                    className="w-full mt-6 min-h-[52px] px-6 bg-gradient-to-r from-accent-600 via-accent-500 to-accent-600 hover:from-accent-500 hover:via-accent-400 hover:to-accent-500 dark:from-accent-500 dark:via-accent-400 dark:to-accent-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-500/30 ring-2 ring-accent-500/50"
                   >
                     <Sparkles className="w-5 h-5" />
                     Generate Blog Post

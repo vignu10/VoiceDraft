@@ -16,6 +16,7 @@ import type { Length, Tone } from '@/types/draft';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,13 +39,12 @@ export default function SettingsTab() {
     defaultLength,
     setDefaultTone,
     setDefaultLength,
-    colorScheme,
-    setColorScheme,
   } = useSettingsStore();
 
-  const { signOutUser, user, isAuthenticated } = useAuthStore();
+  const { signOutUser, user, isAuthenticated, accessToken } = useAuthStore();
   const { data: profile } = useProfile();
   const colors = useThemeColors();
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Construct full avatar URL if avatar_url is a relative path
   const getAvatarUrl = (url: string | undefined) => {
@@ -81,7 +81,7 @@ export default function SettingsTab() {
   const handleClearData = () => {
     Alert.alert(
       'Clear All Data',
-      'This will delete all your drafts and reset settings. This cannot be undone.',
+      'This will delete all your local drafts and reset settings to defaults. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -90,7 +90,20 @@ export default function SettingsTab() {
           onPress: async () => {
             try {
               await AsyncStorage.clear();
-              Alert.alert('Data Cleared', 'All your drafts and settings have been removed.');
+              // Reset the app by reloading to ensure clean state
+              Alert.alert(
+                'Data Cleared',
+                'All your drafts and settings have been removed.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Reload the app to reset all state
+                      router.replace('/(tabs)');
+                    },
+                  },
+                ]
+              );
             } catch (error) {
               console.error('Failed to clear data:', error instanceof Error ? error.message : 'Unknown error');
               Alert.alert('Clear Failed', 'Unable to clear data. Please try again.');
@@ -289,58 +302,7 @@ export default function SettingsTab() {
               </View>
             </SlideIn>
 
-            {/* Appearance - Dark Mode Toggle */}
-            <SlideIn direction="up" delay={Duration.fastest}>
-              <View style={styles.section}>
-                <ThemedText style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                  APPEARANCE
-                </ThemedText>
-                <AnimatedCard variant="outlined" animateEntry={false} style={styles.card}>
-                  {(['light', 'dark', 'auto'] as const).map((scheme, index) => {
-                    const isSelected = colorScheme === scheme;
-                    const schemeConfig = {
-                      light: { icon: 'sunny-outline' as const, label: 'Light', desc: 'Light theme' },
-                      dark: { icon: 'moon-outline' as const, label: 'Dark', desc: 'Dark theme' },
-                      auto: { icon: 'contrast-outline' as const, label: 'Auto', desc: 'Match system' },
-                    }[scheme];
-
-                    return (
-                      <PressableScale
-                        key={scheme}
-                        onPress={() => setColorScheme(scheme)}
-                        hapticStyle="light"
-                        accessibilityLabel={`${schemeConfig.label} theme: ${schemeConfig.desc}${isSelected ? ', selected' : ''}`}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected: isSelected }}
-                        style={[
-                          styles.optionRow,
-                          index < 2 && styles.optionRowBorder,
-                          { borderBottomColor: colors.border },
-                          isSelected && { backgroundColor: withOpacity(colors.primary, 0.08) },
-                        ]}
-                      >
-                        <View style={[styles.optionIcon, { backgroundColor: colors.primaryLight }]}>
-                          <Ionicons name={schemeConfig.icon} size={22} color={colors.primary} />
-                        </View>
-                        <View style={styles.optionText}>
-                          <ThemedText style={[styles.optionLabel, { color: colors.text }]}>
-                            {schemeConfig.label}
-                          </ThemedText>
-                          <ThemedText style={[styles.optionDesc, { color: colors.textMuted }]} numberOfLines={1}>
-                            {schemeConfig.desc}
-                          </ThemedText>
-                        </View>
-                        {isSelected && (
-                          <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
-                            <Ionicons name="checkmark" size={14} color={colors.textInverse} />
-                          </View>
-                        )}
-                      </PressableScale>
-                    );
-                  })}
-                </AnimatedCard>
-              </View>
-            </SlideIn>
+            {/* Appearance - Dark Mode Toggle - REMOVED FOR MOBILE */}
 
             {/* Data Management */}
             <SlideIn direction="up" delay={Duration.moderate}>
@@ -372,6 +334,76 @@ export default function SettingsTab() {
                     </View>
                     <View style={[styles.chevronWrapper, { backgroundColor: colors.errorLight }]}>
                       <Ionicons name="chevron-forward" size={18} color={colors.error} />
+                    </View>
+                  </PressableScale>
+                )}
+
+                {/* Delete Account - only show when authenticated */}
+                {isAuthenticated && (
+                  <PressableScale
+                    onPress={() => {
+                      if (isDeletingAccount) return;
+                      Alert.alert(
+                        'Delete Account',
+                        'This will permanently delete your account, all your drafts, and published posts. This action cannot be undone.',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Delete Account',
+                            style: 'destructive',
+                            onPress: async () => {
+                              setIsDeletingAccount(true);
+                              try {
+                                const response = await fetch(`${API_BASE_URL}/api/profile`, {
+                                  method: 'DELETE',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${accessToken || ''}`,
+                                  },
+                                });
+                                if (response.ok) {
+                                  // Clear local storage and sign out
+                                  await AsyncStorage.clear();
+                                  Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+                                  router.replace('/auth/sign-in');
+                                } else {
+                                  const errorData = await response.json().catch(() => ({}));
+                                  Alert.alert('Error', errorData.error || 'Failed to delete account. Please try again.');
+                                }
+                              } catch (error) {
+                                console.error('Delete account error:', error);
+                                Alert.alert('Error', 'Failed to delete account. Please check your connection and try again.');
+                              } finally {
+                                setIsDeletingAccount(false);
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                    hapticStyle="heavy"
+                    accessibilityLabel="Delete your account permanently"
+                    style={[styles.dangerCard, { marginTop: Spacing[3], borderWidth: 2, borderColor: colors.error, opacity: isDeletingAccount ? 0.6 : 1 }]}
+                  >
+                    <View style={styles.dangerContent}>
+                      <View style={[styles.dangerIcon, { backgroundColor: withOpacity(colors.error, 0.15) }]}>
+                        <Ionicons name="warning" size={20} color={colors.error} />
+                      </View>
+                      <View style={styles.dangerText}>
+                        <ThemedText style={[styles.dangerTitle, { color: colors.error }]}>
+                          Delete Account
+                        </ThemedText>
+                        <ThemedText style={[styles.dangerDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                          {isDeletingAccount ? 'Deleting...' : 'Permanently delete your account'}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    <View style={[styles.chevronWrapper, { backgroundColor: colors.error }]}>
+                      {isDeletingAccount ? (
+                        <Ionicons name="ellipsis-horizontal" size={18} color={colors.textInverse} />
+                      ) : (
+                        <Ionicons name="chevron-forward" size={18} color={colors.textInverse} />
+                      )}
                     </View>
                   </PressableScale>
                 )}
