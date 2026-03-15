@@ -55,11 +55,11 @@ export function BottomNav() {
 }
 
 // Reusable padding wrapper for pages with bottom nav
+// Note: Pages using this wrapper should add pb-16 lg:pb-0 to their container
 export function WithBottomNav({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <div className="h-16" /> {/* Spacer for bottom nav */}
       <BottomNav />
     </>
   );

@@ -26,7 +26,7 @@ import {
 } from "@/constants/design-system";
 import { useGuestTrial } from "@/hooks/use-guest-trial";
 import { useThemeColors } from "@/hooks/use-theme-color";
-import { recordingService } from "@/services/audio/recording-service";
+import { recordingService, PermissionError } from "@/services/audio/recording-service";
 import { Audio } from "expo-av";
 import {
   useAchievementsStore,
@@ -43,7 +43,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
+import { AppState, AppStateStatus, Linking, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Check if audio has meaningful sound levels
@@ -515,6 +515,28 @@ export default function RecordingScreen() {
       }
     } catch (error) {
       console.error("Error starting recording:", error);
+
+      // Check for permission error
+      if (error instanceof PermissionError) {
+        await showDialog({
+          title: "Microphone Access Required",
+          message: "To record audio, you need to grant microphone permission to VoiceDraft.\n\nTo enable:\n\n1. Open your device Settings\n2. Find VoiceDraft in your apps\n3. Enable Microphone permission\n4. Return to the app and tap the microphone button",
+          confirmText: "Open Settings",
+          cancelText: "Got it",
+          variant: "warning",
+          onConfirm: async () => {
+            // Try to open app settings (works on iOS)
+            try {
+              await Linking.openSettings();
+            } catch (e) {
+              console.error("Couldn't open settings:", e);
+            }
+          },
+          // No onCancel needed - user just closes the dialog and tries again
+        });
+        return;
+      }
+
       const warmError = getWarmErrorMessage("recordingError");
 
       await showDialog({

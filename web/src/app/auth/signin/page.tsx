@@ -37,31 +37,31 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-neutral-50 dark:bg-neutral-950">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 lg:py-12 bg-neutral-50 dark:bg-neutral-950">
+      <div className="w-full max-w-sm sm:max-w-md space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <svg className="mx-auto h-12 w-12" viewBox="0 0 48 48" fill="none">
+            <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12" viewBox="0 0 48 48" fill="none">
               <rect width="48" height="48" rx="12" fill="oklch(0.52 0.28 285)"/>
               <rect x="11" y="18" width="6" height="12" rx="2" fill="white"/>
               <rect x="21" y="14" width="6" height="20" rx="2" fill="white"/>
               <rect x="31" y="16" width="6" height="16" rx="2" fill="white"/>
             </svg>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+          <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mt-1.5 sm:mt-2 text-sm text-neutral-600 dark:text-neutral-400">
             Sign in to your account to continue
           </p>
         </div>
 
         {/* Session expired message */}
         {sessionExpired && (
-          <div className="rounded-lg bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
+          <div className="rounded-lg bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 p-3 sm:p-4 flex items-start gap-3">
+            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning-600 dark:text-warning-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 text-left">
               <h3 className="text-sm font-semibold text-warning-900 dark:text-warning-100">
                 Session expired
               </h3>
@@ -73,8 +73,8 @@ export default function SignInPage() {
         )}
 
         {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-3 sm:space-y-4">
             <Input
               label="Email address"
               type="email"
@@ -86,29 +86,30 @@ export default function SignInPage() {
               leftIcon={<MailIcon className="h-5 w-5" />}
             />
 
-            <div className="flex items-center justify-end">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm font-medium text-primary-600 hover:text-primary-500"
-              >
-                Forgot password?
-              </Link>
+            <div className="space-y-3 sm:space-y-4">
+              <Input
+                label="Password"
+                type="password"
+                autoComplete="current-password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={<LockIcon className="h-5 w-5" />}
+              />
+              <div className="text-right">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs sm:text-sm font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
-
-            <Input
-              label="Password"
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<LockIcon className="h-5 w-5" />}
-            />
           </div>
 
           {error && (
-            <div className="rounded-lg bg-accent-50 dark:bg-accent-950 p-4">
+            <div className="rounded-lg bg-accent-50 dark:bg-accent-950 p-3 sm:p-4">
               <p className="text-sm text-accent-600 dark:text-accent-400">{error}</p>
             </div>
           )}
@@ -117,13 +118,13 @@ export default function SignInPage() {
             type="submit"
             fullWidth
             isLoading={isLoading}
-            className="py-3 text-base"
+            className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
           >
             Sign in
           </Button>
 
           {/* OAuth */}
-          <div className="relative">
+          <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300 dark:border-neutral-700" />
             </div>
@@ -138,7 +139,7 @@ export default function SignInPage() {
             type="button"
             variant="secondary"
             fullWidth
-            className="py-3 text-base"
+            className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
             onClick={() => {/* TODO: Implement OAuth */}}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -159,11 +160,12 @@ export default function SignInPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Sign in with Google
+            <span className="hidden sm:inline">Sign in with Google</span>
+            <span className="sm:hidden">Google</span>
           </Button>
 
           {/* Sign up link */}
-          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400 pt-2">
             New here?{' '}
             <Link
               href="/auth/signup"

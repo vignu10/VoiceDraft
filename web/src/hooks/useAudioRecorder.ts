@@ -6,7 +6,10 @@ export interface AudioRecorderState {
   isRecording: boolean;
   duration: number;
   audioLevel: number;
+  permissionState: 'idle' | 'granted' | 'denied' | 'not-allowed';
 }
+
+export type MicErrorType = 'permission-denied' | 'not-allowed' | 'other';
 
 export interface UseAudioRecorderReturn {
   state: AudioRecorderState;
@@ -33,6 +36,7 @@ export function useAudioRecorder(
     isRecording: false,
     duration: 0,
     audioLevel: 0,
+    permissionState: 'idle',
   });
 
   // Use ref to avoid dependency on state in callbacks
@@ -139,13 +143,25 @@ export function useAudioRecorder(
       isRecordingRef.current = true;
 
       // Then update state
-      updateState({ isRecording: true, duration: 0, audioLevel: 0 });
+      updateState({ isRecording: true, duration: 0, audioLevel: 0, permissionState: 'granted' });
       startTimer();
 
       // Start measuring audio level
       animationFrameRef.current = requestAnimationFrame(measureAudioLevel);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error starting recording:', error);
+
+      // Determine the type of error
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'denied' });
+          throw new Error('permission-denied');
+        } else if (error.name === 'NotFoundError') {
+          updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'not-allowed' });
+          throw new Error('not-allowed');
+        }
+      }
+      updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'idle' });
       throw new Error('Failed to access microphone');
     }
   }, [updateState, startTimer, measureAudioLevel]);
@@ -177,11 +193,16 @@ export function useAudioRecorder(
         isRecordingRef.current = false;
 
         // Update state
-        updateState({ isRecording: false, audioLevel: 0 });
+        updateState({ isRecording: false, audioLevel: 0, permissionState: stateRef.current.permissionState });
 
         // Close audio context
         if (analyserRef.current) {
-          analyserRef.current.context?.close();
+          try {
+            // @ts-ignore - close() exists on AudioContext but not on BaseAudioContext
+            analyserRef.current.context?.close();
+          } catch {
+            // Ignore if context is already closed
+          }
         }
 
         resolve(audioBlob);
@@ -207,18 +228,29 @@ export function useAudioRecorder(
     isRecordingRef.current = false;
 
     // Update state
-    updateState({ isRecording: false, duration: 0, audioLevel: 0 });
+    updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: stateRef.current.permissionState });
   }, [updateState, stopTimer]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => track.stop());
+      updateState({ permissionState: 'granted' });
       return true;
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          updateState({ permissionState: 'denied' });
+          return false;
+        } else if (error.name === 'NotFoundError') {
+          updateState({ permissionState: 'not-allowed' });
+          return false;
+        }
+      }
+      updateState({ permissionState: 'idle' });
       return false;
     }
-  }, []);
+  }, [updateState]);
 
   // Cleanup on unmount
   useEffect(() => {

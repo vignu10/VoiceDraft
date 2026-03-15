@@ -19,6 +19,18 @@ export interface RecordingResult {
   duration: number;
 }
 
+export type PermissionState = 'idle' | 'granted' | 'denied';
+
+export class PermissionError extends Error {
+  constructor(
+    message: string,
+    public permissionState: PermissionState
+  ) {
+    super(message);
+    this.name = 'PermissionError';
+  }
+}
+
 type MeteringCallback = (level: number) => void;
 type DurationCallback = (seconds: number) => void;
 
@@ -43,14 +55,40 @@ class RecordingService {
         staysActiveInBackground: true,
       });
 
-      const { granted } = await Audio.requestPermissionsAsync();
+      const { granted, status } = await Audio.getPermissionsAsync();
+
+      // If permission is permanently denied, throw specific error
+      if (status === 'denied' || status === 'restricted') {
+        throw new PermissionError(
+          'Microphone permission was permanently denied. Please enable it in your device settings.',
+          'denied'
+        );
+      }
+
+      // If not granted, request it
       if (!granted) {
-        throw new Error("Microphone permission is required to record audio");
+        const { granted: newGranted, status: newStatus } = await Audio.requestPermissionsAsync();
+        if (!newGranted) {
+          if (newStatus === 'denied' || newStatus === 'restricted') {
+            throw new PermissionError(
+              'Microphone permission was denied. Please enable it in your device settings.',
+              'denied'
+            );
+          }
+          throw new PermissionError(
+            'Microphone permission is required to record audio.',
+            'denied'
+          );
+        }
       }
 
       this.isInitialized = true;
     } catch (error) {
       console.error("[RecordingService] Error initializing audio:", error);
+      // Re-throw PermissionError as-is, wrap other errors
+      if (error instanceof PermissionError) {
+        throw error;
+      }
       throw error;
     }
   }

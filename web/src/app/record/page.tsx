@@ -34,9 +34,11 @@ import {
   Zap,
   Newspaper,
   X,
+  MicOff,
+  Settings,
 } from 'lucide-react';
 
-type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error';
+type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied';
 type ProcessingStep = 'transcribing' | 'generating' | 'ready';
 type Tone = 'professional' | 'casual' | 'conversational';
 type Length = 'short' | 'medium' | 'long';
@@ -120,7 +122,14 @@ export default function RecordPage() {
       setViewState('recording');
     } catch (err) {
       console.error('Failed to start recording:', err);
-      setErrorMessage('Failed to access microphone. Please grant permission and try again.');
+      // Check the error type and show appropriate UI
+      if (err instanceof Error) {
+        if (err.message === 'permission-denied' || err.message === 'not-allowed') {
+          setViewState('permission-denied');
+        } else {
+          setErrorMessage('Failed to access microphone. Please grant permission and try again.');
+        }
+      }
     }
   };
 
@@ -817,6 +826,74 @@ export default function RecordPage() {
                     >
                       Record Another
                     </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* PERMISSION DENIED STATE - helpful instructions */}
+          {viewState === 'permission-denied' && (
+            <>
+              <div className="lg:col-span-2 order-1 animate-in fade-in duration-300">
+                <div className="max-w-md mx-auto text-center">
+                  <div className="mb-6 flex justify-center">
+                    <div className="w-16 h-16 bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center">
+                      <MicOff className="w-8 h-8 text-error-600 dark:text-error-400" />
+                    </div>
+                  </div>
+
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-3">
+                    {state.permissionState === 'not-allowed' ? 'No Microphone Found' : 'Microphone Access Required'}
+                  </h2>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-8">
+                    {state.permissionState === 'not-allowed'
+                      ? 'We couldn\'t find a microphone on your device. Please connect a microphone and try again.'
+                      : 'To record audio, you need to grant microphone permission to VoiceDraft.'}
+                  </p>
+
+                  {state.permissionState === 'denied' && (
+                    <div className="bg-neutral-100 dark:bg-neutral-900 rounded-xl p-5 mb-6 text-left">
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        How to enable microphone access:
+                      </h3>
+                      <ol className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+                        <li className="flex gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 bg-neutral-200 dark:bg-neutral-800 rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+                          <span>Click the lock or info icon in your browser's address bar</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 bg-neutral-200 dark:bg-neutral-800 rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+                          <span>Find "Microphone" in the permission settings</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 bg-neutral-200 dark:bg-neutral-800 rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+                          <span>Change the setting to "Allow"</span>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex-shrink-0 w-5 h-5 bg-neutral-200 dark:bg-neutral-800 rounded-full flex items-center justify-center text-xs font-semibold">4</span>
+                          <span>Refresh this page and try again</span>
+                        </li>
+                      </ol>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => {
+                        setViewState('idle');
+                      }}
+                      className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                      Try Again
+                    </button>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {state.permissionState === 'not-allowed'
+                        ? 'Make sure your microphone is properly connected'
+                        : 'Enable microphone permission in your browser settings, then click the microphone button'}
+                    </p>
                   </div>
                 </div>
               </div>
