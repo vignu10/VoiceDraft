@@ -5,13 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
-import { Select } from '@/components/ui/Select';
-import { Bell, Lock, Globe, Download, Upload, Database, AlertTriangle, Check, X } from 'lucide-react';
+import { Bell, Lock, Download, Upload, Database, AlertTriangle, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
-
-type ThemePreference = 'light' | 'dark' | 'system';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -22,19 +19,11 @@ export default function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationsPermission, setNotificationsPermission] = useState<'default' | 'granted' | 'denied'>('default');
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [language, setLanguage] = useState('en');
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
-  const languageOptions = [
-    { value: 'en', label: 'English' },
-    { value: 'es', label: 'Spanish' },
-    { value: 'fr', label: 'French' },
-    { value: 'de', label: 'German' },
-  ];
 
   useEffect(() => {
     // Check notification permission on mount
@@ -47,11 +36,6 @@ export default function SettingsPage() {
     const savedEmailNotifs = localStorage.getItem('email_notifications');
     if (savedEmailNotifs) {
       setEmailNotifications(savedEmailNotifs === 'true');
-    }
-
-    const savedLang = localStorage.getItem('language');
-    if (savedLang) {
-      setLanguage(savedLang);
     }
   }, []);
 
@@ -95,14 +79,12 @@ export default function SettingsPage() {
     try {
       // Save to localStorage
       localStorage.setItem('email_notifications', String(emailNotifications));
-      localStorage.setItem('language', language);
 
       // Try to save to server (may fail if endpoint doesn't exist yet)
       if (accessToken) {
         try {
           await api.patch('/api/user/settings', {
             email_notifications: emailNotifications,
-            language,
           });
         } catch (serverError) {
           console.warn('Server settings save failed:', serverError);
@@ -225,7 +207,7 @@ export default function SettingsPage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
           <div className="space-y-6">
             {/* Notifications */}
             <Card>
@@ -300,34 +282,6 @@ export default function SettingsPage() {
                         )}
                       />
                     </button>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Language & Region */}
-            <Card>
-              <CardBody className="p-4 sm:p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Globe className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                    Language & Region
-                  </h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                      App Language
-                    </label>
-                    <Select
-                      options={languageOptions}
-                      value={language}
-                      onChange={setLanguage}
-                    />
-                    <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-                      Select your preferred language for the app interface.
-                    </p>
                   </div>
                 </div>
               </CardBody>
