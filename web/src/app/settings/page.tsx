@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Select } from '@/components/ui/Select';
-import { Moon, Sun, Bell, Lock, Globe, Download, Upload, Database, AlertTriangle } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { Bell, Lock, Globe, Download, Upload, Database, AlertTriangle, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -16,28 +15,19 @@ type ThemePreference = 'light' | 'dark' | 'system';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
   const { accessToken } = useAuthStore();
   const [isSaving, setIsSaving] = useState(false);
 
   // Settings state
-  const [themePreference, setThemePreference] = useState<ThemePreference>(
-    (theme as ThemePreference) || 'system'
-  );
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsPermission, setNotificationsPermission] = useState<'default' | 'granted' | 'denied'>('default');
+  const [emailNotifications, setEmailNotifications] = useState(false);
   const [language, setLanguage] = useState('en');
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
-  const themeOptions = [
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'system', label: 'System' },
-  ];
 
   const languageOptions = [
     { value: 'en', label: 'English' },
@@ -47,18 +37,13 @@ export default function SettingsPage() {
   ];
 
   useEffect(() => {
+    // Check notification permission on mount
+    if ('Notification' in window) {
+      setNotificationsPermission(Notification.permission as 'default' | 'granted' | 'denied');
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+
     // Load settings from localStorage
-    const savedTheme = localStorage.getItem('theme_preference');
-    if (savedTheme) {
-      setThemePreference(savedTheme as ThemePreference);
-      setTheme(savedTheme);
-    }
-
-    const savedNotifs = localStorage.getItem('notifications_enabled');
-    if (savedNotifs) {
-      setNotificationsEnabled(savedNotifs === 'true');
-    }
-
     const savedEmailNotifs = localStorage.getItem('email_notifications');
     if (savedEmailNotifs) {
       setEmailNotifications(savedEmailNotifs === 'true');
@@ -68,38 +53,63 @@ export default function SettingsPage() {
     if (savedLang) {
       setLanguage(savedLang);
     }
-  }, [setTheme]);
+  }, []);
+
+  const handleToggleNotifications = async () => {
+    if (!('Notification' in window)) {
+      setSaveMessage({ type: 'error', text: 'Your browser does not support notifications.' });
+      setTimeout(() => setSaveMessage(null), 3000);
+      return;
+    }
+
+    if (notificationsPermission === 'granted') {
+      // Disable notifications - we can't actually revoke, but we can track preference
+      setNotificationsEnabled(false);
+      localStorage.setItem('notifications_enabled', 'false');
+      setSaveMessage({ type: 'success', text: 'Notifications disabled. Note: You may need to disable this in your browser settings.' });
+    } else if (notificationsPermission === 'denied') {
+      setSaveMessage({ type: 'error', text: 'Notifications are blocked. Please enable them in your browser settings.' });
+    } else {
+      // Request permission
+      const permission = await Notification.requestPermission();
+      setNotificationsPermission(permission as 'default' | 'granted' | 'denied');
+      if (permission === 'granted') {
+        setNotificationsEnabled(true);
+        localStorage.setItem('notifications_enabled', 'true');
+        // Show a test notification
+        new Notification('VoiceDraft', {
+          body: 'Notifications enabled! You\'ll receive updates here.',
+          icon: '/icons/icon-192x192.png',
+        });
+        setSaveMessage({ type: 'success', text: 'Notifications enabled successfully!' });
+      } else {
+        setSaveMessage({ type: 'error', text: 'Notifications permission denied.' });
+      }
+    }
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
     setSaveMessage(null);
     try {
       // Save to localStorage
-      localStorage.setItem('theme_preference', themePreference);
-      localStorage.setItem('notifications_enabled', String(notificationsEnabled));
       localStorage.setItem('email_notifications', String(emailNotifications));
       localStorage.setItem('language', language);
-
-      // Apply theme
-      setTheme(themePreference);
 
       // Try to save to server (may fail if endpoint doesn't exist yet)
       if (accessToken) {
         try {
           await api.patch('/api/user/settings', {
-            theme_preference: themePreference,
-            notifications_enabled: notificationsEnabled,
             email_notifications: emailNotifications,
             language,
           });
         } catch (serverError) {
-          // Server save failed but local save succeeded - warn but don't fail
-          console.warn('Server settings save failed (endpoint may not exist):', serverError);
+          console.warn('Server settings save failed:', serverError);
         }
       }
 
       setSaveMessage({ type: 'success', text: 'Settings saved successfully!' });
-      // Clear success message after 3 seconds
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -107,11 +117,6 @@ export default function SettingsPage() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleThemeChange = (value: string) => {
-    setThemePreference(value as ThemePreference);
-    setTheme(value);
   };
 
   const handleExport = async () => {
@@ -130,13 +135,13 @@ export default function SettingsPage() {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        setImportResult('Backup exported successfully!');
+        setImportResult({ type: 'success', text: 'Backup exported successfully!' });
       } else {
-        setImportResult('Failed to export backup');
+        setImportResult({ type: 'error', text: 'Failed to export backup' });
       }
     } catch (error) {
       console.error('Error exporting backup:', error);
-      setImportResult('Error exporting backup');
+      setImportResult({ type: 'error', text: 'Error exporting backup' });
     } finally {
       setIsExporting(false);
     }
@@ -156,26 +161,27 @@ export default function SettingsPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setImportResult(
-          `Import successful! ${result.posts_count || 0} posts, ${result.tags_count || 0} tags restored.`
-        );
+        setImportResult({
+          type: 'success',
+          text: `Import successful! ${result.posts_count || 0} posts, ${result.tags_count || 0} tags restored.`
+        });
       } else {
-        const error = await response.json();
-        setImportResult(error.error || 'Failed to import backup');
+        const error = await response.json().catch(() => ({ error: 'Failed to import backup' }));
+        setImportResult({ type: 'error', text: error.error || 'Failed to import backup' });
       }
     } catch (error) {
       console.error('Error importing backup:', error);
-      setImportResult('Error importing backup');
+      setImportResult({ type: 'error', text: 'Error importing backup' });
     } finally {
       setIsImporting(false);
-      // Reset file input
       event.target.value = '';
     }
   };
 
   const handleDeleteAccount = async () => {
     if (!accessToken) {
-      alert('You must be signed in to delete your account.');
+      setSaveMessage({ type: 'error', text: 'You must be signed in to delete your account.' });
+      setTimeout(() => setSaveMessage(null), 3000);
       return;
     }
 
@@ -184,18 +190,21 @@ export default function SettingsPage() {
       const response = await api.delete('/api/profile');
 
       if (response.ok) {
-        // Clear local storage and redirect
         localStorage.clear();
-        alert('Your account has been permanently deleted.');
-        router.push('/auth/signin');
-        router.refresh();
+        setSaveMessage({ type: 'success', text: 'Your account has been permanently deleted.' });
+        setTimeout(() => {
+          router.push('/auth/signin');
+          router.refresh();
+        }, 2000);
       } else {
         const error = await response.json().catch(() => ({ error: 'Failed to delete account' }));
-        alert(error.error || 'Failed to delete account. Please try again.');
+        setSaveMessage({ type: 'error', text: error.error || 'Failed to delete account. Please try again.' });
+        setTimeout(() => setSaveMessage(null), 3000);
       }
     } catch (error) {
       console.error('Error deleting account:', error);
-      alert('Failed to delete account. Please check your connection and try again.');
+      setSaveMessage({ type: 'error', text: 'Failed to delete account. Please check your connection and try again.' });
+      setTimeout(() => setSaveMessage(null), 3000);
     } finally {
       setIsDeletingAccount(false);
     }
@@ -218,31 +227,6 @@ export default function SettingsPage() {
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
           <div className="space-y-6">
-            {/* Appearance */}
-            <Card>
-              <CardBody className="p-4 sm:p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Sun className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                    Appearance
-                  </h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                      Theme
-                    </label>
-                    <Select
-                      options={themeOptions}
-                      value={themePreference}
-                      onChange={handleThemeChange}
-                    />
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-
             {/* Notifications */}
             <Card>
               <CardBody className="p-4 sm:p-6">
@@ -256,16 +240,18 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   {/* Toggle: Push Notifications */}
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        Push Notifications
+                        Browser Notifications
                       </div>
                       <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                        Receive notifications in your browser
+                        {notificationsPermission === 'denied'
+                          ? 'Blocked by browser. Enable in browser settings.'
+                          : 'Receive updates in your browser'}
                       </div>
                     </div>
                     <button
-                      onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                      onClick={handleToggleNotifications}
                       className={cn(
                         'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
                         notificationsEnabled
@@ -287,12 +273,12 @@ export default function SettingsPage() {
 
                   {/* Toggle: Email Notifications */}
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                         Email Notifications
                       </div>
                       <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                        Receive updates via email
+                        Receive updates and summaries via email
                       </div>
                     </div>
                     <button
@@ -332,13 +318,16 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                      Language
+                      App Language
                     </label>
                     <Select
                       options={languageOptions}
                       value={language}
                       onChange={setLanguage}
                     />
+                    <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                      Select your preferred language for the app interface.
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -350,7 +339,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3 mb-4">
                   <Lock className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                    Privacy
+                    Privacy & Security
                   </h3>
                 </div>
 
@@ -438,12 +427,17 @@ export default function SettingsPage() {
 
                   {importResult && (
                     <div className={cn(
-                      'text-sm p-3 rounded-lg border',
-                      importResult.includes('success')
+                      'text-sm p-3 rounded-lg border flex items-start gap-2',
+                      importResult.type === 'success'
                         ? 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800'
                         : 'bg-error-50 dark:bg-error-950 text-error-700 dark:text-error-300 border-error-200 dark:border-error-800'
                     )}>
-                      {importResult}
+                      {importResult.type === 'success' ? (
+                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <X className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      )}
+                      <span>{importResult.text}</span>
                     </div>
                   )}
                 </div>
@@ -454,11 +448,16 @@ export default function SettingsPage() {
             <div className="flex justify-end items-center gap-4 pt-4">
               {saveMessage && (
                 <div className={cn(
-                  'text-sm px-4 py-2 rounded-lg',
+                  'text-sm px-4 py-2 rounded-lg border flex items-center gap-2',
                   saveMessage.type === 'success'
-                    ? 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800'
-                    : 'bg-error-50 dark:bg-error-950 text-error-700 dark:text-error-300 border border-error-200 dark:border-error-800'
+                    ? 'bg-success-50 dark:bg-success-950 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800'
+                    : 'bg-error-50 dark:bg-error-950 text-error-700 dark:text-error-300 border-error-200 dark:border-error-800'
                 )}>
+                  {saveMessage.type === 'success' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <X className="w-4 h-4" />
+                  )}
                   {saveMessage.text}
                 </div>
               )}
