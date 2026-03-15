@@ -30,6 +30,7 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'VoiceDraft - Voice & Text Collaboration',
   description: 'Transform voice into polished blog posts. A modern platform for creators who speak their mind.',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
