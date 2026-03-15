@@ -712,25 +712,25 @@ export default function RecordPage() {
           {viewState === 'complete' && generatedBlog && (
             <>
               <div className="lg:col-span-2 order-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="max-w-3xl mx-auto">
+                <div className="w-full max-w-3xl mx-auto px-0 sm:px-0">
                   {/* Success header */}
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-6 sm:mb-8 px-4">
                     <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-primary-500 via-pink-500 to-primary-600 text-white rounded-full mb-4 shadow-lg shadow-neutral-500/20">
                       <Check className="w-6 h-6" />
                     </div>
-                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">
+                    <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">
                       Your blog is ready
                     </h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 text-sm">
+                    <p className="text-neutral-600 dark:text-neutral-400 text-xs sm:text-sm">
                       {generatedBlog.wordCount} words · {tone} tone
                     </p>
                   </div>
 
                   {/* Content preview card */}
-                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden mb-6">
+                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden mb-4 sm:mb-6 mx-0 sm:mx-0">
                     {/* Toggle */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800">
-                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-4">
+                    <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-neutral-200 dark:border-neutral-800">
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2 sm:pr-4 text-sm sm:text-base">
                         {generatedBlog.title}
                       </h3>
                       <div className="flex items-center gap-1 bg-white dark:bg-neutral-950 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
@@ -739,7 +739,7 @@ export default function RecordPage() {
                             setIsEditMode(false);
                             setEditedContent('');
                           }}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                             !isEditMode
                               ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
                               : 'text-neutral-600 dark:text-neutral-400'
@@ -752,7 +752,7 @@ export default function RecordPage() {
                             setIsEditMode(true);
                             setEditedContent(generatedBlog.content);
                           }}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
                             isEditMode
                               ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
                               : 'text-neutral-600 dark:text-neutral-400'
@@ -763,23 +763,23 @@ export default function RecordPage() {
                       </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-5 min-h-[280px] max-h-[360px] overflow-y-auto">
+                    {/* Content - responsive height */}
+                    <div className="p-3 sm:p-5 min-h-[200px] sm:min-h-[280px] max-h-[50vh] sm:max-h-[360px] overflow-y-auto">
                       {isEditMode ? (
                         <textarea
                           value={editedContent}
                           onChange={(e) => setEditedContent(e.target.value)}
                           placeholder="Edit your blog content..."
                           maxLength={50000}
-                          className="w-full h-full min-h-[240px] p-4 bg-white dark:bg-neutral-950 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 resize-none text-sm leading-relaxed border border-neutral-200 dark:border-neutral-800"
+                          className="w-full h-full min-h-[180px] sm:min-h-[240px] p-3 sm:p-4 bg-white dark:bg-neutral-950 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 resize-none text-sm leading-relaxed border border-neutral-200 dark:border-neutral-800"
                           aria-label="Edit blog content"
                         />
                       ) : (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-3">
+                          <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-2 sm:mb-3">
                             {generatedBlog.title}
                           </h3>
-                          <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed">
+                          <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed">
                             {generatedBlog.content}
                           </div>
                         </div>
@@ -788,13 +788,13 @@ export default function RecordPage() {
 
                     {/* Edit actions */}
                     {isEditMode && (
-                      <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
+                      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
                         <button
                           onClick={() => {
                             setIsEditMode(false);
                             setEditedContent('');
                           }}
-                          className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
+                          className="px-3 sm:px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
                         >
                           Cancel
                         </button>
@@ -803,7 +803,7 @@ export default function RecordPage() {
                             setGeneratedBlog({ ...generatedBlog, content: editedContent });
                             setIsEditMode(false);
                           }}
-                          className="px-4 py-2 text-sm bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg font-medium transition-colors"
+                          className="px-3 sm:px-4 py-2 text-sm bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg font-medium transition-colors"
                         >
                           Save
                         </button>
@@ -811,18 +811,18 @@ export default function RecordPage() {
                     )}
                   </div>
 
-                  {/* Action buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Action buttons - full width on mobile */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-0">
                     <button
                       onClick={handleViewBlog}
-                      className="flex-1 min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                      className="flex-1 min-h-[48px] sm:min-h-[52px] px-4 sm:px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm sm:text-base"
                     >
                       Open in Editor
-                      <ArrowRight className="w-5 h-5" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     <button
                       onClick={handleReset}
-                      className="flex-1 min-h-[52px] px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-all"
+                      className="flex-1 min-h-[48px] sm:min-h-[52px] px-4 sm:px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-all text-sm sm:text-base"
                     >
                       Record Another
                     </button>
