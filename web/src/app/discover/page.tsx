@@ -41,7 +41,7 @@ export default function DiscoverPage() {
 
   return (
     <WithBottomNav>
-      <main className="min-h-screen pb-20 sm:pb-20 lg:pb-0">
+      <main className="min-h-screen pb-16 lg:pb-0">
         {/* Editorial header with asymmetric layout */}
         <header className="relative border-b border-neutral-200/80 dark:border-neutral-800/80">
           {/* Subtle geometric accent */}

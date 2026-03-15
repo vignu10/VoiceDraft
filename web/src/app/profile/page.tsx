@@ -154,7 +154,7 @@ export default function ProfilePage() {
             </div>
           </header>
 
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
             <Card>
               <CardBody className="p-8 text-center">
                 <User className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
@@ -195,7 +195,7 @@ export default function ProfilePage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
           <div className="grid gap-6">
             {/* Profile Card */}
             <Card>

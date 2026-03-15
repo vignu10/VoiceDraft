@@ -46,29 +46,29 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-neutral-50 dark:bg-neutral-950">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 lg:py-12 bg-neutral-50 dark:bg-neutral-950">
+      <div className="w-full max-w-sm sm:max-w-md space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <svg className="mx-auto h-12 w-12" viewBox="0 0 48 48" fill="none">
+            <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12" viewBox="0 0 48 48" fill="none">
               <rect width="48" height="48" rx="12" fill="oklch(0.52 0.28 285)"/>
               <rect x="11" y="18" width="6" height="12" rx="2" fill="white"/>
               <rect x="21" y="14" width="6" height="20" rx="2" fill="white"/>
               <rect x="31" y="16" width="6" height="16" rx="2" fill="white"/>
             </svg>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+          <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="mt-1.5 sm:mt-2 text-sm text-neutral-600 dark:text-neutral-400">
             Start transforming your voice into organized drafts
           </p>
         </div>
 
         {/* Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-3 sm:space-y-4">
             <Input
               label="Full name"
               type="text"
@@ -117,16 +117,16 @@ export default function SignUpPage() {
           </div>
 
           {/* Terms */}
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 sm:gap-3">
             <input
               id="terms"
               type="checkbox"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
               required
-              className="mt-1 h-4 w-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
+              className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500 flex-shrink-0"
             />
-            <label htmlFor="terms" className="text-sm text-neutral-600 dark:text-neutral-400">
+            <label htmlFor="terms" className="text-sm text-neutral-600 dark:text-neutral-400 leading-snug">
               I agree to the{' '}
               <Link href="/terms" className="text-primary-600 hover:text-primary-500">
                 Terms of Service
@@ -139,7 +139,7 @@ export default function SignUpPage() {
           </div>
 
           {error && (
-            <div className="rounded-lg bg-accent-50 dark:bg-accent-950 p-4">
+            <div className="rounded-lg bg-accent-50 dark:bg-accent-950 p-3 sm:p-4">
               <p className="text-sm text-accent-600 dark:text-accent-400">{error}</p>
             </div>
           )}
@@ -148,13 +148,13 @@ export default function SignUpPage() {
             type="submit"
             fullWidth
             isLoading={isLoading}
-            className="py-3 text-base"
+            className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
           >
             Create account
           </Button>
 
           {/* OAuth */}
-          <div className="relative">
+          <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300 dark:border-neutral-700" />
             </div>
@@ -169,7 +169,7 @@ export default function SignUpPage() {
             type="button"
             variant="secondary"
             fullWidth
-            className="py-3 text-base"
+            className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
             onClick={() => {/* TODO: Implement OAuth */}}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -190,11 +190,12 @@ export default function SignUpPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Sign up with Google
+            <span className="hidden sm:inline">Sign up with Google</span>
+            <span className="sm:hidden">Google</span>
           </Button>
 
           {/* Sign in link */}
-          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-center text-sm text-neutral-600 dark:text-neutral-400 pt-2">
             Already have an account?{' '}
             <Link
               href="/auth/signin"

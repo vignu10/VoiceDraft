@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
             </div>
           </header>
 
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
             <Card>
               <CardBody className="p-8 text-center">
                 <BarChart className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
             </div>
           </header>
 
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 lg:pb-8">
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
             <Card>
               <CardBody className="p-8 text-center">
                 <BarChart className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
