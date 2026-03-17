@@ -3,10 +3,11 @@ import { SessionExpirationHandler } from "@/components/providers/SessionExpirati
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppUpdateNotification } from "@/components/ui/AppUpdateNotification";
+import { PWAInstallPrompt } from "@/components/ui/PWAInstallPrompt";
 import { Analytics } from "@/components/analytics/Analytics";
 import { DialogProvider } from "@/components/ui/dialog";
 import { OfflineIndicator } from "@/components/ui/OfflineIndicator";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
@@ -47,6 +48,17 @@ export const metadata: Metadata = {
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "theme-color": "#0891b2",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -65,6 +77,56 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="theme-color" content="#0891b2" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Service Worker Registration
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js', {
+                    scope: '/'
+                  }).then((registration) => {
+                    console.log('[SW] Service worker registered:', registration.scope);
+
+                    // Listen for waiting service worker
+                    if (registration.waiting) {
+                      // Notify about update
+                      window.dispatchEvent(new CustomEvent('sw-waiting'));
+                    }
+
+                    // Listen for new service worker installing
+                    registration.addEventListener('updatefound', () => {
+                      const newWorker = registration.installing;
+                      if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                          if (newWorker.state === 'installed' && registration.active) {
+                            // New worker is waiting, notify about update
+                            window.dispatchEvent(new CustomEvent('sw-waiting'));
+                          }
+                        });
+                      }
+                    });
+                  }).catch((error) => {
+                    console.error('[SW] Service worker registration failed:', error);
+                  });
+                });
+              }
+
+              // Handle service worker messages
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                  if (event.data && event.data.type === 'SKIP_WAITING') {
+                    navigator.serviceWorker.ready.then((registration) => {
+                      if (registration.waiting) {
+                        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                      }
+                    });
+                  }
+                });
+              }
+            `,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -101,6 +163,9 @@ export default function RootLayout({
 
               {/* App update notification */}
               <AppUpdateNotification />
+
+              {/* PWA install prompt */}
+              <PWAInstallPrompt />
 
               {/* Skip to main content link for accessibility */}
               <a
