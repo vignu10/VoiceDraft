@@ -1,7 +1,7 @@
 // Recording Configuration
 export const MAX_RECORDING_DURATION = 600; // 10 minutes in seconds
 export const RECORDING_WARNING_THRESHOLD = 540; // 9 minutes - show warning
-export const MIN_RECORDING_DURATION = 3; // Minimum 3 seconds required
+export const MIN_RECORDING_DURATION = 15; // Minimum 15 seconds required
 
 // Transcription Validation
 export const MIN_TRANSCRIPT_LENGTH = 20; // Minimum characters for valid transcript
