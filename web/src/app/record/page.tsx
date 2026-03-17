@@ -123,6 +123,7 @@ export default function RecordPage() {
   const [processingMessage, setProcessingMessage] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Blog options
   const [targetKeyword, setTargetKeyword] = useState('');
@@ -393,6 +394,8 @@ export default function RecordPage() {
   };
 
   const handleViewBlog = () => {
+    setIsNavigating(true);
+    // Immediate navigation - loading state provides visual feedback
     if (createdDraftId) {
       router.push(`/draft/${createdDraftId}`);
     } else {
@@ -881,10 +884,20 @@ export default function RecordPage() {
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
                     <button
                       onClick={handleViewBlog}
-                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm"
+                      disabled={isNavigating}
+                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                      Open in Editor
-                      <ArrowRight className="w-4 h-4" />
+                      {isNavigating ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Opening...
+                        </>
+                      ) : (
+                        <>
+                          Open in Editor
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={handleReset}
