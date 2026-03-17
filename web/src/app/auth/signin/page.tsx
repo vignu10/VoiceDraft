@@ -12,16 +12,30 @@ import { MailIcon, LockIcon, AlertCircle } from 'lucide-react';
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, isLoading } = useAuthStore();
+  const { signIn, signInWithGoogle, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
 
   useEffect(() => {
     // Check if session expired flag is in URL
     if (searchParams?.get('session') === 'expired') {
       setSessionExpired(true);
+    }
+
+    // Check for OAuth errors
+    const oauthError = searchParams?.get('oauth_error');
+    if (oauthError) {
+      const errorMessages: Record<string, string> = {
+        access_denied: 'Sign in was cancelled or access was denied',
+        session_failed: 'Failed to establish a session',
+        no_code: 'OAuth flow failed - no code received',
+        no_session: 'Failed to create a session',
+        unknown: 'An unknown error occurred during sign in',
+      };
+      setError(errorMessages[oauthError] || 'Sign in failed. Please try again.');
     }
   }, [searchParams]);
 
@@ -34,6 +48,17 @@ export default function SignInPage() {
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsOAuthLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign in failed');
+      setIsOAuthLoading(false);
     }
   };
 
@@ -136,9 +161,11 @@ export default function SignInPage() {
             variant="secondary"
             fullWidth
             className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
-            disabled
+            onClick={handleGoogleSignIn}
+            disabled={isLoading || isOAuthLoading}
+            isLoading={isOAuthLoading}
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

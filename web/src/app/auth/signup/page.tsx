@@ -11,13 +11,14 @@ import { MailIcon, LockIcon, UserIcon } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { signUp, isLoading } = useAuthStore();
+  const { signUp, signInWithGoogle, isLoading } = useAuthStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +44,17 @@ export default function SignUpPage() {
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign up');
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError('');
+    setIsOAuthLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign up failed');
+      setIsOAuthLoading(false);
     }
   };
 
@@ -166,9 +178,11 @@ export default function SignUpPage() {
             variant="secondary"
             fullWidth
             className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
-            disabled
+            onClick={handleGoogleSignUp}
+            disabled={isLoading || isOAuthLoading}
+            isLoading={isOAuthLoading}
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

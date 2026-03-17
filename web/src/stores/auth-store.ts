@@ -29,6 +29,7 @@ interface AuthState {
   setLastValidated: (timestamp: number | null) => void;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   validateSession: () => Promise<boolean>;
   checkSessionOnMount: () => void;
@@ -179,6 +180,34 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : 'Sign up failed',
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      signInWithGoogle: async () => {
+        set({ isLoading: true, error: null, sessionExpired: false });
+        try {
+          // Get the OAuth URL from the server
+          const response = await fetch('/api/auth/oauth/url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: 'google' }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to initiate OAuth');
+          }
+
+          const { url } = await response.json();
+
+          // Redirect to OAuth provider
+          window.location.href = url;
+        } catch (error) {
+          set({
+            error: error instanceof Error ? error.message : 'OAuth failed',
             isLoading: false,
           });
           throw error;
