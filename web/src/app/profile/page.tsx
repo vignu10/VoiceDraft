@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuthStore } from "@/stores/auth-store";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { api } from "@/lib/api-client";
 import { Calendar, Key, LogOut, Mail, User } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,7 +24,21 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user: authUser, accessToken, signOut } = useAuthStore();
+  const { user: authUser, accessToken, signOut, checkSessionOnMount } = useAuthStore();
+
+  // Check authentication and handle session expiration
+  useRequireAuth({
+    redirectTo: '/auth/signin',
+    onAuthRequired: () => {
+      // Will be called when user is not authenticated or session expires
+      router.push('/auth/signin');
+    },
+  });
+
+  // Validate session on mount
+  useEffect(() => {
+    checkSessionOnMount();
+  }, [checkSessionOnMount]);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +59,7 @@ export default function ProfilePage() {
         full_name: authUser.full_name,
         bio: authUser.bio,
         avatar_url: authUser.avatar_url,
-        created_at: "", // Will be fetched from profile if needed
+        created_at: authUser.created_at || new Date().toISOString(),
       });
       setFullName(authUser.full_name || "");
       setBio(authUser.bio || "");
@@ -154,7 +169,7 @@ export default function ProfilePage() {
             </div>
           </header>
 
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Card>
               <CardBody className="p-8 text-center">
                 <User className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
@@ -178,10 +193,12 @@ export default function ProfilePage() {
     );
   }
 
-  const memberSince = new Date(user.created_at).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  const memberSince = user.created_at && !isNaN(new Date(user.created_at).getTime())
+    ? new Date(user.created_at).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
+    : "Recently";
 
   return (
     <WithBottomNav>
@@ -195,7 +212,7 @@ export default function ProfilePage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid gap-6">
             {/* Profile Card */}
             <Card>

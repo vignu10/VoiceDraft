@@ -62,9 +62,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const toggleTheme = () => {
     setThemeState((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'light';
-      return 'system';
+      // If currently dark, switch to light
+      // Otherwise (system or light), switch to dark
+      return prev === 'dark' ? 'light' : 'dark';
     });
   };
 

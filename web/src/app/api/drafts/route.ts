@@ -187,29 +187,39 @@ export async function POST(req: NextRequest) {
     const finalContent = content || transcript || '';
     const wordCount = finalContent ? finalContent.split(/\s+/).length : 0;
 
+    // Only include audio fields if audio was actually provided
+    // Database constraint: audio_duration_seconds must be > 0 if provided
+    const hasAudio = audioFileSize > 0 && audioDuration > 0;
+
+    const insertData: any = {
+      journal_id: journalId,
+      title,
+      slug,
+      content: finalContent,
+      transcript: transcript || null,
+      meta_description: metaDescription || null,
+      target_keyword: targetKeyword || null,
+      word_count: wordCount,
+      reading_time_minutes: Math.ceil(wordCount / 200),
+      view_count: 0,
+      status: 'draft',
+      audio_is_processed: !!transcript,
+      style_used: 0,
+    };
+
+    // Only add audio fields if audio is present
+    if (hasAudio) {
+      insertData.audio_file_url = audioFileUrl || null;
+      insertData.audio_s3_key = audioS3Key || null;
+      insertData.audio_file_size_bytes = audioFileSize;
+      insertData.audio_mime_type = audioMimeType || null;
+      insertData.audio_duration_seconds = audioDuration;
+      insertData.audio_format = audioFormat;
+    }
+
     const { data: post, error } = await supabaseAdmin
       .from('posts')
-      .insert({
-        journal_id: journalId,
-        title,
-        slug,
-        content: finalContent,
-        transcript,
-        meta_description: metaDescription,
-        target_keyword: targetKeyword,
-        audio_file_url: audioFileUrl,
-        audio_s3_key: audioS3Key,
-        audio_file_size_bytes: audioFileSize,
-        audio_mime_type: audioMimeType,
-        audio_duration_seconds: audioDuration,
-        audio_format: audioFormat,
-        word_count: wordCount,
-        reading_time_minutes: Math.ceil(wordCount / 200),
-        view_count: 0,
-        status: 'draft',
-        audio_is_processed: !!transcript,
-        style_used: 0,
-      })
+      .insert(insertData)
       .select()
       .single();
 

@@ -148,7 +148,7 @@ export default function SyncStatusPage() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-16 lg:pb-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-6">
             {/* Connection Status Card */}
             <Card>

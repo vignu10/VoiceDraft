@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { LogoIcon } from '@/components/logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { MailIcon, LockIcon, UserIcon } from 'lucide-react';
 
@@ -51,12 +52,7 @@ export default function SignUpPage() {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="inline-block">
-            <svg className="mx-auto h-10 w-10 sm:h-12 sm:w-12" viewBox="0 0 48 48" fill="none">
-              <rect width="48" height="48" rx="12" fill="oklch(0.52 0.28 285)"/>
-              <rect x="11" y="18" width="6" height="12" rx="2" fill="white"/>
-              <rect x="21" y="14" width="6" height="20" rx="2" fill="white"/>
-              <rect x="31" y="16" width="6" height="16" rx="2" fill="white"/>
-            </svg>
+            <LogoIcon size={48} className="mx-auto sm:h-12 sm:w-12" />
           </Link>
           <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
             Create your account
@@ -170,7 +166,7 @@ export default function SignUpPage() {
             variant="secondary"
             fullWidth
             className="min-h-[48px] sm:min-h-[52px] py-3 text-base"
-            onClick={() => {/* TODO: Implement OAuth */}}
+            disabled
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
