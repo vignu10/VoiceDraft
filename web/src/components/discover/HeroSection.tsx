@@ -25,37 +25,24 @@ export function HeroSection() {
         <div className="relative flex min-h-[60vh] flex-col justify-center py-16 sm:py-20 lg:py-24">
           {/* Content - Side by side layout with logo and text */}
           <div className="mx-auto max-w-6xl">
-            <div className="flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-16">
-              {/* Logo on the left - smaller size */}
-              <div className="animate-fade-in-up flex-shrink-0">
-                <LogoIcon size={128} className="animate-float" animate={true} />
+            <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
+              {/* Logo + Wordmark on the left - side by side */}
+              <div className="animate-fade-in-up flex flex-shrink-0 items-center gap-6">
+                <LogoIcon size={96} className="animate-float" animate={true} />
+                <LogoWordmark size="lg" showTagline={false} />
               </div>
 
               {/* Content on the right */}
               <div className="flex-1 text-center lg:text-left">
-                {/* Logo Wordmark - smaller */}
-                <div className="animate-fade-in-up animate-delay-100 mb-6 lg:mb-8">
-                  <LogoWordmark size="lg" showTagline={false} />
-                </div>
-
-                {/* Badge */}
-                <div className="animate-fade-in-up animate-delay-200 mb-6 inline-flex items-center gap-2 rounded-full border-2 border-neutral-400/30 bg-neutral-100/50 px-4 py-2 text-sm font-semibold text-neutral-700 dark:border-neutral-600/30 dark:bg-neutral-800/50 dark:text-neutral-300">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neutral-500 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-neutral-500"></span>
-                  </span>
-                  Now with AI-powered transcription
-                </div>
-
                 {/* Main headline */}
-                <h1 className="animate-fade-in-up animate-delay-300 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
+                <h1 className="animate-fade-in-up animate-delay-200 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
                   Your voice,
                   <br />
                   <span className="text-neutral-600 dark:text-neutral-400">amplified.</span>
                 </h1>
 
                 {/* Subheadline */}
-                <p className="animate-fade-in-up animate-delay-400 mt-6 text-base font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-lg">
+                <p className="animate-fade-in-up animate-delay-300 mt-6 text-base font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-lg">
                   {isAuthenticated ? (
                     <>
                       Welcome back, {user?.full_name || user?.email?.split('@')[0] || 'Creator'}!
@@ -72,7 +59,7 @@ export function HeroSection() {
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="animate-fade-in-up animate-delay-500 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start lg:mt-8">
+                <div className="animate-fade-in-up animate-delay-400 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start lg:mt-8">
                   {isAuthenticated ? (
                     <>
                       <Link
