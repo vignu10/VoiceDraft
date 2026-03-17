@@ -21,11 +21,11 @@ export function HeroSection() {
       </div>
 
       <div className="container-wide">
-        <div className="relative flex flex-col justify-center py-12 sm:py-16 lg:py-20">
+        <div className="relative flex min-h-[calc(100vh-60px)] flex-col justify-center py-12 sm:py-16 lg:py-20">
           {/* Content - Centered text without logo */}
           <div className="mx-auto max-w-4xl text-center">
                 {/* Main headline */}
-                <h1 className="animate-fade-in-up animate-delay-200 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
+                <h1 className="animate-fade-in-up animate-delay-200 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-2xl sm:text-3xl lg:text-4xl">
                   Your voice,
                   <br />
                   <span className="text-neutral-600 dark:text-neutral-400">amplified.</span>
