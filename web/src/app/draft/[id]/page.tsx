@@ -10,6 +10,7 @@ import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { ContentGate } from '@/components/ui/ContentGate';
 import { useDialog } from '@/components/ui/dialog';
 import { useContentGate } from '@/hooks/useContentGate';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestStore } from '@/stores/guest-store';
 import { api } from '@/lib/api-client';
@@ -43,6 +44,18 @@ export default function DraftEditorPage() {
   const { showDialog } = useDialog();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { isGuestDraft, addGuestDraft } = useGuestStore();
+
+  // Check authentication for draft editing (optional - guest users can edit)
+  useRequireAuth({
+    optional: true, // Allow guest users, but handle auth state changes
+    onAuthRequired: () => {
+      // If session expires while editing, show error
+      setSaveStatus('error');
+      setError({
+        message: 'Your session has expired. Please sign in to continue editing.',
+      });
+    },
+  });
 
   // Content gate hook
   const {
@@ -477,7 +490,7 @@ export default function DraftEditorPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 pb-16 lg:pb-0">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Error banner */}
       {error && saveStatus === 'error' && (
         <div className="bg-error-500/10 border-b border-error-500/20 px-4 py-3 bg-frosted" role="alert">
@@ -542,47 +555,53 @@ export default function DraftEditorPage() {
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {/* Publish/Unpublish button - primary action */}
               {draft.status === 'draft' ? (
-                <Button
-                  variant="primary"
+                <button
                   onClick={handlePublish}
-                  isLoading={publishLoading === 'loading'}
-                  className="min-h-[40px] sm:min-h-[44px] px-3 sm:px-6"
+                  disabled={publishLoading === 'loading'}
+                  className="min-h-[40px] sm:min-h-[44px] px-4 sm:px-6 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                   title="Publish draft (Ctrl+P)"
                 >
-                  {publishLoading === 'success' ? (
+                  {publishLoading === 'loading' ? (
                     <>
-                      <Check className="w-4 h-4 sm:mr-1" aria-hidden="true" />
-                      <span className="hidden sm:inline">Published!</span>
-                      <Check className="sm:hidden w-4 h-4" aria-hidden="true" />
+                      <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      <span>Publishing...</span>
+                    </>
+                  ) : publishLoading === 'success' ? (
+                    <>
+                      <Check className="w-4 h-4" aria-hidden="true" />
+                      <span>Published!</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4 sm:mr-2" aria-hidden="true" />
-                      <span className="hidden sm:inline">Publish</span>
-                      <Send className="sm:hidden w-4 h-4" aria-hidden="true" />
+                      <Send className="w-4 h-4" aria-hidden="true" />
+                      <span>Publish</span>
                     </>
                   )}
-                </Button>
+                </button>
               ) : (
-                <Button
-                  variant="secondary"
+                <button
                   onClick={handleUnpublish}
-                  isLoading={unpublishLoading === 'loading'}
-                  className="min-h-[40px] sm:min-h-[44px] px-3 sm:px-6 hidden sm:flex"
+                  disabled={unpublishLoading === 'loading'}
+                  className="hidden sm:flex min-h-[44px] px-6 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-all items-center justify-center gap-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                   title="Unpublish draft (Ctrl+P)"
                 >
-                  {unpublishLoading === 'success' ? (
+                  {unpublishLoading === 'loading' ? (
                     <>
-                      <Check className="w-4 h-4 mr-2" aria-hidden="true" />
-                      Unpublished!
+                      <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      <span>Unpublishing...</span>
+                    </>
+                  ) : unpublishLoading === 'success' ? (
+                    <>
+                      <Check className="w-4 h-4" aria-hidden="true" />
+                      <span>Unpublished!</span>
                     </>
                   ) : (
                     <>
-                      <Archive className="w-4 h-4 mr-2" aria-hidden="true" />
-                      Unpublish
+                      <Archive className="w-4 h-4" aria-hidden="true" />
+                      <span>Unpublish</span>
                     </>
                   )}
-                </Button>
+                </button>
               )}
 
               {/* Delete button */}
@@ -638,18 +657,18 @@ export default function DraftEditorPage() {
                     placeholder="Post title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="text-base sm:text-lg font-semibold"
+                    className="text-sm sm:text-base font-semibold"
                     maxLength={200}
                     autoFocus
                   />
                 </div>
 
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-2 sm:space-y-3 flex-1 min-h-0">
                   <Textarea
                     placeholder="Start writing your post..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[300px] sm:min-h-[400px] lg:min-h-[600px] font-mono text-sm leading-relaxed"
+                    className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] font-mono text-sm leading-relaxed"
                     showCharacterCount={false}
                     aria-label="Draft content"
                   />
@@ -706,32 +725,32 @@ export default function DraftEditorPage() {
         <div className="lg:hidden">
           {/* Editor Panel - Mobile */}
           {mobileView === 'edit' && (
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm">
-              <div className="p-4 space-y-4">
+            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+              <div className="p-3 space-y-3 flex-shrink-0">
                 <div>
                   <Input
                     placeholder="Post title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="text-base font-semibold"
+                    className="text-sm font-semibold"
                     maxLength={200}
                     autoFocus
                   />
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Start writing your post..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[400px] font-mono text-sm leading-relaxed"
-                    showCharacterCount={false}
-                    aria-label="Draft content"
-                  />
-                  <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-                    <span>Markdown</span>
-                    <span>{content.length.toLocaleString()}</span>
-                  </div>
+              <div className="flex-1 min-h-0 px-3 pb-3">
+                <Textarea
+                  placeholder="Start writing your post..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full h-full font-mono text-sm leading-relaxed"
+                  showCharacterCount={false}
+                  aria-label="Draft content"
+                />
+                <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
+                  <span>Markdown</span>
+                  <span>{content.length.toLocaleString()}</span>
                 </div>
               </div>
             </div>
