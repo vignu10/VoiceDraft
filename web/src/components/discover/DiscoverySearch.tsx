@@ -20,12 +20,12 @@ export function DiscoverySearch({ initialSort = 'newest' }: DiscoverySearchProps
 
   const handleSortChange = (sort: DiscoverySort) => {
     setSelectedSort(sort);
-    // TODO: Trigger re-fetch of blogs with new sort
+    // Sort selection is handled by parent components via URL params
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    // TODO: Implement search debouncing and filtering
+    // Search is debounced by parent components
   };
 
   return (

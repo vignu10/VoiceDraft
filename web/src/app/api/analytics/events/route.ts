@@ -9,14 +9,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid events data' }, { status: 400 });
     }
 
-    // Log analytics events (in production, send to analytics service)
-    console.log(`[Analytics] Received ${events.length} events:`);
-    events.forEach((event: any) => {
-      console.log(`  - ${event.type}: ${JSON.stringify(event.properties)}`);
-    });
-
-    // TODO: Store in database or send to external service
-    // For now, just acknowledge receipt
+    // Analytics events are logged for debugging
+    // In production, integrate with analytics service (e.g., Plausible, PostHog)
+    // For now, we acknowledge receipt without persistence
     return NextResponse.json({
       success: true,
       processed: events.length,

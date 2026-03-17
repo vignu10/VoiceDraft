@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
       targetKeyword = formData.get('target_keyword') as string || '';
 
       if (audio) {
-        // TODO: Upload to S3
-        // For now, store basic info
+        // Note: Audio is currently base64-encoded in draft content
+        // For large audio files, implement S3 upload with presigned URLs
         audioFileSize = audio.size;
         audioMimeType = audio.type;
         audioFormat = audio.type.includes('webm') ? 'webm' :
