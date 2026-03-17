@@ -25,7 +25,7 @@ export function BottomNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800 z-40"
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800 z-40 pb-[env(safe-area-inset-bottom)]"
     >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-around py-2">

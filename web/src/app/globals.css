@@ -261,12 +261,16 @@ body {
     #ffffff 100%
   );
   background-size: 400% 400%;
-  background-attachment: fixed;
   color: var(--color-neutral-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
-  animation: gradientShift 30s ease infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body {
+    animation: gradientShift 30s ease infinite;
+  }
 }
 
 .dark body {
@@ -282,9 +286,13 @@ body {
     #000000 100%
   );
   background-size: 400% 400%;
-  background-attachment: fixed;
   color: var(--color-neutral-100);
-  animation: gradientShift 30s ease infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dark body {
+    animation: gradientShift 30s ease infinite;
+  }
 }
 
 @keyframes gradientShift {
@@ -1077,24 +1085,3 @@ p {
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
-
-/* Staggered fade in */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.animate-delay-100 { animation-delay: 0.1s; }
-.animate-delay-200 { animation-delay: 0.2s; }
-.animate-delay-300 { animation-delay: 0.3s; }
-.animate-delay-400 { animation-delay: 0.4s; }
