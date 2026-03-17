@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
-import { LogoIcon, LogoWordmark } from '@/components/logo';
 
 export function HeroSection() {
   const { isAuthenticated, user } = useAuthStore();
@@ -23,21 +22,8 @@ export function HeroSection() {
 
       <div className="container-wide">
         <div className="relative flex flex-col justify-center py-12 sm:py-16 lg:py-20">
-          {/* Content - Side by side layout with logo and text */}
-          <div className="mx-auto max-w-6xl">
-            <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
-              {/* Logo + Wordmark on the left - side by side, wrapped as home link */}
-              <Link
-                href="/"
-                aria-label="VoiceDraft home"
-                className="animate-fade-in-up flex flex-shrink-0 items-center gap-6 rounded-xl transition-colors hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
-              >
-                <LogoIcon size={96} className="animate-float" animate={true} />
-                <LogoWordmark size="lg" showTagline={false} />
-              </Link>
-
-              {/* Content on the right */}
-              <div className="flex-1 text-center lg:text-left">
+          {/* Content - Centered text without logo */}
+          <div className="mx-auto max-w-4xl text-center">
                 {/* Main headline */}
                 <h1 className="animate-fade-in-up animate-delay-200 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
                   Your voice,
@@ -63,12 +49,12 @@ export function HeroSection() {
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="animate-fade-in-up animate-delay-400 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start lg:mt-8">
+                <div className="animate-fade-in-up animate-delay-400 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                   {isAuthenticated ? (
                     <>
                       <Link
                         href="/record"
-                        className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 px-8 py-4 min-h-[48px] text-base font-bold text-white shadow-xl shadow-neutral-500/20 transition-all hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-neutral-500/50 focus:ring-offset-2"
+                        className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                       >
                         Start Recording
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,19 +63,16 @@ export function HeroSection() {
                       </Link>
                       <Link
                         href="/drafts"
-                        className="group inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-8 py-4 min-h-[48px] text-base font-bold text-neutral-700 shadow-md transition-all hover:border-neutral-500 hover:text-neutral-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-neutral-500 dark:hover:text-neutral-100"
+                        className="group inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-6 py-3.5 min-h-[48px] text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200"
                       >
                         My Drafts
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 011-2 2h6a2 2 0 012-2v-2a2 2 0 01-2-2H9z" />
-                        </svg>
                       </Link>
                     </>
                   ) : (
                     <>
                       <Link
                         href="/auth/signin"
-                        className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 px-8 py-4 min-h-[48px] text-base font-bold text-white shadow-xl shadow-neutral-500/20 transition-all hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-neutral-500/50 focus:ring-offset-2"
+                        className="group relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                       >
                         Start Creating
                         <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -98,18 +81,13 @@ export function HeroSection() {
                       </Link>
                       <Link
                         href="/discover"
-                        className="group inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-8 py-4 min-h-[48px] text-base font-bold text-neutral-700 shadow-md transition-all hover:border-primary-500 hover:text-primary-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-primary-500 dark:hover:text-primary-400"
+                        className="group inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-6 py-3.5 min-h-[48px] text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200"
                       >
                         Explore Content
-                        <svg className="h-5 w-5 transition-transform group-hover:translate-y-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
                       </Link>
                     </>
                   )}
                 </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
