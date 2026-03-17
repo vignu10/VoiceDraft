@@ -26,6 +26,8 @@ import {
   AlertCircle,
   RefreshCw,
   XCircle,
+  Eye,
+  Edit3,
 } from 'lucide-react';
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
@@ -76,6 +78,7 @@ export default function DraftEditorPage() {
   const [content, setContent] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
 
   // Error and loading states for hardening
   const [isLoading, setIsLoading] = useState(true);
@@ -651,77 +654,173 @@ export default function DraftEditorPage() {
             </div>
           </div>
 
-          {/* Preview Panel - Desktop */}
+          {/* Preview Panel - Desktop - styled like real blog */}
           <div className="flex flex-col">
             <div
-              className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
+              className="bg-white dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
               onScroll={handlePreviewScroll}
             >
-              <article className="blog-content p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-[calc(100vh-200px)]">
-                {title ? (
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-neutral-900 dark:text-white mb-4 sm:mb-6 leading-tight">
-                    {title}
-                  </h1>
-                ) : (
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-neutral-400 dark:text-neutral-600 mb-4 sm:mb-6 leading-tight italic" aria-label="Untitled post placeholder">
-                    Untitled Post
-                  </h1>
-                )}
-
-                <div className="flex items-center flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mb-4 sm:mb-6 lg:mb-8 pb-4 sm:pb-6 lg:pb-8 border-b border-neutral-200 dark:border-neutral-700">
-                  {draft.created_at && (
-                    <time dateTime={draft.created_at}>
-                      {new Date(draft.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </time>
+              <article className="blog-content h-full overflow-y-auto max-h-[calc(100vh-200px)]">
+                {/* Blog-style header matching real blog post */}
+                <div className="px-6 lg:px-8 pt-8 pb-6 border-b border-neutral-200/50 dark:border-neutral-800/50">
+                  {title ? (
+                    <h1 className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white mb-6 leading-tight">
+                      {title}
+                    </h1>
+                  ) : (
+                    <h1 className="text-2xl lg:text-3xl font-bold text-neutral-400 dark:text-neutral-600 mb-6 leading-tight italic">
+                      Untitled Post
+                    </h1>
                   )}
-                  <span>{wordCount} words</span>
-                  <span>{readingTime} min read</span>
-                  <span className={draft.status === 'published' ? 'text-success-600 dark:text-success-400' : 'text-primary-600 dark:text-primary-400'}>
-                    {draft.status === 'published' ? 'Published' : 'Draft'}
-                  </span>
+
+                  {/* Meta info styled like real blog */}
+                  <div className="flex items-center flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+                    {draft.created_at && (
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                        </svg>
+                        <span className="font-medium">
+                          {new Date(draft.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                      </svg>
+                      <span className="font-medium">{readingTime} min read</span>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full bg-gradient-to-r from-neutral-800/10 to-neutral-600/5 px-3 py-1 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-300 dark:from-neutral-200/10 dark:to-neutral-400/5 dark:text-neutral-300 dark:ring-neutral-700`}>
+                      {draft.status === 'published' ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
                 </div>
 
-                <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
+                {/* Blog content */}
+                <div className="px-6 lg:px-8 py-8">
+                  <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
+                </div>
               </article>
             </div>
           </div>
         </div>
 
-        {/* Mobile: Editor only */}
+        {/* Mobile: Editor or Preview with toggle */}
         <div className="lg:hidden">
-          <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 100px)' }}>
-            <div className="p-3 space-y-3 flex-shrink-0">
-              <div>
-                <Input
-                  placeholder="Post title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="text-xs font-medium"
-                  maxLength={200}
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0 px-3 pb-3">
-              <Textarea
-                placeholder="Start writing your post..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full h-full font-mono text-sm leading-relaxed"
-                showCharacterCount={false}
-                aria-label="Draft content"
-              />
-              <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
-                <span>Markdown</span>
-                <span>{content.length.toLocaleString()}</span>
-              </div>
+          {/* Mobile view toggle */}
+          <div className="flex items-center justify-center mb-4">
+            <div className="inline-flex items-center rounded-lg bg-neutral-200/80 p-1 dark:bg-neutral-800/80">
+              <button
+                onClick={() => setMobileViewMode('edit')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  mobileViewMode === 'edit'
+                    ? 'bg-white text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400'
+                }`}
+                aria-label="Switch to edit mode"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={() => setMobileViewMode('preview')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  mobileViewMode === 'preview'
+                    ? 'bg-white text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 shadow-sm'
+                    : 'text-neutral-600 dark:text-neutral-400'
+                }`}
+                aria-label="Switch to preview mode"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview</span>
+              </button>
             </div>
           </div>
+
+          {/* Editor mode */}
+          {mobileViewMode === 'edit' && (
+            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+              <div className="p-3 space-y-3 flex-shrink-0">
+                <div>
+                  <Input
+                    placeholder="Post title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-xs font-medium"
+                    maxLength={200}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-0 px-3 pb-3">
+                <Textarea
+                  placeholder="Start writing your post..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="w-full h-full font-mono text-sm leading-relaxed"
+                  showCharacterCount={false}
+                  aria-label="Draft content"
+                />
+                <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
+                  <span>Markdown</span>
+                  <span>{content.length.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Preview mode - styled like real blog post */}
+          {mobileViewMode === 'preview' && (
+            <div
+              className="bg-white dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
+              onScroll={handlePreviewScroll}
+              style={{ height: 'calc(100vh - 180px)' }}
+            >
+              <article className="blog-content h-full overflow-y-auto">
+                {/* Blog-style header */}
+                <div className="px-4 sm:px-6 pt-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+                  {title ? (
+                    <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white mb-4 leading-tight">
+                      {title}
+                    </h1>
+                  ) : (
+                    <h1 className="text-xl sm:text-2xl font-bold text-neutral-400 dark:text-neutral-600 mb-4 leading-tight italic">
+                      Untitled Post
+                    </h1>
+                  )}
+
+                  {/* Meta info */}
+                  <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-neutral-500 dark:text-neutral-400">
+                    {draft.created_at && (
+                      <time dateTime={draft.created_at}>
+                        {new Date(draft.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </time>
+                    )}
+                    <span>{wordCount} words</span>
+                    <span>{readingTime} min read</span>
+                    <span className={draft.status === 'published' ? 'text-success-600 dark:text-success-400' : 'text-primary-600 dark:text-primary-400'}>
+                      {draft.status === 'published' ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Blog content */}
+                <div className="px-4 sm:px-6 py-6">
+                  <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
+                </div>
+              </article>
+            </div>
+          )}
         </div>
       </main>
 
