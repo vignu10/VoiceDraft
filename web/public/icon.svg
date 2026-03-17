@@ -1,0 +1,35 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#AFA9EC"/>
+      <stop offset="50%" stop-color="#9FE1CB"/>
+      <stop offset="100%" stop-color="#5DCAA5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App icon background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="228" fill="#121210"/>
+
+  <!-- Sound wave bars (voice input) -->
+  <g transform="translate(148, 240)">
+    <rect x="0"   y="104" width="30" height="136" rx="15" fill="url(#waveGrad)" opacity="0.55"/>
+    <rect x="68"  y="52"  width="30" height="240" rx="15" fill="url(#waveGrad)" opacity="0.70"/>
+    <rect x="136" y="0"   width="30" height="344" rx="15" fill="url(#waveGrad)" opacity="0.85"/>
+    <rect x="204" y="34"  width="30" height="276" rx="15" fill="url(#waveGrad)" opacity="0.80"/>
+    <rect x="272" y="86"  width="30" height="172" rx="15" fill="url(#waveGrad)" opacity="0.60"/>
+  </g>
+
+  <!-- Transformation arrow -->
+  <path d="M500 512 L540 512" stroke="#9FE1CB" stroke-width="10" stroke-linecap="round" opacity="0.5"/>
+  <path d="M532 496 L548 512 L532 528" stroke="#9FE1CB" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.5"/>
+
+  <!-- Text lines (blog output) -->
+  <g transform="translate(580, 276)">
+    <rect x="0" y="0"   width="260" height="22" rx="11" fill="#EEEDFE" opacity="0.85"/>
+    <rect x="0" y="68"  width="196" height="22" rx="11" fill="#CECBF6" opacity="0.65"/>
+    <rect x="0" y="136" width="234" height="22" rx="11" fill="#CECBF6" opacity="0.55"/>
+    <rect x="0" y="204" width="150" height="22" rx="11" fill="#AFA9EC" opacity="0.45"/>
+    <rect x="0" y="272" width="260" height="22" rx="11" fill="#CECBF6" opacity="0.60"/>
+    <rect x="0" y="340" width="180" height="22" rx="11" fill="#AFA9EC" opacity="0.40"/>
+  </g>
+</svg>
