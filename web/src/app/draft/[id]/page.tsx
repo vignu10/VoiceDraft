@@ -98,17 +98,23 @@ export default function DraftEditorPage() {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Calculate available height (viewport minus header and padding)
-      const viewportHeight = window.innerHeight;
-      const headerHeight = 140; // Approximate header height
-      const availableHeight = viewportHeight - headerHeight;
+      // Wait for the component's autoResize to complete, then ensure minimum height
+      requestAnimationFrame(() => {
+        if (!textarea) return;
 
-      // Reset to get scrollHeight
-      textarea.style.height = 'auto';
+        // Calculate available height (viewport minus header and padding)
+        const viewportHeight = window.innerHeight;
+        const headerHeight = 140;
+        const availableHeight = viewportHeight - headerHeight;
 
-      // Use the greater of content height or available height
-      const contentHeight = textarea.scrollHeight;
-      textarea.style.height = `${Math.max(contentHeight, availableHeight)}px`;
+        // Get current content height
+        textarea.style.height = 'auto';
+        const contentHeight = textarea.scrollHeight;
+
+        // Use the greater of content height or available height
+        const finalHeight = Math.max(contentHeight, availableHeight);
+        textarea.style.height = `${finalHeight}px`;
+      });
     }
   }, [content, mobileViewMode]);
 
@@ -702,11 +708,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-hidden"
+                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none"
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
-                  style={{ resize: 'none' }}
+                  autoResize
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
@@ -818,11 +824,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-hidden"
+                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none"
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
-                  style={{ resize: 'none' }}
+                  autoResize
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
