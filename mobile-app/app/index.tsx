@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestDraftStore } from '@/stores/guest-draft-store';
-import { View } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
+import { View, StyleSheet } from 'react-native';
+import { LogoWordmark } from '@/components/logo/LogoWordmark';
+import { AnimatedLogoIcon } from '@/components/logo/AnimatedLogoIcon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
@@ -60,10 +61,25 @@ export default function Index() {
     }
   }, [isAuthenticated, hasCheckedGuestDraft, router]);
 
-  // Show a minimal loading state while redirecting
+  // Show splash screen while redirecting
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ThemedText>Loading...</ThemedText>
+    <View style={styles.container}>
+      <AnimatedLogoIcon size={128} />
+      <View style={styles.wordmarkContainer}>
+        <LogoWordmark size="lg" showTagline={true} />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#121210',
+  },
+  wordmarkContainer: {
+    marginTop: 24,
+  },
+});
