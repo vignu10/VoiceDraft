@@ -661,9 +661,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="min-h-[calc(100vh-280px)] font-mono text-sm leading-relaxed"
+                  className="font-mono text-sm leading-relaxed"
                   showCharacterCount={false}
                   aria-label="Draft content"
+                  autoResize
+                  style={{ minHeight: '200px' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
@@ -775,9 +777,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="min-h-[calc(100vh-300px)] font-mono text-sm leading-relaxed"
+                  className="font-mono text-sm leading-relaxed"
                   showCharacterCount={false}
                   aria-label="Draft content"
+                  autoResize
+                  style={{ minHeight: '200px' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
