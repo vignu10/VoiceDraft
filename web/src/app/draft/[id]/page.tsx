@@ -92,6 +92,18 @@ export default function DraftEditorPage() {
   const latestTitleRef = useRef(title);
   const latestContentRef = useRef(content);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea to show ALL content (no internal scroll)
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      // Set height to scrollHeight to show all content
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [content]);
 
   // Keep refs in sync with latest values (prevents stale closures)
   useEffect(() => {
@@ -661,11 +673,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed"
+                  className="font-mono text-sm leading-relaxed !overflow-hidden"
                   showCharacterCount={false}
                   aria-label="Draft content"
-                  autoResize
-                  style={{ minHeight: '200px' }}
+                  ref={textareaRef}
+                  style={{ minHeight: '200px', resize: 'none', height: 'auto' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
@@ -777,11 +789,11 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed"
+                  className="font-mono text-sm leading-relaxed !overflow-hidden"
                   showCharacterCount={false}
                   aria-label="Draft content"
-                  autoResize
-                  style={{ minHeight: '200px' }}
+                  ref={textareaRef}
+                  style={{ minHeight: '200px', resize: 'none', height: 'auto' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
