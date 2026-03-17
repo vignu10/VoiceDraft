@@ -105,8 +105,9 @@ export default function DraftEditorPage() {
       // Calculate available height based on viewport
       let availableHeight: number;
       if (isDesktop) {
-        // Desktop: header + padding ≈ 160px
-        availableHeight = viewportHeight - 160;
+        // Desktop: header + padding + gap ≈ 120px
+        // Use more of the viewport height
+        availableHeight = viewportHeight - 120;
       } else {
         // Mobile: more compact header ≈ 180px
         availableHeight = viewportHeight - 180;
@@ -604,10 +605,10 @@ export default function DraftEditorPage() {
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </button>
               <div className="min-w-0 flex-1">
-                <h1 className="text-sm sm:text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                <span className="block text-xs sm:text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate w-full">
                   {draft.title || 'Untitled Draft'}
-                </h1>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
+                </span>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 flex-shrink-0">
                   {saveStatus === 'saved' && (
                     <span className="flex items-center gap-1">
                       <Check className="w-3 h-3 text-success-500" aria-hidden="true" />
