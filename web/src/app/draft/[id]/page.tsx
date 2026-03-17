@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -39,7 +39,6 @@ interface ErrorState {
 export default function DraftEditorPage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const id = params.id as string;
   const { showDialog } = useDialog();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -77,9 +76,6 @@ export default function DraftEditorPage() {
   const [content, setContent] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [mobileView, setMobileView] = useState<'edit' | 'preview'>(() =>
-    searchParams?.get('mode') === 'preview' ? 'preview' : 'edit'
-  );
 
   // Error and loading states for hardening
   const [isLoading, setIsLoading] = useState(true);
@@ -620,33 +616,7 @@ export default function DraftEditorPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Mobile Edit/Preview Toggle */}
-        <div className="lg:hidden mb-4">
-          <div className="inline-flex bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
-            <button
-              onClick={() => setMobileView('edit')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                mobileView === 'edit'
-                  ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
-              }`}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setMobileView('preview')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                mobileView === 'preview'
-                  ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
-              }`}
-            >
-              Preview
-            </button>
-          </div>
-        </div>
-
-        {/* Side by side on desktop, toggle on mobile */}
+        {/* Side by side on desktop, edit only on mobile */}
         <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Editor Panel - Desktop */}
           <div className="flex flex-col">
@@ -721,79 +691,37 @@ export default function DraftEditorPage() {
           </div>
         </div>
 
-        {/* Mobile: Show active view only */}
+        {/* Mobile: Editor only */}
         <div className="lg:hidden">
-          {/* Editor Panel - Mobile */}
-          {mobileView === 'edit' && (
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
-              <div className="p-3 space-y-3 flex-shrink-0">
-                <div>
-                  <Input
-                    placeholder="Post title..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-sm font-semibold"
-                    maxLength={200}
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 min-h-0 px-3 pb-3">
-                <Textarea
-                  placeholder="Start writing your post..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full h-full font-mono text-sm leading-relaxed"
-                  showCharacterCount={false}
-                  aria-label="Draft content"
+          <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+            <div className="p-3 space-y-3 flex-shrink-0">
+              <div>
+                <Input
+                  placeholder="Post title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-sm font-semibold"
+                  maxLength={200}
+                  autoFocus
                 />
-                <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
-                  <span>Markdown</span>
-                  <span>{content.length.toLocaleString()}</span>
-                </div>
               </div>
             </div>
-          )}
 
-          {/* Preview Panel - Mobile */}
-          {mobileView === 'preview' && (
-            <div
-              className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
-              onScroll={handlePreviewScroll}
-            >
-              <article className="blog-content p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-                {title ? (
-                  <h1 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 leading-tight">
-                    {title}
-                  </h1>
-                ) : (
-                  <h1 className="text-xl font-bold text-neutral-400 dark:text-neutral-600 mb-4 leading-tight italic" aria-label="Untitled post placeholder">
-                    Untitled Post
-                  </h1>
-                )}
-
-                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-700">
-                  {draft.created_at && (
-                    <time dateTime={draft.created_at}>
-                      {new Date(draft.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </time>
-                  )}
-                  <span>{wordCount} words</span>
-                  <span>{readingTime} min read</span>
-                  <span className={draft.status === 'published' ? 'text-success-600 dark:text-success-400' : 'text-primary-600 dark:text-primary-400'}>
-                    {draft.status === 'published' ? 'Published' : 'Draft'}
-                  </span>
-                </div>
-
-                <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
-              </article>
+            <div className="flex-1 min-h-0 px-3 pb-3">
+              <Textarea
+                placeholder="Start writing your post..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full h-full font-mono text-sm leading-relaxed"
+                showCharacterCount={false}
+                aria-label="Draft content"
+              />
+              <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
+                <span>Markdown</span>
+                <span>{content.length.toLocaleString()}</span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </main>
 
