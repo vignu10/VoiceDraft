@@ -1,48 +1,50 @@
-import type { Metadata } from 'next';
-import { Space_Grotesk, Outfit } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
-import { DialogProvider } from '@/components/ui/dialog';
-import { Navigation } from '@/components/layout/Navigation';
-import { ToastProvider } from '@/components/providers/ToastProvider';
-import { SessionExpirationHandler } from '@/components/providers/SessionExpirationHandler';
-import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
-import { AppUpdateNotification } from '@/components/ui/AppUpdateNotification';
-import './globals.css';
+import { Navigation } from "@/components/layout/Navigation";
+import { SessionExpirationHandler } from "@/components/providers/SessionExpirationHandler";
+import { ToastProvider } from "@/components/providers/ToastProvider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AppUpdateNotification } from "@/components/ui/AppUpdateNotification";
+import { Analytics } from "@/components/analytics/Analytics";
+import { DialogProvider } from "@/components/ui/dialog";
+import { OfflineIndicator } from "@/components/ui/OfflineIndicator";
+import type { Metadata } from "next";
+import { Outfit, Space_Grotesk } from "next/font/google";
+import "./globals.css";
 
 // Force dynamic rendering to avoid build-time prerendering issues
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Bold, distinctive typography pairing for tech-savvy creators
 const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
-  display: 'swap',
-  weight: ['500', '600', '700'],
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+  weight: ["500", "600", "700"],
 });
 
 const outfit = Outfit({
-  subsets: ['latin'],
-  variable: '--font-outfit',
-  display: 'swap',
-  weight: ['400', '500', '600'],
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: 'VoiceDraft - Voice & Text Collaboration',
-  description: 'Transform voice into polished blog posts. A modern platform for creators who speak their mind.',
-  manifest: '/manifest.json',
+  title: "VoiceDraft - Voice & Text Collaboration",
+  description:
+    "Transform voice into polished blog posts. A modern platform for creators who speak their mind.",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'VoiceDraft',
+    statusBarStyle: "default",
+    title: "VoiceDraft",
   },
   icons: {
     icon: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
 };
@@ -56,7 +58,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${spaceGrotesk.variable} ${outfit.variable}`}
-      style={{ fontFamily: 'var(--font-body)' }}
+      style={{ fontFamily: "var(--font-body)" }}
       suppressHydrationWarning
     >
       <head>
@@ -88,32 +90,35 @@ export default function RootLayout({
         <DialogProvider>
           <ToastProvider>
             <ThemeProvider>
-            {/* Session expiration handler */}
-            <SessionExpirationHandler />
+              {/* Session expiration handler */}
+              <SessionExpirationHandler />
 
-            {/* Offline indicator */}
-            <OfflineIndicator />
+              {/* Analytics */}
+              <Analytics />
 
-            {/* App update notification */}
-            <AppUpdateNotification />
+              {/* Offline indicator */}
+              <OfflineIndicator />
 
-            {/* Skip to main content link for accessibility */}
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-primary-500/50 transition-all"
-            >
-              Skip to main content
-            </a>
+              {/* App update notification */}
+              <AppUpdateNotification />
 
-            {/* Navigation */}
-            <Navigation />
+              {/* Skip to main content link for accessibility */}
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-primary-500/50 transition-all"
+              >
+                Skip to main content
+              </a>
 
-            {/* Main content */}
-            <main id="main" tabIndex={-1}>
-              {children}
-            </main>
-          </ThemeProvider>
-        </ToastProvider>
+              {/* Navigation */}
+              <Navigation />
+
+              {/* Main content */}
+              <main id="main" tabIndex={-1}>
+                {children}
+              </main>
+            </ThemeProvider>
+          </ToastProvider>
         </DialogProvider>
       </body>
     </html>
