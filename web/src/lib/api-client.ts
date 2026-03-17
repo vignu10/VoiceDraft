@@ -26,15 +26,35 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public statusText: string,
-    message: string
+    message: string,
+    public rateLimitReset?: string,
+    public rateLimitRemaining?: number,
+    public rateLimitLimit?: number,
   ) {
     super(message);
     this.name = 'ApiError';
   }
+
+  // Check if this is a rate limit error
+  get isRateLimit(): boolean {
+    return this.status === 429;
+  }
+
+  // Get minutes until rate limit resets
+  get minutesUntilReset(): number | null {
+    if (!this.rateLimitReset) return null;
+    const resetTime = new Date(this.rateLimitReset).getTime();
+    const now = Date.now();
+    return Math.max(0, Math.ceil((resetTime - now) / 60000));
+  }
 }
 
 // Get user-friendly error message
-function getErrorMessage(status: number, statusText: string): string {
+function getErrorMessage(
+  status: number,
+  statusText: string,
+  rateLimitReset?: string,
+): string {
   switch (status) {
     case 400:
       return 'Invalid request. Please check your input.';
@@ -45,6 +65,10 @@ function getErrorMessage(status: number, statusText: string): string {
     case 404:
       return 'The requested resource was not found.';
     case 429:
+      if (rateLimitReset) {
+        const minutes = Math.ceil((new Date(rateLimitReset).getTime() - Date.now()) / 60000);
+        return `Free trial limit reached. Please sign up to create unlimited drafts. Try again in ${minutes} minutes.`;
+      }
       return 'Too many requests. Please wait a moment and try again.';
     case 500:
       return 'Server error. Please try again later.';
@@ -65,7 +89,8 @@ interface RetryConfig {
 const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
   maxRetries: 3,
   retryDelay: 1000,
-  retryableStatuses: [408, 429, 500, 502, 503, 504],
+  // Note: 429 (Rate Limit) is NOT retryable - user should wait for reset
+  retryableStatuses: [408, 500, 502, 503, 504],
 };
 
 // Sleep function for retry delay
@@ -104,6 +129,11 @@ export async function apiFetch(
         headers,
       });
 
+      // Parse rate limit headers from all responses
+      const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+      const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+      const rateLimitLimit = response.headers.get('X-RateLimit-Limit');
+
       // Handle 401 Unauthorized
       if (response.status === 401) {
         // Prevent infinite loop of redirects
@@ -125,8 +155,37 @@ export async function apiFetch(
         throw new ApiError(401, 'Unauthorized', 'Session expired. Please log in again.');
       }
 
+      // Handle 429 Rate Limit - do NOT retry, user must wait
+      if (response.status === 429) {
+        let resetTime: string | undefined;
+        try {
+          const errorData = await response.clone().json();
+          resetTime = errorData.resetTime;
+        } catch {
+          // If we can't parse JSON, use the header value
+          if (rateLimitReset) {
+            resetTime = new Date(parseInt(rateLimitReset, 10) * 1000).toISOString();
+          }
+        }
+
+        throw new ApiError(
+          429,
+          'Too Many Requests',
+          getErrorMessage(429, 'Too Many Requests', resetTime),
+          resetTime,
+          rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : undefined,
+          rateLimitLimit ? parseInt(rateLimitLimit, 10) : undefined,
+        );
+      }
+
       // If response is ok, return it
       if (response.ok) {
+        // Attach rate limit info to the response for consumers to use
+        (response as Response & { rateLimitInfo?: RateLimitInfo }).rateLimitInfo = {
+          remaining: rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : undefined,
+          limit: rateLimitLimit ? parseInt(rateLimitLimit, 10) : undefined,
+          reset: rateLimitReset ? new Date(parseInt(rateLimitReset, 10) * 1000).toISOString() : undefined,
+        };
         return response;
       }
 
@@ -135,13 +194,21 @@ export async function apiFetch(
         attempt < config.maxRetries &&
         config.retryableStatuses.includes(response.status)
       ) {
-        lastError = new ApiError(response.status, response.statusText, getErrorMessage(response.status, response.statusText));
+        lastError = new ApiError(
+          response.status,
+          response.statusText,
+          getErrorMessage(response.status, response.statusText),
+        );
         await sleep(config.retryDelay * Math.pow(2, attempt)); // Exponential backoff
         continue;
       }
 
       // For non-retryable errors or final attempt, throw
-      throw new ApiError(response.status, response.statusText, getErrorMessage(response.status, response.statusText));
+      throw new ApiError(
+        response.status,
+        response.statusText,
+        getErrorMessage(response.status, response.statusText),
+      );
 
     } catch (error) {
       // Re-throw ApiErrors immediately (they're intentional)
@@ -163,6 +230,13 @@ export async function apiFetch(
 
   // Should never reach here, but TypeScript needs it
   throw lastError || new Error('Unexpected error');
+}
+
+// Rate limit info interface
+export interface RateLimitInfo {
+  remaining?: number;
+  limit?: number;
+  reset?: string;
 }
 
 // Convenience methods for common HTTP operations

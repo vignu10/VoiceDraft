@@ -245,10 +245,15 @@
 
 html {
   scroll-behavior: smooth;
+  /* Extend layout to cover safe areas (notches, gesture bars) */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 body {
   font-family: var(--font-body);
+  /* Extend body to include safe area inset at bottom for Android gesture bar */
+  min-height: calc(100vh + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background: linear-gradient(
     135deg,
     #ffffff 0%,
@@ -261,6 +266,7 @@ body {
     #ffffff 100%
   );
   background-size: 400% 400%;
+  background-attachment: fixed;
   color: var(--color-neutral-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -274,6 +280,9 @@ body {
 }
 
 .dark body {
+  /* Extend body to include safe area inset at bottom for Android gesture bar */
+  min-height: calc(100vh + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background: linear-gradient(
     135deg,
     #0a0a0a 0%,
@@ -286,6 +295,7 @@ body {
     #000000 100%
   );
   background-size: 400% 400%;
+  background-attachment: fixed;
   color: var(--color-neutral-100);
 }
 
@@ -382,11 +392,11 @@ p {
 .blog-content {
   font-size: 1.125rem;
   line-height: 1.8;
-  color: var(--color-neutral-800);
+  color: var(--color-neutral-900);
 }
 
 .dark .blog-content {
-  color: var(--color-neutral-200);
+  color: var(--color-neutral-100);
 }
 
 .blog-content h2 {
@@ -459,7 +469,7 @@ p {
     oklch(1 0 0) 100%
   );
   font-style: italic;
-  color: var(--color-neutral-700);
+  color: var(--color-neutral-900);
   border-radius: 0 0.5rem 0.5rem 0;
 }
 
@@ -469,7 +479,7 @@ p {
     var(--color-neutral-800) 0%,
     var(--color-neutral-900) 100%
   );
-  color: var(--color-neutral-300);
+  color: var(--color-neutral-200);
 }
 
 .blog-content code {
@@ -717,10 +727,18 @@ p {
   .card-grid-cards-1 {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .card-grid-cards-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @container card-grid (min-width: 1024px) {
   .card-grid-cards-1 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .card-grid-cards-2 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -1130,4 +1148,60 @@ p {
 .transcript-scroll {
   scrollbar-color: oklch(0.45 0.26 285 / 0.3) transparent;
   scrollbar-width: thin;
+}
+
+/* ============================================================
+   SAFE AREA HANDLING - Android Gesture Navigation Bar
+   ============================================================ */
+
+/* Utility class for elements that need to account for safe area at bottom */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Utility class for fixed elements at bottom (nav bars, etc.) */
+.safe-bottom-fixed {
+  bottom: env(safe-area-inset-bottom);
+}
+
+/* Extend background through safe area (for gesture bar transparency) */
+.extend-to-bottom {
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ============================================================
+   MODAL ANIMATIONS - Smooth entrance animations
+   ============================================================ */
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile bottom sheet animation */
+@media (max-width: 640px) {
+  [role="dialog"] > div:last-child {
+    animation: modalSlideUp 0.3s ease-out forwards;
+  }
+}
+
+/* Desktop modal animation */
+@media (min-width: 641px) {
+  [role="dialog"] > div:last-child {
+    animation: modalFadeIn 0.2s ease-out forwards;
+  }
 }

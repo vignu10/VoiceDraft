@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { BlogDiscoveryCard } from './BlogDiscoveryCard';
 import { BlogCardSkeleton } from './BlogCardSkeleton';
 import type { BlogDiscoveryCard as BlogCardType, DiscoverySort } from '@/types/discover';
@@ -81,6 +82,17 @@ export function FeaturedBlogsGrid({
         <p className="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
           Be the first to start a blog and share your voice!
         </p>
+        <div className="mt-8">
+          <Link
+            href="/settings"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create Your Blog
+          </Link>
+        </div>
       </div>
     );
   }
@@ -110,6 +122,12 @@ export function FeaturedBlogsGrid({
           {isLoading &&
             Array.from({ length: 3 }).map((_, i) => <BlogCardSkeleton key={`skeleton-${i}`} />)
           }
+          {/* Screen reader announcement for loading state */}
+          {isLoading && (
+            <span className="sr-only" role="status" aria-live="polite">
+              Loading more blogs...
+            </span>
+          )}
         </div>
 
         {hasMore && (

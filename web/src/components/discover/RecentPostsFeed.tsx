@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { PostCard } from '../blog/PostCard';
 import { PostCardSkeleton } from '../blog/PostCardSkeleton';
 import type { PostCardData } from '@/types/blog';
@@ -62,6 +63,23 @@ export function RecentPostsFeed({
         <p className="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
           No posts yet. Be the first to share your voice!
         </p>
+        <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <Link
+            href="/record"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create Your First Post
+          </Link>
+          <Link
+            href="/drafts"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[48px] px-6 py-3.5 text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200"
+          >
+            View My Drafts
+          </Link>
+        </div>
       </section>
     );
   }
@@ -95,6 +113,12 @@ export function RecentPostsFeed({
           {isLoading &&
             Array.from({ length: 3 }).map((_, i) => <PostCardSkeleton key={`skeleton-${i}`} />)
           }
+          {/* Screen reader announcement for loading state */}
+          {isLoading && (
+            <span className="sr-only" role="status" aria-live="polite">
+              Loading more posts...
+            </span>
+          )}
         </div>
 
         {hasMore && !isLoading && (

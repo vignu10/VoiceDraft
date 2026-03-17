@@ -67,7 +67,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const baseClasses = cn(
       'inline-flex items-center justify-center gap-2 rounded-xl',
       'transition-all duration-200 ease-out',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
+      'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/50 focus-visible:ring-offset-2',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       'active:scale-95',
       variantStyles[variant],

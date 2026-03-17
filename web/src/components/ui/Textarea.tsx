@@ -1,5 +1,5 @@
-import React, { useId } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
+import React, { useId, useRef } from "react";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -25,23 +25,34 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       onChange,
       ...props
     },
-    ref
+    ref,
   ) => {
     const generatedId = useId();
     const textareaId = id || generatedId;
     const errorId = `${textareaId}-error`;
     const helperId = `${textareaId}-helper`;
     const charCountId = `${textareaId}-charcount`;
+    const rafRef = useRef<number | undefined>(undefined);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       if (autoResize) {
-        e.target.style.height = 'auto';
-        e.target.style.height = `${e.target.scrollHeight}px`;
+        // Use requestAnimationFrame to batch reads/writes and prevent layout thrashing
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current);
+        }
+        rafRef.current = requestAnimationFrame(() => {
+          const target = e.target;
+          // Read layout property
+          const scrollHeight = target.scrollHeight;
+          // Write layout property
+          target.style.height = "auto";
+          target.style.height = `${scrollHeight}px`;
+        });
       }
       onChange?.(e);
     };
 
-    const characterCount = typeof value === 'string' ? value.length : 0;
+    const characterCount = typeof value === "string" ? value.length : 0;
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -71,43 +82,58 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           onChange={handleInputChange}
           maxLength={maxLength}
           aria-describedby={
-            error ? errorId : helperText ? helperId : showCharacterCount ? charCountId : undefined
+            error
+              ? errorId
+              : helperText
+                ? helperId
+                : showCharacterCount
+                  ? charCountId
+                  : undefined
           }
-          aria-invalid={error ? 'true' : undefined}
+          aria-invalid={error ? "true" : undefined}
           className={cn(
-            'w-full rounded-xl border px-4 py-3',
-            'bg-white dark:bg-neutral-900',
-            'text-neutral-900 dark:text-neutral-100',
-            'placeholder:text-neutral-400',
-            'border-neutral-300 dark:border-neutral-700',
-            'hover:border-neutral-400 dark:hover:border-neutral-600',
-            'focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
-            'focus:outline-none',
-            'transition-colors duration-200',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'resize-y',
-            'min-h-[80px]',
-            error && 'border-accent-500 focus:border-accent-500 focus:ring-accent-500/20',
-            autoResize && 'overflow-hidden',
-            className
+            "w-full rounded-xl border px-4 py-3",
+            "bg-white dark:bg-neutral-900",
+            "text-neutral-900 dark:text-neutral-100",
+            "placeholder:text-neutral-400",
+            "border-neutral-300 dark:border-neutral-700",
+            "hover:border-neutral-400 dark:hover:border-neutral-600",
+            "focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20",
+            "focus:outline-none",
+            "transition-colors duration-200",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            "resize-y",
+            "min-h-[80px]",
+            error &&
+              "border-accent-500 focus:border-accent-500 focus:ring-accent-500/20",
+            autoResize && "overflow-hidden",
+            className,
           )}
           {...props}
         />
 
         {error && (
-          <p id={errorId} className="text-sm text-accent-500">
+          <p
+            id={errorId}
+            className="text-sm text-accent-500"
+            role="alert"
+            aria-live="polite"
+          >
             {error}
           </p>
         )}
 
         {helperText && !error && (
-          <p id={helperId} className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p
+            id={helperId}
+            className="text-sm text-neutral-500 dark:text-neutral-400"
+          >
             {helperText}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-Textarea.displayName = 'Textarea';
+Textarea.displayName = "Textarea";

@@ -9,6 +9,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useToast } from '@/components/providers/ToastProvider';
 import { api } from '@/lib/api-client';
 import { WithBottomNav } from '@/components/layout/BottomNav';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import {
   MIN_RECORDING_DURATION,
   MAX_RECORDING_DURATION,
@@ -34,6 +36,7 @@ import {
   X,
   MicOff,
   Settings,
+  Send,
 } from 'lucide-react';
 
 type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied' | 'session-expired';
@@ -115,9 +118,9 @@ export default function RecordPage() {
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
   const [createdDraftId, setCreatedDraftId] = useState<string | null>(null);
   const [processingMessage, setProcessingMessage] = useState(0);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedContent, setEditedContent] = useState('');
   const [isNavigating, setIsNavigating] = useState(false);
+  const [publishLoading, setPublishLoading] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
 
   // Blog options
   const [targetKeyword, setTargetKeyword] = useState('');
@@ -361,6 +364,8 @@ export default function RecordPage() {
     setTone('professional');
     setLength('medium');
     setAudioBlob(null);
+    setPublishLoading('idle');
+    setShowPublishSuccessModal(false);
     hasStartedProcessing.current = false;
   };
 
@@ -395,6 +400,56 @@ export default function RecordPage() {
       router.push(`/draft/${createdDraftId}`);
     } else {
       router.push('/drafts');
+    }
+  };
+
+  const handlePublish = async () => {
+    if (publishLoading === 'loading') return;
+
+    setPublishLoading('loading');
+
+    try {
+      // First, create a draft if we haven't already
+      let draftId = createdDraftId;
+
+      if (!draftId) {
+        const createResponse = await api.post('/api/drafts', {
+          title: generatedBlog?.title || 'Untitled Post',
+          content: generatedBlog?.content || '',
+          status: 'draft',
+        });
+
+        if (createResponse.ok) {
+          const draft = await createResponse.json();
+          draftId = draft.id;
+          setCreatedDraftId(draftId);
+        } else {
+          throw new Error('Failed to create draft');
+        }
+      }
+
+      // Then publish the draft
+      const publishResponse = await api.patch(`/api/drafts/${draftId}`, {
+        status: 'published',
+      });
+
+      if (publishResponse.ok) {
+        setPublishLoading('success');
+        // Show success modal
+        setTimeout(() => {
+          setShowPublishSuccessModal(true);
+          setPublishLoading('idle');
+        }, 500);
+      } else {
+        throw new Error('Failed to publish draft');
+      }
+    } catch (err) {
+      console.error('Publish error:', err);
+      setPublishLoading('error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to publish. Please try again.';
+      warning(errorMessage);
+      // Reset to idle after showing error
+      setTimeout(() => setPublishLoading('idle'), 2000);
     }
   };
 
@@ -830,7 +885,7 @@ export default function RecordPage() {
                         </svg>
                       </div>
                       <div>
-                        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <h2 className="text-base font-bold text-neutral-900 dark:text-neutral-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
                           Your blog is ready!
                         </h2>
                         <p className="text-sm text-neutral-600 dark:text-neutral-400">
@@ -845,39 +900,7 @@ export default function RecordPage() {
                     </div>
                   </div>
 
-                  {/* View/Edit toggle */}
-                  <div className="flex items-center justify-end mb-3 px-4 sm:px-6 shrink-0">
-                    <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
-                      <button
-                        onClick={() => {
-                          setIsEditMode(false);
-                          setEditedContent('');
-                        }}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          !isEditMode
-                            ? 'bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white shadow-sm'
-                            : 'text-neutral-600 dark:text-neutral-400'
-                        }`}
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditMode(true);
-                          setEditedContent(generatedBlog.content);
-                        }}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          isEditMode
-                            ? 'bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white shadow-sm'
-                            : 'text-neutral-600 dark:text-neutral-400'
-                        }`}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Content preview - takes available space */}
+                  {/* Content preview - takes available space, read-only */}
                   <div className="flex-1 min-h-0 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden flex flex-col mb-3">
                     <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
                       <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm truncate">
@@ -885,45 +908,12 @@ export default function RecordPage() {
                       </h3>
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto p-3">
-                      {isEditMode ? (
-                        <textarea
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                          placeholder="Edit your blog content..."
-                          maxLength={50000}
-                          className="w-full h-full min-h-full bg-transparent text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none resize-none text-sm leading-relaxed"
-                          aria-label="Edit blog content"
-                        />
-                      ) : (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed break-words">
-                            {generatedBlog.content}
-                          </div>
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed break-words">
+                          {generatedBlog.content}
                         </div>
-                      )}
-                    </div>
-                    {isEditMode && (
-                      <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-2 shrink-0">
-                        <button
-                          onClick={() => {
-                            setIsEditMode(false);
-                            setEditedContent('');
-                          }}
-                          className="px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-400 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => {
-                            setGeneratedBlog({ ...generatedBlog, content: editedContent });
-                            setIsEditMode(false);
-                          }}
-                          className="px-3 py-1.5 text-xs bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded font-medium transition-colors"
-                        >
-                          Save
-                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Action buttons - full width on mobile */}
@@ -942,6 +932,28 @@ export default function RecordPage() {
                         <>
                           Open in Editor
                           <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handlePublish}
+                      disabled={publishLoading === 'loading' || publishLoading === 'success'}
+                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {publishLoading === 'loading' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Publishing...
+                        </>
+                      ) : publishLoading === 'success' ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Published!
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Publish
                         </>
                       )}
                     </button>
@@ -1113,6 +1125,53 @@ export default function RecordPage() {
           )}
         </div>
       </main>
+
+      {/* Publish Success Modal */}
+      <Modal
+        isOpen={showPublishSuccessModal}
+        onClose={() => {
+          setShowPublishSuccessModal(false);
+        }}
+        title=""
+        showCloseButton={false}
+        footer={
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="primary"
+              onClick={() => {
+                router.push(`/draft/${createdDraftId}`);
+              }}
+              className="flex-1"
+            >
+              View Post
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowPublishSuccessModal(false);
+                handleReset();
+              }}
+              className="flex-1"
+            >
+              Record Another
+              <Mic className="w-4 h-4" />
+            </Button>
+          </div>
+        }
+      >
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
+            <Check className="h-8 w-8 text-success-600 dark:text-success-400" />
+          </div>
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
+            Published Successfully!
+          </h3>
+          <p className="text-neutral-600 dark:text-neutral-400">
+            Your blog post has been published and is now live for everyone to see.
+          </p>
+        </div>
+      </Modal>
     </div>
     </WithBottomNav>
   );

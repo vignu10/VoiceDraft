@@ -71,21 +71,21 @@ export function Navigation() {
                 {/* Authenticated user navigation */}
                 <Link
                   href="/record"
-                  className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent min-h-[44px] px-4 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
                   <Mic className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Record</span>
                 </Link>
                 <Link
                   href="/drafts"
-                  className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  className="hidden sm:inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-transparent min-h-[44px] px-4 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
                   <FileText className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Drafts</span>
                 </Link>
                 <Link
                   href="/discover"
-                  className="hidden sm:inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-400"
+                  className="hidden sm:inline-flex items-center justify-center rounded-lg min-h-[44px] px-4 py-3 text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-400"
                 >
                   Explore
                 </Link>
@@ -94,7 +94,7 @@ export function Navigation() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     ref={userMenuButtonRef}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                    className="flex items-center gap-2 rounded-lg min-h-[44px] px-4 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-neutral-300 dark:hover:bg-neutral-800"
                     onClick={() => setIsUserMenuOpen((prev) => !prev)}
                     onKeyDown={handleUserMenuKeyDown}
                     aria-haspopup="true"
@@ -156,13 +156,13 @@ export function Navigation() {
                 {/* Non-authenticated navigation */}
                 <Link
                   href="/discover"
-                  className="text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg px-3 py-2 dark:text-neutral-400"
+                  className="text-sm font-medium text-neutral-600 transition-colors hover:text-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg min-h-[44px] px-4 py-3 dark:text-neutral-400"
                 >
                   Explore
                 </Link>
                 <Link
                   href="/auth/signin"
-                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/35 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 min-h-[48px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/35 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                 >
                   Get Started
                 </Link>

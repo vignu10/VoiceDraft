@@ -134,11 +134,20 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
             <div className="flex items-center gap-3">
               {draft.status === 'draft' && onPublish && (
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    onPublish(draft.id);
+                    const confirmed = await showDialog({
+                      title: 'Publish Draft',
+                      message: `Are you sure you want to publish "${draft.title || 'Untitled Draft'}"? This will make it visible to others.`,
+                      variant: 'default',
+                      confirmText: 'Publish',
+                      cancelText: 'Cancel',
+                    });
+                    if (confirmed && onPublish) {
+                      onPublish(draft.id);
+                    }
                   }}
-                  className="p-2.5 text-neutral-600 hover:text-primary-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
+                  className="p-3.5 text-neutral-600 hover:text-primary-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg min-h-[44px] min-w-[44px]"
                   aria-label={`Publish ${draft.title}`}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -150,11 +159,20 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
 
               {draft.status === 'published' && onUnpublish && (
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.preventDefault();
-                    onUnpublish(draft.id);
+                    const confirmed = await showDialog({
+                      title: 'Unpublish Post',
+                      message: `Are you sure you want to unpublish "${draft.title || 'Untitled Draft'}"? It will no longer be visible to others.`,
+                      variant: 'default',
+                      confirmText: 'Unpublish',
+                      cancelText: 'Cancel',
+                    });
+                    if (confirmed && onUnpublish) {
+                      onUnpublish(draft.id);
+                    }
                   }}
-                  className="p-2.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
+                  className="p-3.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg min-h-[44px] min-w-[44px]"
                   aria-label={`Unpublish ${draft.title}`}
                   title="Unpublish"
                 >
@@ -168,7 +186,7 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
               {onDelete && (
                 <button
                   onClick={handleDelete}
-                  className="p-2.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
+                  className="p-3.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg min-h-[44px] min-w-[44px]"
                   aria-label={`Delete ${draft.title}`}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

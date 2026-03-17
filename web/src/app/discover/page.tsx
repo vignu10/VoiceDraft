@@ -131,6 +131,10 @@ export default function DiscoverPage() {
           <div className="flex flex-col items-center justify-center py-20 px-4">
             <div className="animate-spin h-12 w-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full mb-4" />
             <p className="text-neutral-600 dark:text-neutral-400 font-medium">Loading amazing content...</p>
+            {/* Screen reader announcement */}
+            <span className="sr-only" role="status" aria-live="polite">
+              Loading discover page content...
+            </span>
           </div>
         ) : (
           <>

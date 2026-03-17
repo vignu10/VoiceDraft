@@ -31,24 +31,49 @@ export const Modal: React.FC<ModalProps> = ({
       // Store the previously focused element
       previousActiveElement.current = document.activeElement as HTMLElement;
 
-      // Focus the modal
-      modalRef.current?.focus();
-
       // Prevent body scroll
       document.body.style.overflow = 'hidden';
 
-      // Trap focus within modal
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
+      // Focus management function - handles both initial and dynamic content
+      const setupFocusTrap = () => {
+        // Focus the modal container
+        modalRef.current?.focus();
 
-      const firstElement = focusableElements?.[0] as HTMLElement;
-      const lastElement = focusableElements?.[
-        (focusableElements?.length || 0) - 1
-      ] as HTMLElement;
+        // Get all focusable elements within modal
+        const focusableElements = modalRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
 
+        const firstElement = focusableElements?.[0] as HTMLElement;
+        const lastElement = focusableElements?.[
+          (focusableElements?.length || 0) - 1
+        ] as HTMLElement;
+
+        // If no focusable elements, keep focus on modal
+        if (!firstElement) {
+          modalRef.current?.focus();
+          return;
+        }
+
+        // Focus first element if not already focused on something inside
+        if (!modalRef.current?.contains(document.activeElement)) {
+          firstElement?.focus();
+        }
+
+        return { firstElement, lastElement };
+      };
+
+      // Initial focus setup
+      let focusRefs = setupFocusTrap();
+
+      // Handle tab key with current focusable elements
       const handleTabKey = (e: KeyboardEvent) => {
+        // Re-query focusable elements in case DOM changed
+        focusRefs = setupFocusTrap();
+        const { firstElement, lastElement } = focusRefs;
+
         if (e.key !== 'Tab') return;
+        if (!firstElement || !lastElement) return;
 
         if (e.shiftKey) {
           if (document.activeElement === firstElement) {
@@ -65,8 +90,23 @@ export const Modal: React.FC<ModalProps> = ({
 
       document.addEventListener('keydown', handleTabKey);
 
+      // Set up a MutationObserver to handle dynamically added content
+      const observer = new MutationObserver(() => {
+        focusRefs = setupFocusTrap();
+      });
+
+      if (modalRef.current) {
+        observer.observe(modalRef.current, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['tabindex', 'disabled', 'hidden'],
+        });
+      }
+
       return () => {
         document.removeEventListener('keydown', handleTabKey);
+        observer.disconnect();
         document.body.style.overflow = '';
         previousActiveElement.current?.focus();
       };
@@ -119,31 +159,32 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={onClose}
       />
 
-      {/* Modal panel */}
-      <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+      {/* Modal panel - centered on desktop, bottom sheet on mobile */}
+      <div className="flex min-h-full items-end justify-center sm:items-center p-0 sm:p-4">
         <div
           ref={modalRef}
           tabIndex={-1}
           className={cn(
-            'relative transform overflow-hidden rounded-2xl',
+            'relative transform overflow-hidden rounded-t-3xl sm:rounded-2xl',
             'bg-white dark:bg-neutral-900',
-            'text-left shadow-xl transition-all',
-            'w-full max-w-md',
-            'my-8 sm:my-0'
+            'text-left shadow-2xl sm:shadow-xl transition-all',
+            'w-full sm:max-w-md',
+            'max-h-[90vh] sm:max-h-none',
+            'my-0 sm:my-8'
           )}
         >
           {/* Header */}
-          <div className="px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-            <div className={cn('sm:flex sm:items-start', variant === 'destructive' && 'sm:items-start')}>
+          <div className="px-6 pt-6 pb-4 sm:px-6 sm:pb-4 sm:pt-5">
+            <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
               {headerIcon}
-              <div className={cn('mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left', variant === 'destructive' && 'w-full')}>
+              <div className={cn('mt-4 w-full', variant === 'destructive' && 'w-full')}>
                 <h3
-                  className="text-xl font-semibold leading-6 text-neutral-900 dark:text-neutral-100"
+                  className="text-xl font-bold leading-6 text-neutral-900 dark:text-neutral-100"
                   id="modal-title"
                 >
                   {title}
                 </h3>
-                <div className="mt-4">
+                <div className="mt-3">
                   {children}
                 </div>
               </div>
@@ -163,7 +204,7 @@ export const Modal: React.FC<ModalProps> = ({
 
           {/* Footer */}
           {footer && (
-            <div className="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 bg-neutral-50 dark:bg-neutral-800/50">
+            <div className="px-4 py-4 sm:py-3 sm:flex sm:flex-row-reverse sm:px-6 sm:gap-3 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-200 dark:border-neutral-800">
               {footer}
             </div>
           )}

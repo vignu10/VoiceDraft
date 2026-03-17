@@ -226,6 +226,26 @@ class ApiClient {
         }
       }
 
+      // Handle 429 Rate Limited response
+      if (response.status === 429) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Rate limit exceeded", resetTime: undefined }));
+        const resetTime = errorData.resetTime;
+        const minutesUntilReset = resetTime
+          ? Math.ceil((new Date(resetTime).getTime() - Date.now()) / 60000)
+          : undefined;
+        return {
+          success: false,
+          error:
+            errorData.error ||
+              "Rate limit exceeded. Please sign up for more requests.",
+          isRateLimited: true,
+          resetTime,
+          minutesUntilReset,
+        };
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -284,6 +304,26 @@ class ApiClient {
             error: 'Session expired. Please sign in again.',
           };
         }
+      }
+
+      // Handle 429 Rate Limited response
+      if (response.status === 429) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Rate limit exceeded", resetTime: undefined }));
+        const resetTime = errorData.resetTime;
+        const minutesUntilReset = resetTime
+          ? Math.ceil((new Date(resetTime).getTime() - Date.now()) / 60000)
+          : undefined;
+        return {
+          success: false,
+          error:
+            errorData.error ||
+              "Rate limit exceeded. Please sign up for more requests.",
+          isRateLimited: true,
+          resetTime,
+          minutesUntilReset,
+        };
       }
 
       if (!response.ok) {
@@ -346,6 +386,26 @@ class ApiClient {
         }
       }
 
+      // Handle 429 Rate Limited response
+      if (response.status === 429) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Rate limit exceeded", resetTime: undefined }));
+        const resetTime = errorData.resetTime;
+        const minutesUntilReset = resetTime
+          ? Math.ceil((new Date(resetTime).getTime() - Date.now()) / 60000)
+          : undefined;
+        return {
+          success: false,
+          error:
+            errorData.error ||
+              "Rate limit exceeded. Please sign up for more requests.",
+          isRateLimited: true,
+          resetTime,
+          minutesUntilReset,
+        };
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -405,12 +465,48 @@ class ApiClient {
         }
       }
 
+      // Handle 429 Rate Limited response
+      if (response.status === 429) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Rate limit exceeded", resetTime: undefined }));
+        const resetTime = errorData.resetTime;
+        const minutesUntilReset = resetTime
+          ? Math.ceil((new Date(resetTime).getTime() - Date.now()) / 60000)
+          : undefined;
+        return {
+          success: false,
+          error:
+            errorData.error ||
+              "Rate limit exceeded. Please sign up for more requests.",
+          isRateLimited: true,
+          resetTime,
+          minutesUntilReset,
+        };
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      return { success: true };
+      // Extract rate limit headers for successful responses
+      const rateLimitRemaining = response.headers.get("X-RateLimit-Remaining");
+      const rateLimitLimit = response.headers.get("X-RateLimit-Limit");
+      const rateLimitReset = response.headers.get("X-RateLimit-Reset");
+
+      return {
+        success: true,
+        ...(rateLimitRemaining !== null && {
+          rateLimitRemaining: parseInt(rateLimitRemaining, 10),
+        }),
+        ...(rateLimitLimit !== null && {
+          rateLimitLimit: parseInt(rateLimitLimit, 10),
+        }),
+        ...(rateLimitReset !== null && {
+          rateLimitReset: parseInt(rateLimitReset, 10),
+        }),
+      };
     } catch (error) {
       return {
         success: false,
