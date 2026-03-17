@@ -95,28 +95,43 @@ export default function DraftEditorPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea to show ALL content (no internal scroll)
-  useEffect(() => {
+  const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Wait for the component's autoResize to complete, then ensure minimum height
-      requestAnimationFrame(() => {
-        if (!textarea) return;
+      // Check if we're on desktop (lg breakpoint = 1024px)
+      const isDesktop = window.innerWidth >= 1024;
+      const viewportHeight = window.innerHeight;
 
-        // Calculate available height (viewport minus header and padding)
-        const viewportHeight = window.innerHeight;
-        const headerHeight = 140;
-        const availableHeight = viewportHeight - headerHeight;
+      // Calculate available height based on viewport
+      let availableHeight: number;
+      if (isDesktop) {
+        // Desktop: header + padding ≈ 160px
+        availableHeight = viewportHeight - 160;
+      } else {
+        // Mobile: more compact header ≈ 180px
+        availableHeight = viewportHeight - 180;
+      }
 
-        // Get current content height
-        textarea.style.height = 'auto';
-        const contentHeight = textarea.scrollHeight;
+      // Reset to get scrollHeight
+      textarea.style.height = 'auto';
+      const contentHeight = textarea.scrollHeight;
 
-        // Use the greater of content height or available height
-        const finalHeight = Math.max(contentHeight, availableHeight);
-        textarea.style.height = `${finalHeight}px`;
-      });
+      // Use the greater of content height or available height
+      const finalHeight = Math.max(contentHeight, availableHeight);
+      textarea.style.height = `${finalHeight}px`;
     }
-  }, [content, mobileViewMode]);
+  }, []);
+
+  // Adjust height on content change, mode switch, and window resize
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [content, mobileViewMode, adjustTextareaHeight]);
+
+  // Also adjust on window resize
+  useEffect(() => {
+    window.addEventListener('resize', adjustTextareaHeight);
+    return () => window.removeEventListener('resize', adjustTextareaHeight);
+  }, [adjustTextareaHeight]);
 
   // Keep refs in sync with latest values (prevents stale closures)
   useEffect(() => {
