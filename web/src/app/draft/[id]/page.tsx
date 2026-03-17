@@ -518,7 +518,7 @@ export default function DraftEditorPage() {
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
               </button>
               <div className="min-w-0 flex-1">
-                <h1 className="text-base sm:text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                <h1 className="text-sm sm:text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
                   {draft.title || 'Untitled Draft'}
                 </h1>
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
@@ -554,7 +554,7 @@ export default function DraftEditorPage() {
                 <button
                   onClick={handlePublish}
                   disabled={publishLoading === 'loading'}
-                  className="min-h-[40px] sm:min-h-[44px] px-4 sm:px-6 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="min-h-[44px] sm:min-h-[52px] px-6 sm:px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                   title="Publish draft (Ctrl+P)"
                 >
                   {publishLoading === 'loading' ? (
@@ -627,7 +627,7 @@ export default function DraftEditorPage() {
                     placeholder="Post title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="text-sm sm:text-base font-semibold"
+                    className="text-xs sm:text-sm font-medium"
                     maxLength={200}
                     autoFocus
                   />
@@ -638,7 +638,7 @@ export default function DraftEditorPage() {
                     placeholder="Start writing your post..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] font-mono text-sm leading-relaxed"
+                    className="min-h-[600px] sm:min-h-[700px] lg:min-h-[800px] font-mono text-sm leading-relaxed"
                     showCharacterCount={false}
                     aria-label="Draft content"
                   />
@@ -655,7 +655,7 @@ export default function DraftEditorPage() {
           <div className="flex flex-col">
             <div
               className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
-              onScroll={mobileView === 'edit' ? undefined : handlePreviewScroll}
+              onScroll={handlePreviewScroll}
             >
               <article className="blog-content p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-[calc(100vh-200px)]">
                 {title ? (
@@ -693,14 +693,14 @@ export default function DraftEditorPage() {
 
         {/* Mobile: Editor only */}
         <div className="lg:hidden">
-          <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+          <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 100px)' }}>
             <div className="p-3 space-y-3 flex-shrink-0">
               <div>
                 <Input
                   placeholder="Post title..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="text-sm font-semibold"
+                  className="text-xs font-medium"
                   maxLength={200}
                   autoFocus
                 />

@@ -138,7 +138,7 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
                     e.preventDefault();
                     onPublish(draft.id);
                   }}
-                  className="p-2 text-neutral-600 hover:text-primary-600 transition-colors"
+                  className="p-2.5 text-neutral-600 hover:text-primary-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
                   aria-label={`Publish ${draft.title}`}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -154,7 +154,7 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
                     e.preventDefault();
                     onUnpublish(draft.id);
                   }}
-                  className="p-2 text-neutral-600 hover:text-accent-600 transition-colors"
+                  className="p-2.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
                   aria-label={`Unpublish ${draft.title}`}
                   title="Unpublish"
                 >
@@ -168,7 +168,7 @@ export function DraftCard({ draft, onDelete, onPublish, onUnpublish }: DraftCard
               {onDelete && (
                 <button
                   onClick={handleDelete}
-                  className="p-2 text-neutral-600 hover:text-accent-600 transition-colors"
+                  className="p-2.5 text-neutral-600 hover:text-accent-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
                   aria-label={`Delete ${draft.title}`}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
