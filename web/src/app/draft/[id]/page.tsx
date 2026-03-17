@@ -98,12 +98,15 @@ export default function DraftEditorPage() {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Reset height to auto to get the correct scrollHeight
-      textarea.style.height = 'auto';
-      // Set height to scrollHeight to show all content
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      // Small delay to ensure DOM is ready after mode switch
+      setTimeout(() => {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set height to scrollHeight to show all content
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }, 0);
     }
-  }, [content]);
+  }, [content, mobileViewMode]);
 
   // Keep refs in sync with latest values (prevents stale closures)
   useEffect(() => {
@@ -279,6 +282,17 @@ export default function DraftEditorPage() {
   const handlePublish = async () => {
     if (publishLoading === 'loading') return; // Prevent double-submit
 
+    // Show confirmation dialog before publishing
+    const confirmed = await showDialog({
+      title: 'Publish Draft',
+      message: `Are you sure you want to publish "${draft.title || 'Untitled Draft'}"? This will make it visible to others.`,
+      variant: 'default',
+      confirmText: 'Publish',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) return;
+
     setPublishLoading('loading');
 
     try {
@@ -311,6 +325,17 @@ export default function DraftEditorPage() {
 
   const handleUnpublish = async () => {
     if (unpublishLoading === 'loading') return; // Prevent double-submit
+
+    // Show confirmation dialog before unpublishing
+    const confirmed = await showDialog({
+      title: 'Unpublish Post',
+      message: `Are you sure you want to unpublish "${draft.title || 'Untitled Draft'}"? It will no longer be visible to others.`,
+      variant: 'default',
+      confirmText: 'Unpublish',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) return;
 
     setUnpublishLoading('loading');
 
@@ -866,28 +891,40 @@ export default function DraftEditorPage() {
         title="Delete Draft"
         variant="destructive"
         footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDeleteModal(false)}
-              disabled={deleteLoading === 'loading'}
-            >
-              Cancel
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:flex-row-reverse gap-3 sm:gap-3">
             <Button
               variant="danger"
               onClick={handleDelete}
               isLoading={deleteLoading === 'loading'}
               disabled={deleteLoading === 'loading'}
+              fullWidth
+              className="min-h-[48px] sm:min-h-[44px]"
             >
               {deleteLoading === 'loading' ? 'Deleting...' : 'Delete'}
             </Button>
-          </>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleteLoading === 'loading'}
+              fullWidth
+              className="min-h-[48px] sm:min-h-[44px]"
+            >
+              Cancel
+            </Button>
+          </div>
         }
       >
-        <p className="text-neutral-600 dark:text-neutral-400">
-          Are you sure you want to delete "<span className="font-medium text-neutral-900 dark:text-neutral-100 line-clamp-1 inline-block max-w-[300px] align-bottom">{draft.title || 'Untitled Draft'}</span>"? This action cannot be undone.
-        </p>
+        <div className="text-center sm:text-left">
+          <p className="text-base text-neutral-700 dark:text-neutral-300 mb-2">
+            Are you sure you want to delete this draft?
+          </p>
+          <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2 mb-3">
+            {draft.title || 'Untitled Draft'}
+          </p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            This action cannot be undone.
+          </p>
+        </div>
       </Modal>
 
       {/* Content Gate for guest drafts */}
