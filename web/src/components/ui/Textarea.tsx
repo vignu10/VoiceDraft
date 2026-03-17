@@ -80,6 +80,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             'text-neutral-900 dark:text-neutral-100',
             'placeholder:text-neutral-400',
             'border-neutral-300 dark:border-neutral-700',
+            'hover:border-neutral-400 dark:hover:border-neutral-600',
             'focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
             'focus:outline-none',
             'transition-colors duration-200',
