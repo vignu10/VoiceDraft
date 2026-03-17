@@ -55,7 +55,7 @@ export default function DiscoverPage() {
 
   return (
     <WithBottomNav>
-      <main className="min-h-screen pb-16 lg:pb-0">
+      <main className="min-h-screen pb-20 lg:pb-0 relative z-0">
         {/* Editorial header with asymmetric layout */}
         <header className="relative border-b border-neutral-200/80 dark:border-neutral-800/80">
           {/* Subtle geometric accent */}
@@ -73,7 +73,7 @@ export default function DiscoverPage() {
                 </p>
 
                 {/* Dramatic editorial headline */}
-                <h1 className="text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-3xl sm:text-4xl lg:text-5xl">
+                <h1 className="text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-xl sm:text-2xl">
                   Voices from the<br />
                   <span className="text-primary-600 dark:text-primary-400">community</span>
                 </h1>
@@ -98,20 +98,20 @@ export default function DiscoverPage() {
                   <>
                     {initialData.blogsTotal > 0 && (
                       <div className="text-right">
-                        <div className="text-5xl font-bold tracking-tight text-neutral-900 dark:text-white tabular-nums">
+                        <div className="text-xl font-semibold text-neutral-900 dark:text-white tabular-nums">
                           {initialData.blogsTotal.toLocaleString()}
                         </div>
-                        <div className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                        <div className="mt-0.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
                           active blogs
                         </div>
                       </div>
                     )}
                     {initialData.postsTotal > 0 && (
                       <div className="text-right">
-                        <div className="text-5xl font-bold tracking-tight text-neutral-900 dark:text-white tabular-nums">
+                        <div className="text-xl font-semibold text-neutral-900 dark:text-white tabular-nums">
                           {initialData.postsTotal.toLocaleString()}
                         </div>
-                        <div className="mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                        <div className="mt-0.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
                           posts published
                         </div>
                       </div>
