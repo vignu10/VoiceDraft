@@ -7,6 +7,15 @@ import { RecentPostsFeed } from '@/components/discover/RecentPostsFeed';
 import { useEffect, useState } from 'react';
 import type { DiscoveryResponse } from '@/types/discover';
 
+// Playful loading messages that rotate
+const LOADING_MESSAGES = [
+  'Finding amazing content...',
+  'Discovering new voices...',
+  'Gathering inspiration...',
+  'Exploring the community...',
+  'Curating great posts...',
+];
+
 export default function DiscoverPage() {
   const [initialData, setInitialData] = useState<DiscoveryResponse>({
     blogs: [],
@@ -17,10 +26,20 @@ export default function DiscoverPage() {
     hasMorePosts: false,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
+
+    // Rotate loading messages for variety
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      if (isMounted) {
+        messageIndex = (messageIndex + 1) % LOADING_MESSAGES.length;
+        setLoadingMessage(LOADING_MESSAGES[messageIndex]);
+      }
+    }, 2000);
 
     async function fetchDiscoveryData() {
       try {
@@ -41,6 +60,7 @@ export default function DiscoverPage() {
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          clearInterval(messageInterval);
         }
       }
     }
@@ -129,8 +149,13 @@ export default function DiscoverPage() {
         <DiscoverySearch initialSort="newest" />
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 px-4">
-            <div className="animate-spin h-12 w-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full mb-4" />
-            <p className="text-neutral-600 dark:text-neutral-400 font-medium">Loading amazing content...</p>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-xl animate-pulse" />
+              <div className="animate-spin h-14 w-14 border-4 border-primary-500/30 border-t-primary-500 rounded-full relative" />
+            </div>
+            <p className="mt-6 text-lg text-neutral-700 dark:text-neutral-300 font-medium animate-fade-in">
+              {loadingMessage}
+            </p>
             {/* Screen reader announcement */}
             <span className="sr-only" role="status" aria-live="polite">
               Loading discover page content...

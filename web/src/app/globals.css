@@ -1205,3 +1205,66 @@ p {
     animation: modalFadeIn 0.2s ease-out forwards;
   }
 }
+
+/* ============================================================
+   DELIGHT ANIMATIONS - Extra polish for joyful moments
+   ============================================================ */
+
+/* Simple fade in for loading messages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Bounce for celebration */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce 1s ease-in-out;
+}
+
+/* Shimmer effect for loading cards */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.98 0.01 285 / 0.5) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(0.22 0.02 285 / 0.5) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}

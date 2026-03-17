@@ -7,6 +7,7 @@ import { PWAInstallPrompt } from "@/components/ui/PWAInstallPrompt";
 import { Analytics } from "@/components/analytics/Analytics";
 import { DialogProvider } from "@/components/ui/dialog";
 import { OfflineIndicator } from "@/components/ui/OfflineIndicator";
+import { EasterEggs } from "@/components/EasterEggs";
 import type { Metadata, Viewport } from "next";
 import { Outfit, Space_Grotesk } from "next/font/google";
 import "./globals.css";
@@ -166,6 +167,9 @@ export default function RootLayout({
 
               {/* PWA install prompt */}
               <PWAInstallPrompt />
+
+              {/* Easter eggs for curious developers */}
+              <EasterEggs />
 
               {/* Skip to main content link for accessibility */}
               <a

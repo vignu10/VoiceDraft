@@ -14,6 +14,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestStore } from '@/stores/guest-store';
 import { api } from '@/lib/api-client';
+import { celebrate } from '@/lib/confetti';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import { Post } from '@/lib/types';
 import {
@@ -366,6 +367,9 @@ export default function DraftEditorPage() {
             window.open(publishedUrl, '_blank');
           },
         });
+
+        // Celebrate with confetti!
+        celebrate({ count: 80 });
 
         // Reset to idle after showing success state
         setTimeout(() => setPublishLoading('idle'), 2000);

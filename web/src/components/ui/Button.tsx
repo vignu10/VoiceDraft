@@ -12,11 +12,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantStyles = {
-  primary: 'bg-gradient-to-r from-neutral-800 via-neutral-900 to-neutral-800 text-white hover:from-neutral-700 hover:via-neutral-800 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-100 dark:to-neutral-200 dark:text-neutral-900 shadow-lg',
-  secondary: 'bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 text-neutral-900 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 active:from-neutral-300 active:via-neutral-200 active:to-neutral-300 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 dark:text-neutral-100',
-  danger: 'bg-gradient-to-r from-neutral-700 via-neutral-800 to-neutral-700 text-white hover:from-neutral-600 hover:via-neutral-700 hover:to-neutral-600 dark:from-neutral-300 dark:via-neutral-200 dark:to-neutral-300 dark:text-neutral-900 shadow-lg',
+  primary: 'bg-gradient-to-r from-neutral-800 via-neutral-900 to-neutral-800 text-white hover:from-neutral-700 hover:via-neutral-800 hover:to-neutral-700 hover:-translate-y-0.5 hover:shadow-xl dark:from-neutral-200 dark:via-neutral-100 dark:to-neutral-200 dark:text-neutral-900 shadow-lg',
+  secondary: 'bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 text-neutral-900 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 hover:-translate-y-0.5 active:from-neutral-300 active:via-neutral-200 active:to-neutral-300 active:translate-y-0 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 dark:text-neutral-100 dark:hover:shadow-lg',
+  danger: 'bg-gradient-to-r from-neutral-700 via-neutral-800 to-neutral-700 text-white hover:from-neutral-600 hover:via-neutral-700 hover:to-neutral-600 hover:-translate-y-0.5 hover:shadow-xl dark:from-neutral-300 dark:via-neutral-200 dark:to-neutral-300 dark:text-neutral-900 shadow-lg',
   ghost: 'bg-transparent text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 dark:text-neutral-200 dark:hover:bg-neutral-800',
-  'danger-outline': 'bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100 active:bg-neutral-200 dark:text-neutral-300 dark:border-neutral-300 dark:hover:bg-neutral-800',
+  'danger-outline': 'bg-transparent text-neutral-700 border border-neutral-700 hover:bg-neutral-100 hover:-translate-y-0.5 active:bg-neutral-200 active:translate-y-0 dark:text-neutral-300 dark:border-neutral-300 dark:hover:bg-neutral-800',
 };
 
 const sizeStyles = {
