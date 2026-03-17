@@ -22,7 +22,7 @@ export function HeroSection() {
       </div>
 
       <div className="container-wide">
-        <div className="relative flex min-h-[60vh] flex-col justify-center py-16 sm:py-20 lg:py-24">
+        <div className="relative flex flex-col justify-center py-12 sm:py-16 lg:py-20">
           {/* Content - Side by side layout with logo and text */}
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
