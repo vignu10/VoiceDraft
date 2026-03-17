@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -425,18 +425,19 @@ export default function DraftEditorPage() {
 
   const previewContent = getPreviewContent(content, title);
 
-  // Handle scroll for content gate (preview panel)
-  const handlePreviewScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.currentTarget;
-    const scrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
+  // Handle scroll for content gate - use page scroll instead of container scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight > 0) {
+        const percentage = Math.round((scrollTop / docHeight) * 100);
+        setScrollPercentage(percentage);
+      }
+    };
 
-    const maxScroll = scrollHeight - clientHeight;
-    if (maxScroll > 0) {
-      const percentage = Math.round((scrollTop / maxScroll) * 100);
-      setScrollPercentage(percentage);
-    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [setScrollPercentage]);
 
   // Loading state
@@ -638,99 +639,92 @@ export default function DraftEditorPage() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Side by side on desktop, edit only on mobile */}
-        <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          {/* Editor Panel - Desktop */}
-          <div className="flex flex-col">
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm">
-              <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
-                <div>
-                  <Input
-                    placeholder="Post title..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-xs sm:text-sm font-medium"
-                    maxLength={200}
-                    autoFocus
-                  />
-                </div>
+      <main className="max-w-full mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Desktop: 50/50 split, no boxes, page scroll */}
+        <div className="hidden lg:grid lg:grid-cols-2 gap-8">
+          {/* Editor Panel - Desktop - minimal, no box/border */}
+          <div className="flex flex-col pr-4">
+            <div className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Post title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-sm font-medium"
+                  maxLength={200}
+                  autoFocus
+                />
+              </div>
 
-                <div className="space-y-2 sm:space-y-3 flex-1 min-h-0">
-                  <Textarea
-                    placeholder="Start writing your post..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[600px] sm:min-h-[700px] lg:min-h-[800px] font-mono text-sm leading-relaxed"
-                    showCharacterCount={false}
-                    aria-label="Draft content"
-                  />
-                  <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-                    <span>Markdown</span>
-                    <span>{content.length.toLocaleString()}</span>
-                  </div>
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Start writing your post..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="min-h-[calc(100vh-280px)] font-mono text-sm leading-relaxed"
+                  showCharacterCount={false}
+                  aria-label="Draft content"
+                />
+                <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
+                  <span>Markdown</span>
+                  <span>{content.length.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Preview Panel - Desktop - styled like real blog */}
-          <div className="flex flex-col">
-            <div
-              className="bg-white dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
-              onScroll={handlePreviewScroll}
-            >
-              <article className="blog-content h-full overflow-y-auto max-h-[calc(100vh-200px)]">
-                {/* Blog-style header matching real blog post */}
-                <div className="px-6 lg:px-8 pt-8 pb-6 border-b border-neutral-200/50 dark:border-neutral-800/50">
-                  {title ? (
-                    <h1 className="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-white mb-6 leading-tight">
-                      {title}
-                    </h1>
-                  ) : (
-                    <h1 className="text-2xl lg:text-3xl font-bold text-neutral-400 dark:text-neutral-600 mb-6 leading-tight italic">
-                      Untitled Post
-                    </h1>
-                  )}
+          {/* Preview Panel - Desktop - no box, page scroll, matches published blog */}
+          <div className="pl-4 border-l border-neutral-200/50 dark:border-neutral-800/50">
+            <article className="blog-content">
+              {/* Blog-style header matching real blog post */}
+              <div className="px-8 py-6 border-b border-neutral-200/50 dark:border-neutral-800/50">
+                {title ? (
+                  <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-6 leading-tight">
+                    {title}
+                  </h1>
+                ) : (
+                  <h1 className="text-3xl font-bold text-neutral-400 dark:text-neutral-600 mb-6 leading-tight italic">
+                    Untitled Post
+                  </h1>
+                )}
 
-                  {/* Meta info styled like real blog */}
-                  <div className="flex items-center flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    {draft.created_at && (
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
-                        <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                        </svg>
-                        <span className="font-medium">
-                          {new Date(draft.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    )}
+                {/* Meta info styled like real blog */}
+                <div className="flex items-center flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+                  {draft.created_at && (
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
                       <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
                       </svg>
-                      <span className="font-medium">{readingTime} min read</span>
+                      <span className="font-medium">
+                        {new Date(draft.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
                     </div>
-                    <span className={`inline-flex items-center rounded-full bg-gradient-to-r from-neutral-800/10 to-neutral-600/5 px-3 py-1 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-300 dark:from-neutral-200/10 dark:to-neutral-400/5 dark:text-neutral-300 dark:ring-neutral-700`}>
-                      {draft.status === 'published' ? 'Published' : 'Draft'}
-                    </span>
+                  )}
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                    </svg>
+                    <span className="font-medium">{readingTime} min read</span>
                   </div>
+                  <span className={`inline-flex items-center rounded-full bg-gradient-to-r from-neutral-800/10 to-neutral-600/5 px-3 py-1 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-300 dark:from-neutral-200/10 dark:to-neutral-400/5 dark:text-neutral-300 dark:ring-neutral-700`}>
+                    {draft.status === 'published' ? 'Published' : 'Draft'}
+                  </span>
                 </div>
+              </div>
 
-                {/* Blog content */}
-                <div className="px-6 lg:px-8 py-8">
-                  <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
-                </div>
-              </article>
-            </div>
+              {/* Blog content - page scroll */}
+              <div className="px-8 py-8">
+                <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
+              </div>
+            </article>
           </div>
         </div>
 
-        {/* Mobile: Editor or Preview with toggle */}
+        {/* Mobile: Editor or Preview with toggle - full page, no boxes */}
         <div className="lg:hidden">
           {/* Mobile view toggle */}
           <div className="flex items-center justify-center mb-4">
@@ -762,32 +756,30 @@ export default function DraftEditorPage() {
             </div>
           </div>
 
-          {/* Editor mode */}
+          {/* Editor mode - full page, no box */}
           {mobileViewMode === 'edit' && (
-            <div className="bg-gradient-card rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
-              <div className="p-3 space-y-3 flex-shrink-0">
-                <div>
-                  <Input
-                    placeholder="Post title..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-xs font-medium"
-                    maxLength={200}
-                    autoFocus
-                  />
-                </div>
+            <div className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Post title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="text-sm font-medium"
+                  maxLength={200}
+                  autoFocus
+                />
               </div>
 
-              <div className="flex-1 min-h-0 px-3 pb-3">
+              <div className="space-y-2">
                 <Textarea
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full h-full font-mono text-sm leading-relaxed"
+                  className="min-h-[calc(100vh-300px)] font-mono text-sm leading-relaxed"
                   showCharacterCount={false}
                   aria-label="Draft content"
                 />
-                <div className="flex items-center justify-between text-xs text-neutral-400 px-1 pt-2">
+                <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
                   <span>{content.length.toLocaleString()}</span>
                 </div>
@@ -795,29 +787,28 @@ export default function DraftEditorPage() {
             </div>
           )}
 
-          {/* Preview mode - styled like real blog post */}
+          {/* Preview mode - full page, no box, matches published blog */}
           {mobileViewMode === 'preview' && (
-            <div
-              className="bg-white dark:bg-neutral-950 rounded-xl border border-neutral-200/50 dark:border-neutral-800/50 overflow-hidden shadow-sm"
-              onScroll={handlePreviewScroll}
-              style={{ height: 'calc(100vh - 180px)' }}
-            >
-              <article className="blog-content h-full overflow-y-auto">
-                {/* Blog-style header */}
-                <div className="px-4 sm:px-6 pt-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-                  {title ? (
-                    <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-white mb-4 leading-tight">
-                      {title}
-                    </h1>
-                  ) : (
-                    <h1 className="text-xl sm:text-2xl font-bold text-neutral-400 dark:text-neutral-600 mb-4 leading-tight italic">
-                      Untitled Post
-                    </h1>
-                  )}
+            <article className="blog-content">
+              {/* Blog-style header */}
+              <div className="px-4 sm:px-6 pt-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+                {title ? (
+                  <h1 className="text-2xl font-bold text-neutral-900 dark:text-white mb-4 leading-tight">
+                    {title}
+                  </h1>
+                ) : (
+                  <h1 className="text-2xl font-bold text-neutral-400 dark:text-neutral-600 mb-4 leading-tight italic">
+                    Untitled Post
+                  </h1>
+                )}
 
-                  {/* Meta info */}
-                  <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-neutral-500 dark:text-neutral-400">
-                    {draft.created_at && (
+                {/* Meta info */}
+                <div className="flex items-center flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+                  {draft.created_at && (
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                      </svg>
                       <time dateTime={draft.created_at}>
                         {new Date(draft.created_at).toLocaleDateString('en-US', {
                           month: 'short',
@@ -825,21 +816,25 @@ export default function DraftEditorPage() {
                           year: 'numeric',
                         })}
                       </time>
-                    )}
-                    <span>{wordCount} words</span>
-                    <span>{readingTime} min read</span>
-                    <span className={draft.status === 'published' ? 'text-success-600 dark:text-success-400' : 'text-primary-600 dark:text-primary-400'}>
-                      {draft.status === 'published' ? 'Published' : 'Draft'}
-                    </span>
+                    </div>
+                  )}
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-3 py-1 dark:bg-neutral-800">
+                    <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                    </svg>
+                    <span className="font-medium">{readingTime} min read</span>
                   </div>
+                  <span className={`inline-flex items-center rounded-full bg-gradient-to-r from-neutral-800/10 to-neutral-600/5 px-3 py-1 text-sm font-semibold text-neutral-700 ring-1 ring-neutral-300 dark:from-neutral-200/10 dark:to-neutral-400/5 dark:text-neutral-300 dark:ring-neutral-700`}>
+                    {draft.status === 'published' ? 'Published' : 'Draft'}
+                  </span>
                 </div>
+              </div>
 
-                {/* Blog content */}
-                <div className="px-4 sm:px-6 py-6">
-                  <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
-                </div>
-              </article>
-            </div>
+              {/* Blog content - page scroll */}
+              <div className="px-4 sm:px-6 py-6">
+                <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
+              </div>
+            </article>
           )}
         </div>
       </main>
