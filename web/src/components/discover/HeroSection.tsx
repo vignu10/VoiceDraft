@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
+import { LogoIcon, LogoWordmark } from '@/components/logo';
 
 export function HeroSection() {
   const { isAuthenticated, user } = useAuthStore();
@@ -23,9 +24,19 @@ export function HeroSection() {
       <div className="container-wide">
         <div className="relative flex min-h-[70vh] flex-col justify-center py-24 sm:py-32 lg:py-40">
           {/* Content - Asymmetric layout with dramatic typography */}
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-4xl text-center">
+            {/* Logo Icon with animation */}
+            <div className="animate-fade-in-up mb-8 flex justify-center">
+              <LogoIcon size={192} className="animate-float" animate={true} />
+            </div>
+
+            {/* Logo Wordmark */}
+            <div className="animate-fade-in-up animate-delay-100 mb-8">
+              <LogoWordmark size="xl" showTagline={true} />
+            </div>
+
             {/* Badge */}
-            <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border-2 border-neutral-400/30 bg-neutral-100/50 px-4 py-2 text-sm font-semibold text-neutral-700 dark:border-neutral-600/30 dark:bg-neutral-800/50 dark:text-neutral-300">
+            <div className="animate-fade-in-up animate-delay-200 mb-8 inline-flex items-center gap-2 rounded-full border-2 border-neutral-400/30 bg-neutral-100/50 px-4 py-2 text-sm font-semibold text-neutral-700 dark:border-neutral-600/30 dark:bg-neutral-800/50 dark:text-neutral-300">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-neutral-500 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-neutral-500"></span>
@@ -34,14 +45,14 @@ export function HeroSection() {
             </div>
 
             {/* Main headline - Extreme scale with bold accent color */}
-            <h1 className="animate-fade-in-up animate-delay-100 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-4xl sm:text-5xl lg:text-6xl">
+            <h1 className="animate-fade-in-up animate-delay-300 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-4xl sm:text-5xl lg:text-6xl">
               Your voice,
               <br />
               <span className="text-neutral-600 dark:text-neutral-400">amplified.</span>
             </h1>
 
             {/* Subheadline - Bold and direct */}
-            <p className="animate-fade-in-up animate-delay-200 mt-8 text-base font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-lg lg:text-xl">
+            <p className="animate-fade-in-up animate-delay-400 mt-8 text-base font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-lg lg:text-xl">
               {isAuthenticated ? (
                 <>
                   Welcome back, {user?.full_name || user?.email?.split('@')[0] || 'Creator'}!
@@ -58,7 +69,7 @@ export function HeroSection() {
             </p>
 
             {/* CTA Buttons - Bold and action-oriented */}
-            <div className="animate-fade-in-up animate-delay-300 mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:mt-14">
+            <div className="animate-fade-in-up animate-delay-500 mt-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:mt-14">
               {isAuthenticated ? (
                 <>
                   <Link
