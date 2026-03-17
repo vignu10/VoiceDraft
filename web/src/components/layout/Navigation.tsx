@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { LogoIcon, LogoWordmark } from '@/components/logo';
 import { Mic, FileText, LogOut, User, ChevronDown } from 'lucide-react';
 
 export function Navigation() {
@@ -57,25 +58,10 @@ export function Navigation() {
           {/* VoiceDraft brand/logo - Bold and confident */}
           <Link
             href="/"
-            className="group flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
+            className="group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
           >
-            {/* Bold logo mark */}
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-lg shadow-primary-500/25 transition-all group-hover:shadow-xl group-hover:shadow-primary-500/35 group-hover:scale-105">
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 transition-colors group-hover:text-primary-500 font-[family:var(--font-display)]">
-                VoiceDraft
-              </span>
-              <span className="text-[10px] font-medium tracking-wide text-neutral-500 dark:text-neutral-400 uppercase">
-                Speak. Create.
-              </span>
-            </div>
+            <LogoIcon size={32} className="transition-transform duration-300 group-hover:scale-110" />
+            <LogoWordmark size="md" className="hidden sm:block" />
           </Link>
 
           {/* Right side navigation items */}
