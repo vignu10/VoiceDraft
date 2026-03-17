@@ -927,7 +927,7 @@ export default function RecordPage() {
                   </div>
 
                   {/* Action buttons - full width on mobile */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0 pb-16 lg:pb-4">
                     <button
                       onClick={handleViewBlog}
                       disabled={isNavigating}
