@@ -746,6 +746,7 @@ export default function DraftEditorPage() {
                   aria-label="Draft content"
                   ref={textareaRef}
                   autoResize
+                  style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
@@ -862,6 +863,7 @@ export default function DraftEditorPage() {
                   aria-label="Draft content"
                   ref={textareaRef}
                   autoResize
+                  style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
