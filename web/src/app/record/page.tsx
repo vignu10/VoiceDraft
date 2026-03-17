@@ -123,6 +123,7 @@ export default function RecordPage() {
   const [targetKeyword, setTargetKeyword] = useState('');
   const [tone, setTone] = useState<Tone>('professional');
   const [length, setLength] = useState<Length>('medium');
+  const [transcriptExpanded, setTranscriptExpanded] = useState(false);
 
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -487,7 +488,7 @@ export default function RecordPage() {
             <>
               <div className="lg:col-span-1 order-2 lg:order-1 animate-in fade-in slide-in-from-left-8 duration-700">
                 <div className="sticky top-32">
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
                     Speak.
                     <br />
                     <span className="text-neutral-400 dark:text-neutral-600">Create.</span>
@@ -536,7 +537,7 @@ export default function RecordPage() {
                         ? 'bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 text-white shadow-lg shadow-neutral-500/20'
                         : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-2 border-neutral-200 dark:border-neutral-800'
                     }`}>
-                      <span className="text-4xl sm:text-5xl font-bold tabular-nums tracking-tight">
+                      <span className="text-3xl font-bold tabular-nums tracking-tight">
                         {formatDuration(duration)}
                       </span>
                     </div>
@@ -763,13 +764,39 @@ export default function RecordPage() {
                   </div>
 
                   {transcript && (
-                    <div className="mt-8 p-4 bg-neutral-100 dark:bg-neutral-900 rounded-lg text-left">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
-                        Your Transcript
-                      </p>
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-3">
-                        {transcript}
-                      </p>
+                    <div className="mt-8 group relative bg-gradient-to-br from-white/80 dark:from-neutral-900/90 to-neutral-50/80 dark:to-neutral-950/90 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/5">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                            Your Transcript
+                          </p>
+                          <button
+                            onClick={() => setTranscriptExpanded(!transcriptExpanded)}
+                            className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors flex items-center gap-1"
+                          >
+                            {transcriptExpanded ? 'Show less' : 'Read full transcript'}
+                            <svg className={`w-4 h-4 transition-transform duration-300 ${transcriptExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div className="relative">
+                          {/* Scrollable transcript container */}
+                          <div className={`overflow-y-auto transition-all duration-500 ease-out transcript-scroll ${
+                            transcriptExpanded ? 'max-h-64' : 'max-h-24'
+                          }`}>
+                            <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                              {transcript}
+                            </p>
+                          </div>
+
+                          {/* Gradient fade overlay when collapsed */}
+                          {!transcriptExpanded && (
+                            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-50/80 dark:to-neutral-900/80 pointer-events-none" />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -785,16 +812,41 @@ export default function RecordPage() {
 
               <div className="lg:col-span-2 order-1 fixed inset-x-0 bottom-0 top-auto max-h-[85vh] lg:static lg:max-h-none lg:rounded-t-3xl lg:rounded-xl bg-neutral-50 dark:bg-neutral-900 shadow-2xl lg:shadow-lg z-50 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col h-[calc(100vh-8rem)] lg:h-auto">
-                  {/* Compact success header */}
-                  <div className="flex items-center justify-between mb-3 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-success-500 flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                  {/* Drag handle indicator (mobile only) */}
+                  <div className="lg:hidden flex justify-center py-3 shrink-0">
+                    <div className="w-12 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full" />
+                  </div>
+
+                  {/* Animated success header */}
+                  <div className="px-4 sm:px-6 pt-2 pb-4 shrink-0">
+                    <div className="flex items-center gap-3 mb-3">
+                      {/* Animated checkmark */}
+                      <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-success-500 to-success-600 flex items-center justify-center animate-in zoom-in duration-300 shadow-lg shadow-success-500/30">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                          <path
+                            className="origin-center animate-in dash-in duration-500"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          />
+                        </svg>
                       </div>
-                      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                        {generatedBlog.wordCount} words · {tone}
-                      </span>
+                      <div>
+                        <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                          Your blog is ready!
+                        </h2>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {generatedBlog.wordCount?.toLocaleString() || '0'} words · {Math.ceil((generatedBlog.wordCount || 200) / 200)} min read
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Animated progress bar */}
+                    <div className="h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary-500 via-primary-400 to-success-500 animate-in slide-in-from-left duration-700 ease-out" style={{width: '100%'}} />
+                    </div>
+                  </div>
+
+                  {/* View/Edit toggle */}
+                  <div className="flex items-center justify-end mb-3 px-4 sm:px-6 shrink-0">
                     <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
                       <button
                         onClick={() => {
