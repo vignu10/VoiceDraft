@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { WaveformVisualizer } from '@/components/recording/WaveformVisualizer';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestStore } from '@/stores/guest-store';
 import { useToast } from '@/components/providers/ToastProvider';
@@ -38,7 +39,7 @@ import {
   Settings,
 } from 'lucide-react';
 
-type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied';
+type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied' | 'session-expired';
 type ProcessingStep = 'transcribing' | 'generating' | 'ready';
 type Tone = 'professional' | 'casual' | 'conversational';
 type Length = 'short' | 'medium' | 'long';
@@ -64,8 +65,50 @@ const LENGTHS: { value: Length; icon: typeof Zap; label: string; words: string; 
 
 export default function RecordPage() {
   const router = useRouter();
-  const { accessToken } = useAuthStore();
+  const { accessToken, isAuthenticated, validateSession, checkSessionOnMount } = useAuthStore();
   const { addGuestDraft } = useGuestStore();
+
+  // Session validation state
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [useGuestMode, setUseGuestMode] = useState(false);
+
+  // Check session on mount - BEFORE allowing any recording
+  useEffect(() => {
+    const checkSession = async () => {
+      // If user has a token (was previously logged in), validate it
+      if (accessToken && isAuthenticated) {
+        setIsCheckingSession(true);
+        setSessionError(null);
+
+        const isValid = await validateSession();
+
+        setIsCheckingSession(false);
+
+        if (!isValid) {
+          // Session is expired - show error and block recording
+          setSessionError('Your session has expired. Please sign in again to continue.');
+          setViewState('session-expired');
+          return;
+        }
+      } else if (!accessToken && !isAuthenticated) {
+        // No token - user can choose to sign in or use guest mode
+        setUseGuestMode(true);
+      }
+    };
+
+    checkSession();
+  }, [accessToken, isAuthenticated, validateSession]);
+
+  // Listen for auth state changes (e.g., if session expires during recording)
+  useRequireAuth({
+    optional: true,
+    onAuthRequired: () => {
+      setSessionError('Your session has expired. Please sign in again.');
+      setViewState('session-expired');
+    },
+  });
+
   const { success, warning } = useToast();
   const { state, startRecording, stopRecording, cancelRecording, requestPermission } = useAudioRecorder(
     (duration) => setDuration(duration),
@@ -116,6 +159,30 @@ export default function RecordPage() {
   }, [viewState]);
 
   const handleStartRecording = async () => {
+    // Prevent starting if we're still checking session or if session has expired
+    if (isCheckingSession) {
+      warning('Please wait while we verify your session...');
+      return;
+    }
+
+    if (sessionError) {
+      // Session expired - don't allow recording
+      return;
+    }
+
+    // If user has a token but isn't authenticated, validate first
+    if (accessToken && !isAuthenticated) {
+      setIsCheckingSession(true);
+      const isValid = await validateSession();
+      setIsCheckingSession(false);
+
+      if (!isValid) {
+        setSessionError('Your session has expired. Please sign in again to continue.');
+        setViewState('session-expired');
+        return;
+      }
+    }
+
     setErrorMessage(null);
     try {
       await startRecording();
@@ -390,10 +457,10 @@ export default function RecordPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col pb-16 lg:pb-0">
-      {/* Header - matches app theme */}
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col">
+      {/* Header - compact */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-frosted backdrop-blur-sm border-b border-neutral-200/50 dark:border-neutral-800/50">
-        <div className="px-4 sm:px-6 lg:px-8 py-6 flex items-start justify-between">
+        <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-start justify-between">
           <div className="text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-neutral-400 dark:text-neutral-500 mb-0.5">
               {viewState === 'idle' ? 'Ready'
@@ -416,8 +483,8 @@ export default function RecordPage() {
       </header>
 
       {/* Main content - asymmetric layout */}
-      <main className="flex-1 flex items-center p-4 sm:p-6 lg:p-8 pt-32 pb-12">
-        <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+      <main className="flex-1 flex items-center px-4 sm:px-6 lg:px-8 py-4 lg:py-6 pt-20 lg:pt-24">
+        <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-2 gap-6 lg:gap-12 items-start">
           {/* IDLE STATE - asymmetric editorial layout */}
           {viewState === 'idle' && (
             <>
@@ -446,10 +513,15 @@ export default function RecordPage() {
               <div className="lg:col-span-1 order-1 lg:order-2 flex items-center justify-center lg:justify-end animate-in fade-in slide-in-from-right-8 duration-700 delay-100">
                 <button
                   onClick={handleStartRecording}
-                  className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-neutral-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                  aria-label="Start recording"
+                  disabled={isCheckingSession}
+                  className="group w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 disabled:from-neutral-600 disabled:via-neutral-500 disabled:to-neutral-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-neutral-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
+                  aria-label={isCheckingSession ? "Verifying session" : "Start recording"}
                 >
-                  <Mic className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20" strokeWidth={1.5} aria-hidden="true" />
+                  {isCheckingSession ? (
+                    <RefreshCw className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 animate-spin" strokeWidth={1.5} aria-hidden="true" />
+                  ) : (
+                    <Mic className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20" strokeWidth={1.5} aria-hidden="true" />
+                  )}
                 </button>
               </div>
             </>
@@ -708,93 +780,87 @@ export default function RecordPage() {
             </>
           )}
 
-          {/* COMPLETE STATE - preview and action */}
+          {/* COMPLETE STATE - compact single-screen layout */}
           {viewState === 'complete' && generatedBlog && (
             <>
-              <div className="lg:col-span-2 order-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="w-full max-w-3xl mx-auto px-0 sm:px-0">
-                  {/* Success header */}
-                  <div className="text-center mb-6 sm:mb-8 px-4">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-primary-500 via-pink-500 to-primary-600 text-white rounded-full mb-4 shadow-lg shadow-neutral-500/20">
-                      <Check className="w-6 h-6" />
+              {/* Mobile backdrop overlay */}
+              <div className="lg:hidden fixed inset-0 bg-neutral-900/20 backdrop-blur-sm z-40" aria-hidden="true" />
+
+              <div className="lg:col-span-2 order-1 fixed inset-x-0 bottom-0 top-auto max-h-[85vh] lg:static lg:max-h-none lg:rounded-t-3xl lg:rounded-xl bg-neutral-50 dark:bg-neutral-900 shadow-2xl lg:shadow-lg z-50 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col h-[calc(100vh-8rem)] lg:h-auto">
+                  {/* Compact success header */}
+                  <div className="flex items-center justify-between mb-3 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-success-500 flex items-center justify-center">
+                        <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                      </div>
+                      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                        {generatedBlog.wordCount} words · {tone}
+                      </span>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">
-                      Your blog is ready
-                    </h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 text-xs sm:text-sm">
-                      {generatedBlog.wordCount} words · {tone} tone
-                    </p>
+                    <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
+                      <button
+                        onClick={() => {
+                          setIsEditMode(false);
+                          setEditedContent('');
+                        }}
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                          !isEditMode
+                            ? 'bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white shadow-sm'
+                            : 'text-neutral-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditMode(true);
+                          setEditedContent(generatedBlog.content);
+                        }}
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                          isEditMode
+                            ? 'bg-white dark:bg-neutral-600 text-neutral-900 dark:text-white shadow-sm'
+                            : 'text-neutral-600 dark:text-neutral-400'
+                        }`}
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Content preview card */}
-                  <div className="bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden mb-4 sm:mb-6 mx-0 sm:mx-0">
-                    {/* Toggle */}
-                    <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-neutral-200 dark:border-neutral-800">
-                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 truncate pr-2 sm:pr-4 text-sm sm:text-base">
+                  {/* Content preview - takes available space */}
+                  <div className="flex-1 min-h-0 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden flex flex-col mb-3">
+                    <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm truncate">
                         {generatedBlog.title}
                       </h3>
-                      <div className="flex items-center gap-1 bg-white dark:bg-neutral-950 rounded-lg p-0.5 border border-neutral-200 dark:border-neutral-700">
-                        <button
-                          onClick={() => {
-                            setIsEditMode(false);
-                            setEditedContent('');
-                          }}
-                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            !isEditMode
-                              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                              : 'text-neutral-600 dark:text-neutral-400'
-                          }`}
-                        >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsEditMode(true);
-                            setEditedContent(generatedBlog.content);
-                          }}
-                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            isEditMode
-                              ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900'
-                              : 'text-neutral-600 dark:text-neutral-400'
-                          }`}
-                        >
-                          Edit
-                        </button>
-                      </div>
                     </div>
-
-                    {/* Content - responsive height */}
-                    <div className="p-3 sm:p-5 min-h-[200px] sm:min-h-[280px] max-h-[50vh] sm:max-h-[360px] overflow-y-auto">
+                    <div className="flex-1 min-h-0 overflow-y-auto p-3">
                       {isEditMode ? (
                         <textarea
                           value={editedContent}
                           onChange={(e) => setEditedContent(e.target.value)}
                           placeholder="Edit your blog content..."
                           maxLength={50000}
-                          className="w-full h-full min-h-[180px] sm:min-h-[240px] p-3 sm:p-4 bg-white dark:bg-neutral-950 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 resize-none text-sm leading-relaxed border border-neutral-200 dark:border-neutral-800"
+                          className="w-full h-full min-h-full bg-transparent text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none resize-none text-sm leading-relaxed"
                           aria-label="Edit blog content"
                         />
                       ) : (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-2 sm:mb-3">
-                            {generatedBlog.title}
-                          </h3>
-                          <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-xs sm:text-sm leading-relaxed">
+                          <div className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed break-words">
                             {generatedBlog.content}
                           </div>
                         </div>
                       )}
                     </div>
-
-                    {/* Edit actions */}
                     {isEditMode && (
-                      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-2">
+                      <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-2 shrink-0">
                         <button
                           onClick={() => {
                             setIsEditMode(false);
                             setEditedContent('');
                           }}
-                          className="px-3 sm:px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
+                          className="px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-400 transition-colors"
                         >
                           Cancel
                         </button>
@@ -803,7 +869,7 @@ export default function RecordPage() {
                             setGeneratedBlog({ ...generatedBlog, content: editedContent });
                             setIsEditMode(false);
                           }}
-                          className="px-3 sm:px-4 py-2 text-sm bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded-lg font-medium transition-colors"
+                          className="px-3 py-1.5 text-xs bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 rounded font-medium transition-colors"
                         >
                           Save
                         </button>
@@ -812,17 +878,17 @@ export default function RecordPage() {
                   </div>
 
                   {/* Action buttons - full width on mobile */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 px-0">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 shrink-0">
                     <button
                       onClick={handleViewBlog}
-                      className="flex-1 min-h-[48px] sm:min-h-[52px] px-4 sm:px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm sm:text-base"
+                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm"
                     >
                       Open in Editor
-                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                     <button
                       onClick={handleReset}
-                      className="flex-1 min-h-[48px] sm:min-h-[52px] px-4 sm:px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-all text-sm sm:text-base"
+                      className="w-full sm:flex-1 min-h-[48px] px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-all text-sm"
                     >
                       Record Another
                     </button>
@@ -884,7 +950,7 @@ export default function RecordPage() {
                       onClick={() => {
                         setViewState('idle');
                       }}
-                      className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                      className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                     >
                       <RefreshCw className="w-5 h-5" />
                       Try Again
@@ -922,7 +988,7 @@ export default function RecordPage() {
                     {transcript ? (
                       <button
                         onClick={handleRetryGeneration}
-                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                       >
                         <RefreshCw className="w-5 h-5" />
                         Retry Generation
@@ -930,7 +996,7 @@ export default function RecordPage() {
                     ) : (
                       <button
                         onClick={handleReset}
-                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                       >
                         <RefreshCw className="w-5 h-5" />
                         Try Again
@@ -941,6 +1007,46 @@ export default function RecordPage() {
                         Your transcript is saved. You can retry with adjusted options.
                       </p>
                     )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Session Expired State */}
+          {viewState === 'session-expired' && (
+            <>
+              <div className="lg:col-span-2 order-1 animate-in fade-in duration-300">
+                <div className="max-w-md mx-auto text-center" role="alert" aria-live="assertive">
+                  <div className="mb-6 flex justify-center">
+                    <div className="w-16 h-16 bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center">
+                      <AlertCircle className="w-8 h-8 text-error-600 dark:text-error-400" />
+                    </div>
+                  </div>
+
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-3">
+                    Session Expired
+                  </h2>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                    {sessionError || 'Your session has expired. Please sign in again to continue.'}
+                  </p>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-500 mb-8">
+                    This prevents wasting transcription credits on an expired session.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      onClick={() => router.push('/auth/signin')}
+                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => router.push('/auth/signup')}
+                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 dark:hover:from-neutral-700 dark:hover:via-neutral-600 dark:hover:to-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      Create Account
+                    </button>
                   </div>
                 </div>
               </div>
