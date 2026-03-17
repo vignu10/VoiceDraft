@@ -1,14 +1,17 @@
+'use client';
+
 import { formatDate, formatReadingTime } from '@/lib/blog-utils';
 import type { PostMetaProps } from '@/types/blog-post';
 import { ShareButtons } from '@/components/blog-post/ShareButtons';
+import { useState, useEffect } from 'react';
 
 export function PostMeta({ post, urlPrefix }: PostMetaProps) {
   const { title, published_at, reading_time_minutes, target_keyword, journals } = post;
+  const [shareUrl, setShareUrl] = useState('');
 
-  // Construct full URL for sharing
-  const shareUrl = typeof window !== 'undefined'
-    ? window.location.href
-    : `${process.env.NEXT_PUBLIC_APP_URL || ''}/${urlPrefix}/${post.slug}`;
+  useEffect(() => {
+    setShareUrl(window.location.href);
+  }, []);
 
   return (
     <div className="mb-8">
