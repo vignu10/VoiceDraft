@@ -1,53 +1,98 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { LogoIcon } from '@/components/logo';
 import { useAuthStore } from '@/stores/auth-store';
+import { supabase } from '@/lib/supabase';
 import { AlertCircle } from 'lucide-react';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { setUser, setAccessToken } = useAuthStore();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const processCallback = async () => {
-      const accessToken = searchParams?.get('access_token');
-      const refreshToken = searchParams?.get('refresh_token');
-
-      if (!accessToken) {
-        setError('No access token received');
-        setIsLoading(false);
-        return;
-      }
+      // Give Supabase a moment to process the OAuth callback
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       try {
-        // Get user info using the access token
+        // Check URL hash for access token (Supabase may pass it there)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+
+        // Supabase handles the OAuth callback and sets up the session
+        // We just need to get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError('Failed to get session. Please try again.');
+          setIsLoading(false);
+          setTimeout(() => router.push('/auth/signin'), 3000);
+          return;
+        }
+
+        if (!session || !session.user) {
+          // Try checking URL params as fallback
+          const urlParams = new URLSearchParams(window.location.search);
+          const errorParam = urlParams.get('error');
+          const errorDescription = urlParams.get('error_description');
+
+          if (errorParam) {
+            setError(errorDescription || 'Sign in was cancelled or failed');
+          } else {
+            setError('No session found. Please sign in again.');
+          }
+          setIsLoading(false);
+          setTimeout(() => router.push('/auth/signin'), 3000);
+          return;
+        }
+
+        // Get or create user profile from our database
         const response = await fetch('/api/auth/session', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
         });
 
         if (!response.ok) {
-          throw new Error('Failed to get user session');
+          // If profile doesn't exist, try to create it
+          if (response.status === 401) {
+            // Create profile with OAuth user data
+            const createResponse = await fetch('/api/auth/oauth/profile', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
+              }),
+            });
+
+            if (createResponse.ok) {
+              const { user } = await createResponse.json();
+              setUser(user);
+              setAccessToken(session.access_token);
+              setTimeout(() => router.push('/'), 500);
+              return;
+            }
+          }
+          throw new Error('Failed to get user profile');
         }
 
         const { user } = await response.json();
 
         // Set the auth state
         setUser(user);
-        setAccessToken(accessToken);
-
-        // Store refresh token if available
-        if (refreshToken) {
-          localStorage.setItem('voiceDraft-refresh-token', refreshToken);
-        }
+        setAccessToken(session.access_token);
 
         // Redirect to home
         setTimeout(() => {
@@ -66,7 +111,7 @@ export default function AuthCallbackPage() {
     };
 
     processCallback();
-  }, [searchParams, router, setUser, setAccessToken]);
+  }, [router, setUser, setAccessToken]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-neutral-50 dark:bg-neutral-950">

@@ -9,7 +9,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unsupported provider' }, { status: 400 });
     }
 
-    const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`;
+    // Get the origin for proper redirect
+    const origin = req.headers.get('origin') ||
+                   req.headers.get('referer') ||
+                   process.env.NEXT_PUBLIC_APP_URL ||
+                   'http://localhost:3000';
+
+    // Supabase will redirect to our callback after OAuth
+    const redirectTo = new URL('/auth/callback', origin).toString();
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -19,6 +26,7 @@ export async function POST(req: NextRequest) {
           access_type: 'offline',
           prompt: 'consent',
         },
+        skipBrowserRedirect: false,
       },
     });
 
@@ -27,6 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // Return the URL - the client will handle the redirect
     return NextResponse.json({ url: data.url });
   } catch (error) {
     console.error('OAuth URL error:', error);
