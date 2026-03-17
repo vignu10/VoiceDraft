@@ -405,6 +405,26 @@ export default function DraftEditorPage() {
   const wordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
   const readingTime = Math.ceil(wordCount / 200);
 
+  // Strip the title from content for preview (same logic as blog post page)
+  const getPreviewContent = (markdownContent: string, postTitle: string) => {
+    if (!markdownContent || !postTitle) return markdownContent;
+
+    const titleVariants = [
+      `# ${postTitle}`,
+      `# ${postTitle.replace(/[#*_\[\]]/g, '\\$&')}`,
+    ];
+
+    let cleanedContent = markdownContent;
+    for (const variant of titleVariants) {
+      const regex = new RegExp(`^${variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n`, 'im');
+      cleanedContent = cleanedContent.replace(regex, '');
+    }
+
+    return cleanedContent.trim();
+  };
+
+  const previewContent = getPreviewContent(content, title);
+
   // Handle scroll for content gate (preview panel)
   const handlePreviewScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
@@ -703,7 +723,7 @@ export default function DraftEditorPage() {
 
                 {/* Blog content */}
                 <div className="px-6 lg:px-8 py-8">
-                  <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
+                  <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
                 </div>
               </article>
             </div>
@@ -816,7 +836,7 @@ export default function DraftEditorPage() {
 
                 {/* Blog content */}
                 <div className="px-4 sm:px-6 py-6">
-                  <MarkdownRenderer content={content || '*Start writing to see your preview here...'} />
+                  <MarkdownRenderer content={previewContent || '*Start writing to see your preview here...'} />
                 </div>
               </article>
             </div>
