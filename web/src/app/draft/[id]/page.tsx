@@ -741,7 +741,7 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none"
+                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
@@ -858,7 +858,7 @@ export default function DraftEditorPage() {
                   placeholder="Start writing your post..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none"
+                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
