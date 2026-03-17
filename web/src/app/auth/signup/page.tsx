@@ -161,8 +161,8 @@ export default function SignUpPage() {
             Create account
           </Button>
 
-          {/* OAuth */}
-          <div className="relative pt-2">
+          {/* OAuth - Hidden for now */}
+          {/* <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-neutral-300 dark:border-neutral-700" />
             </div>
@@ -202,7 +202,7 @@ export default function SignUpPage() {
             </svg>
             <span className="hidden sm:inline">Sign up with Google</span>
             <span className="sm:hidden">Google</span>
-          </Button>
+          </Button> */}
 
           {/* Sign in link */}
           <p className="text-center text-sm text-neutral-600 dark:text-neutral-400 pt-2">
