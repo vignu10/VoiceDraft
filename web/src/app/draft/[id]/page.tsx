@@ -98,13 +98,17 @@ export default function DraftEditorPage() {
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
-      // Small delay to ensure DOM is ready after mode switch
-      setTimeout(() => {
-        // Reset height to auto to get the correct scrollHeight
-        textarea.style.height = 'auto';
-        // Set height to scrollHeight to show all content
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }, 0);
+      // Calculate available height (viewport minus header and padding)
+      const viewportHeight = window.innerHeight;
+      const headerHeight = 140; // Approximate header height
+      const availableHeight = viewportHeight - headerHeight;
+
+      // Reset to get scrollHeight
+      textarea.style.height = 'auto';
+
+      // Use the greater of content height or available height
+      const contentHeight = textarea.scrollHeight;
+      textarea.style.height = `${Math.max(contentHeight, availableHeight)}px`;
     }
   }, [content, mobileViewMode]);
 
@@ -702,7 +706,7 @@ export default function DraftEditorPage() {
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
-                  style={{ minHeight: '200px', resize: 'none', height: 'auto' }}
+                  style={{ resize: 'none' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
@@ -818,7 +822,7 @@ export default function DraftEditorPage() {
                   showCharacterCount={false}
                   aria-label="Draft content"
                   ref={textareaRef}
-                  style={{ minHeight: '200px', resize: 'none', height: 'auto' }}
+                  style={{ resize: 'none' }}
                 />
                 <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
                   <span>Markdown</span>
