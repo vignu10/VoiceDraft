@@ -112,12 +112,11 @@ export default function DraftEditorPage() {
         availableHeight = viewportHeight - 180;
       }
 
-      // Reset to get scrollHeight
-      textarea.style.height = 'auto';
+      // Get content height
       const contentHeight = textarea.scrollHeight;
 
-      // Use the greater of content height or available height
-      const finalHeight = Math.max(contentHeight, availableHeight);
+      // Always use at least availableHeight, grow if content is longer
+      const finalHeight = Math.max(availableHeight, contentHeight);
       textarea.style.height = `${finalHeight}px`;
     }
   }, []);
