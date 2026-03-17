@@ -486,7 +486,7 @@ export default function DraftEditorPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen pb-16 lg:pb-0 bg-neutral-50 dark:bg-neutral-950">
       {/* Error banner */}
       {error && saveStatus === 'error' && (
         <div className="bg-error-500/10 border-b border-error-500/20 px-4 py-3 bg-frosted" role="alert">

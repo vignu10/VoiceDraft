@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
   if (!isConsent) {
     return (
       <WithBottomNav>
-        <div className="min-h-screen">
+        <div className="min-h-screen pb-16 lg:pb-0">
           <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-16 lg:pb-0">
         {/* Header */}
         <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

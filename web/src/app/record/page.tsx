@@ -6,9 +6,7 @@ import { WaveformVisualizer } from '@/components/recording/WaveformVisualizer';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useAuthStore } from '@/stores/auth-store';
-import { useGuestStore } from '@/stores/guest-store';
 import { useToast } from '@/components/providers/ToastProvider';
-import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api-client';
 import { WithBottomNav } from '@/components/layout/BottomNav';
 import {
@@ -29,7 +27,6 @@ import {
   Check,
   ArrowRight,
   Sparkles,
-  Search,
   Briefcase,
   MessageSquare,
   Zap,
@@ -65,13 +62,11 @@ const LENGTHS: { value: Length; icon: typeof Zap; label: string; words: string; 
 
 export default function RecordPage() {
   const router = useRouter();
-  const { accessToken, isAuthenticated, validateSession, checkSessionOnMount } = useAuthStore();
-  const { addGuestDraft } = useGuestStore();
+  const { accessToken, isAuthenticated, validateSession } = useAuthStore();
 
   // Session validation state
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
-  const [useGuestMode, setUseGuestMode] = useState(false);
 
   // Check session on mount - BEFORE allowing any recording
   useEffect(() => {
@@ -92,8 +87,7 @@ export default function RecordPage() {
           return;
         }
       } else if (!accessToken && !isAuthenticated) {
-        // No token - user can choose to sign in or use guest mode
-        setUseGuestMode(true);
+        // No token - user can continue with guest mode
       }
     };
 
@@ -460,7 +454,7 @@ export default function RecordPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col">
+      <div className="min-h-screen pb-16 lg:pb-0 bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 flex flex-col">
       {/* Header - compact */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-frosted backdrop-blur-sm border-b border-neutral-200/50 dark:border-neutral-800/50">
         <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-start justify-between">

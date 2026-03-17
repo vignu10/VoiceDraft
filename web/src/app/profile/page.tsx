@@ -160,7 +160,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <WithBottomNav>
-        <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+        <div className="min-h-screen pb-16 lg:pb-0 bg-neutral-50 dark:bg-neutral-950">
           <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
               <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -202,7 +202,7 @@ export default function ProfilePage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="min-h-screen pb-16 lg:pb-0 bg-neutral-50 dark:bg-neutral-950">
         {/* Header */}
         <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

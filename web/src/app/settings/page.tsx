@@ -194,7 +194,7 @@ export default function SettingsPage() {
 
   return (
     <WithBottomNav>
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-16 lg:pb-0">
         {/* Header */}
         <header className="bg-frosted border-b border-neutral-200/50 dark:border-neutral-800/50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
