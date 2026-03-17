@@ -326,6 +326,47 @@ export default function DraftEditorPage() {
         const updated = await response.json();
         setDraft(updated);
         setPublishLoading('success');
+
+        // Show success dialog with published link
+        const publishedUrl = `${window.location.origin}/${draft.journal?.url_prefix || 'blog'}/${draft.slug}`;
+
+        await showDialog({
+          title: 'Published Successfully!',
+          message: `Your blog "${draft.title || 'Untitled Draft'}" is now live.`,
+          variant: 'success',
+          confirmText: 'View Blog',
+          cancelText: 'Close',
+          extraContent: (
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+                  Your blog is now visible to everyone. Here's the link:
+                </p>
+                <div className="flex items-center gap-2 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+                  <input
+                    type="text"
+                    readOnly
+                    value={publishedUrl}
+                    className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-neutral-100 outline-none"
+                    onClick={(e) => (e.currentTarget as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(publishedUrl);
+                    }}
+                    className="text-primary-600 dark:text-primary-400 text-sm font-medium hover:underline"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          ),
+          onConfirm: () => {
+            window.open(publishedUrl, '_blank');
+          },
+        });
+
         // Reset to idle after showing success state
         setTimeout(() => setPublishLoading('idle'), 2000);
       } else if (response.status === 403) {
