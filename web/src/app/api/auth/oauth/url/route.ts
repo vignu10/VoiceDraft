@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the origin for proper redirect
-    const origin = req.headers.get('origin') ||
-                   req.headers.get('referer') ||
+    // Use nextUrl.origin (most reliable in production), fallback to headers, then env var
+    const origin = req.nextUrl.origin ||
                    process.env.NEXT_PUBLIC_APP_URL ||
                    'http://localhost:3000';
 
