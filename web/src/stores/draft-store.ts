@@ -194,7 +194,25 @@ export const useDraftStore = create<DraftState>()((set, get) => ({
   },
 
   publishDraft: async (id) => {
-    await get().updateDraft(id, { status: 'published' });
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post(`/api/posts/${id}/publish`, {});
+      const publishedPost = await response.json();
+
+      // Update local state to reflect published status
+      set((state) => ({
+        drafts: state.drafts.map((d) =>
+          d.id === id ? { ...d, status: 'published' as PostStatus, published_at: publishedPost.published_at } : d
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to publish draft',
+        isLoading: false,
+      });
+      throw error;
+    }
   },
 
   unpublishDraft: async (id) => {

@@ -321,7 +321,7 @@ export default function DraftEditorPage() {
     setPublishLoading('loading');
 
     try {
-      const response = await api.patch(`/api/drafts/${id}`, { status: 'published' });
+      const response = await api.post(`/api/posts/${id}/publish`, {});
 
       if (response.ok) {
         const updated = await response.json();
