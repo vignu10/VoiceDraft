@@ -13,13 +13,16 @@ config.watchFolders = [
   __dirname
 ];
 
-// Add resolver for @/ imports
+// Add resolver for @/ imports - fix for EAS builds
+const { resolver: defaultResolver } = config;
 config.resolver = {
-  ...config.resolver,
+  ...defaultResolver,
   alias: {
+    ...(defaultResolver.alias || {}),
     '@': path.resolve(__dirname),
   },
-  assetExts: [...config.resolver.assetExts, 'svg'],
+  assetExts: [...defaultResolver.assetExts, 'svg'],
+  sourceExts: [...defaultResolver.sourceExts, 'mjs', 'cjs'],
 };
 
 module.exports = config;

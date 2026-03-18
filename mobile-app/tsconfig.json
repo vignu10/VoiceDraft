@@ -5,7 +5,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*", "./src/*", "./app/*", "./components/*", "./hooks/*", "./services/*", "./stores/*", "./utils/*"]
     },
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
