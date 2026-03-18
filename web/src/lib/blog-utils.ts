@@ -1,11 +1,27 @@
 /**
  * Format date for display
  */
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string | null | undefined): string {
+  // Handle null/undefined
+  if (!dateString) {
+    return 'Recently';
+  }
+
   const date = new Date(dateString);
+
+  // Check for invalid date
+  if (isNaN(date.getTime())) {
+    return 'Recently';
+  }
+
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Handle future dates or dates before 1970 (Unix epoch)
+  if (diffDays < 0 || date.getFullYear() < 1970) {
+    return 'Recently';
+  }
 
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';

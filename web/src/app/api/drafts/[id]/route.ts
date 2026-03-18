@@ -95,6 +95,11 @@ export async function PATCH(
         .replace(/^-+|-+$/g, '') + '-' + Date.now();
     }
 
+    // Set published_at when status changes to published
+    if (body.status === 'published' && draft.status !== 'published' && !draft.published_at) {
+      updates.published_at = new Date().toISOString();
+    }
+
     const { data: updated, error } = await supabaseAdmin
       .from('posts')
       .update(updates)
