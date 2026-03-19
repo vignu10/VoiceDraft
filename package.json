@@ -1,5 +1,5 @@
 {
-  "name": "voicedraft-monorepo",
+  "name": "voicescribe-monorepo",
   "version": "1.0.0",
   "scripts": {
     "dev:web": "cd web && npm run dev",
