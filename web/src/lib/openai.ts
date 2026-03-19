@@ -29,6 +29,40 @@ export async function transcribeAudio(
   };
 }
 
+// Content moderation check using OpenAI's Moderation API
+async function checkContentSafety(text: string): Promise<{ safe: boolean; reason?: string }> {
+  try {
+    const moderation = await openai.moderations.create({
+      input: text,
+    });
+
+    const result = moderation.results[0];
+    const flaggedCategories = result.categories;
+
+    // Check flagged categories and build helpful response
+    const flaggedReasons: string[] = [];
+    if (flaggedCategories.sexual) flaggedReasons.push('sexual content');
+    if (flaggedCategories.hate) flaggedReasons.push('hate speech');
+    if (flaggedCategories.harassment) flaggedReasons.push('harassment');
+    if (flaggedCategories['self-harm']) flaggedReasons.push('self-harm content');
+    if (flaggedCategories.violence) flaggedReasons.push('violence');
+    if (flaggedCategories['sexual/minors']) flaggedReasons.push('inappropriate content involving minors');
+
+    if (flaggedReasons.length > 0) {
+      return {
+        safe: false,
+        reason: `Content contains ${flaggedReasons.join(', ')}. Please provide appropriate content for a general audience.`,
+      };
+    }
+
+    return { safe: true };
+  } catch (error) {
+    // If moderation API fails, log but allow content to proceed
+    console.error('Moderation check failed:', error);
+    return { safe: true };
+  }
+}
+
 export async function generateBlogPost(options: {
   transcript: string;
   target_keyword?: string;
@@ -41,6 +75,12 @@ export async function generateBlogPost(options: {
   wordCount: number;
 }> {
   const { transcript, target_keyword, tone, target_length } = options;
+
+  // Check transcript content safety before processing
+  const safetyCheck = await checkContentSafety(transcript);
+  if (!safetyCheck.safe) {
+    throw new Error(safetyCheck.reason || 'Content does not meet our safety guidelines.');
+  }
 
   // Validate transcript has meaningful content
   const trimmedTranscript = transcript.trim();
@@ -55,6 +95,15 @@ export async function generateBlogPost(options: {
   }
 
   const systemPrompt = `You are an expert SEO blog writer and content strategist. Your task is to transform a voice transcript into a polished, engaging, SEO-optimized blog post.
+
+CONTENT SAFETY GUIDELINES (STRICT):
+- DO NOT generate content containing profanity, obscenity, or foul language
+- DO NOT create content about sexual topics, nudity, or explicit material
+- DO NOT produce content involving hate speech, discrimination, or harassment
+- DO NOT write about self-harm, violence, or illegal activities
+- If the transcript contains inappropriate content, politely refuse and suggest the user provide different content
+- All content must be suitable for a general audience including children
+- Keep language professional, respectful, and family-friendly
 
 IMPORTANT INSTRUCTIONS:
 
@@ -122,8 +171,28 @@ export async function regenerateSection(
   currentContent: string,
   instruction?: string
 ): Promise<{ heading: string; content: string }> {
+  // Check instruction and content safety before processing
+  if (instruction) {
+    const instructionSafetyCheck = await checkContentSafety(instruction);
+    if (!instructionSafetyCheck.safe) {
+      throw new Error(instructionSafetyCheck.reason || 'Instruction does not meet our safety guidelines.');
+    }
+  }
+
+  const contentSafetyCheck = await checkContentSafety(currentContent);
+  if (!contentSafetyCheck.safe) {
+    throw new Error(contentSafetyCheck.reason || 'Content does not meet our safety guidelines.');
+  }
+
   const systemPrompt = `You are an expert SEO blog writer. Rewrite the following section based on the instruction provided.
 ${instruction ? `Instruction: ${instruction}` : 'Improve the section while maintaining the same topic and style.'}
+
+CONTENT SAFETY (STRICT):
+- DO NOT use profanity, obscenity, or foul language
+- DO NOT create content about sexual topics, nudity, or explicit material
+- DO NOT produce hate speech, discrimination, or harassment
+- All content must be suitable for a general audience
+- Keep language professional and family-friendly
 
 Return your response as JSON with this structure:
 {
