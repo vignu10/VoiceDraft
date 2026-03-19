@@ -54,14 +54,13 @@ async function getJournalData(urlPrefix: string) {
       return null;
     }
 
-    // Fetch initial posts - must have BOTH status='published' AND published_at IS NOT NULL
+    // Fetch initial posts - accept posts where status='published' (backfill published_at if null)
     const { data: posts, error: postsError, count } = await supabase
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('journal_id', journal.id)
       .eq('status', 'published')
-      .not('published_at', 'is', null)
-      .order('published_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(12);
 
     if (postsError) {

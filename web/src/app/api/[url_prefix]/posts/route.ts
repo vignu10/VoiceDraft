@@ -50,30 +50,29 @@ export async function GET(
     }
 
     // Build query with filters
-    // Must have BOTH status='published' AND published_at IS NOT NULL
+    // Accept posts where status='published' (backfill published_at if null)
     let query = supabase
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('journal_id', journal.id)
-      .eq('status', 'published')
-      .not('published_at', 'is', null);
+      .eq('status', 'published');
 
     // Add search filter if provided
     if (search) {
       query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
     }
 
-    // Add sorting
+    // Add sorting - use created_at since we're accepting posts with null published_at
     switch (sort) {
       case 'oldest':
-        query = query.order('published_at', { ascending: true });
+        query = query.order('created_at', { ascending: true });
         break;
       case 'title':
         query = query.order('title', { ascending: true });
         break;
       case 'newest':
       default:
-        query = query.order('published_at', { ascending: false });
+        query = query.order('created_at', { ascending: false });
         break;
     }
 

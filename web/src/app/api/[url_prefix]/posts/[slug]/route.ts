@@ -22,14 +22,13 @@ export async function GET(
     }
 
     // Then get the post by slug within that journal
-    // Must have BOTH status='published' AND published_at IS NOT NULL
+    // Accept posts where status='published' (backfill published_at if null)
     const { data: post, error } = await supabase
       .from('posts')
       .select('*')
       .eq('journal_id', journal.id)
       .eq('slug', params.slug)
       .eq('status', 'published')
-      .not('published_at', 'is', null)
       .single();
 
     if (error || !post) {

@@ -125,13 +125,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch recent published posts across all blogs with journal info
-    // Must have BOTH status='published' AND published_at IS NOT NULL
+    // Accept posts where status='published' (backfill published_at if null)
     const { data: posts, error: postsError, count: postsCount } = await supabase
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('status', 'published')
-      .not('published_at', 'is', null)
-      .order('published_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .range(postsOffset, postsOffset + postsLimit - 1);
 
     if (postsError) {
