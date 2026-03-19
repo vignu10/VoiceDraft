@@ -2,17 +2,17 @@ const PACKAGE = require("./package.json");
 
 export default {
   expo: {
-    name: "VoiceDraft",
-    slug: "voicedraft",
+    name: "VoiceScribe",
+    slug: "voicescribe",
     version: PACKAGE.version,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "voicedraft",
+    scheme: "voicescribe",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: " ",
+      bundleIdentifier: "com.voicescribe.app",
     },
     android: {
       adaptiveIcon: {
@@ -21,7 +21,7 @@ export default {
         backgroundImage: "./assets/images/android-icon-background.png",
         monochromeImage: "./assets/images/android-icon-monochrome.png",
       },
-      package: "com.voined.vicedraft",
+      package: "com.voicescribe.app",
       versionCode: 5,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
