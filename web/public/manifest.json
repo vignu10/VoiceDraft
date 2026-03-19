@@ -1,6 +1,6 @@
 {
-  "name": "VoiceDraft",
-  "short_name": "VoiceDraft",
+  "name": "VoiceScribe",
+  "short_name": "VoiceScribe",
   "description": "Transform your voice into organized drafts instantly",
   "start_url": "/",
   "display": "standalone",
