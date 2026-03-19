@@ -41,7 +41,7 @@ export default function RecordTab() {
           <View style={styles.content}>
           <FadeIn>
             <ThemedText style={[styles.title, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
-              VoiceDraft
+              VoiceScribe
             </ThemedText>
           </FadeIn>
 

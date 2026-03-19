@@ -520,7 +520,7 @@ export default function RecordingScreen() {
       if (error instanceof PermissionError) {
         await showDialog({
           title: "Microphone Access Required",
-          message: "To record audio, you need to grant microphone permission to VoiceDraft.\n\nTo enable:\n\n1. Open your device Settings\n2. Find VoiceDraft in your apps\n3. Enable Microphone permission\n4. Return to the app and tap the microphone button",
+          message: "To record audio, you need to grant microphone permission to VoiceScribe.\n\nTo enable:\n\n1. Open your device Settings\n2. Find VoiceScribe in your apps\n3. Enable Microphone permission\n4. Return to the app and tap the microphone button",
           confirmText: "Open Settings",
           cancelText: "Got it",
           variant: "warning",

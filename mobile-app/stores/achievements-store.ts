@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Achievements Store
+ * VoiceScribe Achievements Store
  * Tracks user milestones and achievements for delightful moments
  */
 
@@ -201,7 +201,7 @@ export const useAchievementsStore = create<AchievementsState>()(
       },
     }),
     {
-      name: 'voicedraft-achievements',
+      name: 'voicescribe-achievements',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

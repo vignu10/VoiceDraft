@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Celebration Component
+ * VoiceScribe Celebration Component
  * Lightweight, accessible celebration animation for achievements
  */
 

@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Welcome Tooltip
+ * VoiceScribe Welcome Tooltip
  * Simple, non-intrusive onboarding hint
  */
 

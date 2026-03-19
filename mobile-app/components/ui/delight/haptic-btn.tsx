@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Haptic Button
+ * VoiceScribe Haptic Button
  * Adds satisfying haptic feedback to press actions
  * Respects reduced motion preferences
  */

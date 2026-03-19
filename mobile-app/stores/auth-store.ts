@@ -183,7 +183,7 @@ export const useAuthStore = create<AuthStateExtended>()(
       },
     }),
     {
-      name: 'voicedraft-auth',
+      name: 'voicescribe-auth',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         // Persist only these fields

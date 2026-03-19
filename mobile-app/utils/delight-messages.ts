@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Delight Messages
+ * VoiceScribe Delight Messages
  * Warm, encouraging, slightly playful copy that aligns with the
  * "Arc Browser-inspired: soft pastels, playful gradients, unique personality" brand
  */
@@ -112,7 +112,7 @@ export const successMessages = {
     'Draft saved. Keep it up!',
   ],
   draftCreated: [
-    'First draft created! Welcome to VoiceDraft',
+    'First draft created! Welcome to VoiceScribe',
     'Your first draft. The start of something great.',
     'Welcome aboard! First capture complete.',
     'Beginnings are exciting. Great start!',
@@ -347,7 +347,7 @@ export function getEditorEncouragement(wordCount: number): string | null {
 // ============================================
 export const onboardingMessages = {
   welcome: {
-    title: 'Welcome to VoiceDraft',
+    title: 'Welcome to VoiceScribe',
     subtitle: 'Your voice, amplified ✨',
   },
   firstRecording: {
@@ -508,7 +508,7 @@ export const warmErrorMessages = {
   permissionDenied: {
     title: 'We need to hear you',
     messages: [
-      'VoiceDraft needs microphone access to record your voice.',
+      'VoiceScribe needs microphone access to record your voice.',
       'Please enable microphone access in settings.',
       'We can\'t record without your permission. Check settings!',
     ],

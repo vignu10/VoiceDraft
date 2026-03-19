@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Delight Toast
+ * VoiceScribe Delight Toast
  * Subtle, warm feedback for micro-interactions
  * Brand-aligned: quick (< 1 second), refined, accessible
  */

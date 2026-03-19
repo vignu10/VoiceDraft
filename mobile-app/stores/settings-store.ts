@@ -42,7 +42,7 @@ export const useSettingsStore = create<SettingsState>()(
       resetSettings: () => set(defaultSettings),
     }),
     {
-      name: 'voicedraft-settings',
+      name: 'voicescribe-settings',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

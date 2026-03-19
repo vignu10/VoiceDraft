@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Design System
+ * VoiceScribe Design System
  * Arc Browser-inspired: soft pastels, playful gradients, unique personality
  * Warm, cozy, refined - not generic tech
  */

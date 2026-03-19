@@ -180,7 +180,7 @@ export function FirstWelcome({ visible, onComplete }: FirstWelcomeProps) {
           {/* Title */}
           <Animated.View style={titleStyle}>
             <ThemedText style={[styles.title, { color: colors.text }]}>
-              Welcome to VoiceDraft
+              Welcome to VoiceScribe
             </ThemedText>
           </Animated.View>
 

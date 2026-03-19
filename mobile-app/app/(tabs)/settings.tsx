@@ -146,7 +146,7 @@ export default function SettingsTab() {
                   </LinearGradient>
                 </View>
                 <ThemedText style={[styles.subtitle, { color: colors.textSecondary }]}>
-                  Make VoiceDraft yours
+                  Make VoiceScribe yours
                 </ThemedText>
               </View>
             </SlideIn>
@@ -446,7 +446,7 @@ export default function SettingsTab() {
                     <Ionicons name="mic" size={32} color={colors.textInverse} />
                   </View>
                   <ThemedText style={[styles.appName, { color: colors.text }]}>
-                    VoiceDraft
+                    VoiceScribe
                   </ThemedText>
                   <ThemedText style={[styles.appTagline, { color: colors.textSecondary }]}>
                     Voice to Blog in One Tap

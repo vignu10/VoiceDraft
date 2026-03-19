@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Animation System
+ * VoiceScribe Animation System
  * Consistent, smooth animations throughout the app
  */
 

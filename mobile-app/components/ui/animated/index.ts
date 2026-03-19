@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Animated UI Components
+ * VoiceScribe Animated UI Components
  * SaaS-level components with smooth animations
  */
 

@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Processing Dots
+ * VoiceScribe Processing Dots
  * A delightful animated loading indicator
  * Brand-aligned: soft, warm, playful
  */

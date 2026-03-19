@@ -1,5 +1,5 @@
 /**
- * VoiceDraft Theme Configuration
+ * VoiceScribe Theme Configuration
  * Comprehensive color system for light and dark modes
  */
 
