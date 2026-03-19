@@ -2,7 +2,7 @@
 
 ## Overview
 
-VoiceDraft logo components for web and mobile apps.
+VoiceScribe logo components for web and mobile apps.
 
 ## Components
 

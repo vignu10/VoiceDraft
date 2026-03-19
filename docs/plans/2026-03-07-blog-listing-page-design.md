@@ -8,13 +8,13 @@
 
 ## Overview
 
-Design a blog listing page for the VoiceDraft web application that displays published blog posts from a user's journal. The page will use Next.js App Router with Server Components for optimal performance and SEO.
+Design a blog listing page for the VoiceScribe web application that displays published blog posts from a user's journal. The page will use Next.js App Router with Server Components for optimal performance and SEO.
 
 ---
 
 ## Problem Statement
 
-Users can create and publish blog posts from the VoiceDraft mobile app, but there is no web UI to display these published blogs. The API infrastructure exists, but frontend pages need to be built.
+Users can create and publish blog posts from the VoiceScribe mobile app, but there is no web UI to display these published blogs. The API infrastructure exists, but frontend pages need to be built.
 
 ---
 

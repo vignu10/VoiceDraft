@@ -1,4 +1,4 @@
-# VoiceDraft PWA Implementation Plan
+# VoiceScribe PWA Implementation Plan
 
 **Date:** 2026-03-12
 **Status:** Ready to Implement
@@ -8,7 +8,7 @@
 
 ## Context
 
-The VoiceDraft web app currently has:
+The VoiceScribe web app currently has:
 - **Violet-based color scheme** (electric violet using OKLCH)
 - **Blog discovery and reading** functionality
 - **Good component foundation** with semantic HTML and Tailwind CSS
@@ -72,8 +72,8 @@ module.exports = withPWA({
 **File: `web/public/manifest.json`**
 ```json
 {
-  "name": "VoiceDraft",
-  "short_name": "VoiceDraft",
+  "name": "VoiceScribe",
+  "short_name": "VoiceScribe",
   "description": "Turn your voice into blog posts with AI",
   "start_url": "/",
   "display": "standalone",

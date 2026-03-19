@@ -5,7 +5,7 @@
 
 ## Overview
 
-Add the VoiceDraft logo (from `assets/logo&icons/voicedraft-logo-midnight.svg`) to both mobile and web apps with split components (icon + text) and delightful animations/color effects.
+Add the VoiceScribe logo (from `assets/logo&icons/voicescribe-logo-midnight.svg`) to both mobile and web apps with split components (icon + text) and delightful animations/color effects.
 
 ## Component Structure
 
@@ -52,7 +52,7 @@ Add the VoiceDraft logo (from `assets/logo&icons/voicedraft-logo-midnight.svg`) 
 
 ### Design
 - Add to left side of navigation bar
-- Logo icon (32x32) + "VoiceDraft" wordmark
+- Logo icon (32x32) + "VoiceScribe" wordmark
 - Current text navigation becomes secondary
 
 ### Delight Effects
@@ -65,7 +65,7 @@ Add the VoiceDraft logo (from `assets/logo&icons/voicedraft-logo-midnight.svg`) 
 
 ### Design
 - Large animated logo icon (192x192) as hero image
-- "VoiceDraft" wordmark as main heading
+- "VoiceScribe" wordmark as main heading
 - Tagline below
 
 ### Delight Effects
@@ -101,7 +101,7 @@ pulse: scale 1 → 1.05 → 1, duration: 2000ms, repeat: infinite
 
 ## Implementation Notes
 
-1. **SVG Asset**: Use the existing `/assets/logo&icons/voicedraft-logo-midnight.svg` as reference for colors and proportions
+1. **SVG Asset**: Use the existing `/assets/logo&icons/voicescribe-logo-midnight.svg` as reference for colors and proportions
 
 2. **Cross-platform compatibility**:
    - Mobile: React Native Animated API

@@ -1,6 +1,6 @@
-# VoiceDraft UI Styling Skill
+# VoiceScribe UI Styling Skill
 
-This skill provides consistent SaaS-level styling with an **Arc Browser-inspired** soft pastel theme for the VoiceDraft React Native application.
+This skill provides consistent SaaS-level styling with an **Arc Browser-inspired** soft pastel theme for the VoiceScribe React Native application.
 
 ## Color Theme Philosophy
 

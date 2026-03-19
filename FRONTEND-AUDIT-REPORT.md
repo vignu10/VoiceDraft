@@ -1,4 +1,4 @@
-# VoiceDraft Web Frontend Audit Report
+# VoiceScribe Web Frontend Audit Report
 
 **Date**: 2026-03-08
 **Auditor**: Claude (impeccable:audit)
@@ -89,7 +89,7 @@ className="transition-shadow hover:shadow-lg"
 // Current
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 ```
-- **Recommendation**: Choose a distinctive font pairing (display + body) that matches VoiceDraft's brand
+- **Recommendation**: Choose a distinctive font pairing (display + body) that matches VoiceScribe's brand
 - **Suggested command**: `/frontend-design` for font rebranding
 
 ---
@@ -383,7 +383,7 @@ hover:-translate-y-0.5 will-change-transform
 
 ## Closing Summary
 
-VoiceDraft's web frontend is **functional but forgettable**. It exhibits multiple signs of AI-generated design that will make users immediately think "an AI made this." The application lacks brand identity and has several accessibility/performance issues that should be addressed before production.
+VoiceScribe's web frontend is **functional but forgettable**. It exhibits multiple signs of AI-generated design that will make users immediately think "an AI made this." The application lacks brand identity and has several accessibility/performance issues that should be addressed before production.
 
 **The good news**: All issues are fixable. The codebase is well-structured with TypeScript, proper semantic HTML, and good Next.js patterns. With focused effort on the recommended commands, this can be transformed into a distinctive, accessible, high-performance interface.
 

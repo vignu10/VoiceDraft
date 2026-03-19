@@ -8,7 +8,7 @@
 
 ## Overview
 
-Design a publish modal for the VoiceDraft mobile app that allows users to publish their blog posts directly from the draft editor with preview, confirmation, and feedback.
+Design a publish modal for the VoiceScribe mobile app that allows users to publish their blog posts directly from the draft editor with preview, confirmation, and feedback.
 
 ---
 

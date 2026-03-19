@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add a publish modal to the VoiceDraft mobile app that allows users to publish blog posts directly from the draft editor with URL preview, warnings, and success feedback.
+**Goal:** Add a publish modal to the VoiceScribe mobile app that allows users to publish blog posts directly from the draft editor with URL preview, warnings, and success feedback.
 
 **Architecture:** React Native modal component with full-screen presentation, integrated with existing publish API endpoint, using custom toast component for success feedback.
 

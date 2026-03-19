@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add the VoiceDraft logo (icon + wordmark) to mobile splash screen and web navigation/home page with delightful animations
+**Goal:** Add the VoiceScribe logo (icon + wordmark) to mobile splash screen and web navigation/home page with delightful animations
 
 **Architecture:** Create reusable LogoIcon and LogoWordmark components for both platforms, apply animations using platform-specific APIs (React Native Animated for mobile, CSS/Tailwind for web)
 
@@ -13,20 +13,20 @@
 ## Task 1: Copy Logo SVG Assets to Web Public Directory
 
 **Files:**
-- Copy: `assets/logo&icons/voicedraft-logo-midnight.svg` → `web/public/logo.svg`
-- Copy: `assets/logo&icons/voicedraft-icon-midnight.svg` → `web/public/icon.svg`
+- Copy: `assets/logo&icons/voicescribe-logo-midnight.svg` → `web/public/logo.svg`
+- Copy: `assets/logo&icons/voicescribe-icon-midnight.svg` → `web/public/icon.svg`
 
 **Step 1: Copy the logo files**
 
 ```bash
-cp /home/matrix/VoiceDraft/assets/logo\&icons/voicedraft-logo-midnight.svg /home/matrix/VoiceDraft/web/public/logo.svg
-cp /home/matrix/VoiceDraft/assets/logo\&icons/voicedraft-icon-midnight.svg /home/matrix/VoiceDraft/web/public/icon.svg
+cp /home/matrix/VoiceScribe/assets/logo\&icons/voicescribe-logo-midnight.svg /home/matrix/VoiceScribe/web/public/logo.svg
+cp /home/matrix/VoiceScribe/assets/logo\&icons/voicescribe-icon-midnight.svg /home/matrix/VoiceScribe/web/public/icon.svg
 ```
 
 **Step 2: Verify files copied**
 
 ```bash
-ls -la /home/matrix/VoiceDraft/web/public/*.svg
+ls -la /home/matrix/VoiceScribe/web/public/*.svg
 ```
 
 Expected: Should see `logo.svg` and `icon.svg`
@@ -35,7 +35,7 @@ Expected: Should see `logo.svg` and `icon.svg`
 
 ```bash
 git add web/public/logo.svg web/public/icon.svg
-git commit -m "feat: add VoiceDraft logo SVG assets to web public directory"
+git commit -m "feat: add VoiceScribe logo SVG assets to web public directory"
 ```
 
 ---
@@ -43,18 +43,18 @@ git commit -m "feat: add VoiceDraft logo SVG assets to web public directory"
 ## Task 2: Copy Logo SVG Assets to Mobile Assets Directory
 
 **Files:**
-- Copy: `assets/logo&icons/voicedraft-icon-midnight.svg` → `mobile-app/assets/images/logo-icon.svg`
+- Copy: `assets/logo&icons/voicescribe-icon-midnight.svg` → `mobile-app/assets/images/logo-icon.svg`
 
 **Step 1: Copy the icon file to mobile assets**
 
 ```bash
-cp /home/matrix/VoiceDraft/assets/logo\&icons/voicedraft-icon-midnight.svg /home/matrix/VoiceDraft/mobile-app/assets/images/logo-icon.svg
+cp /home/matrix/VoiceScribe/assets/logo\&icons/voicescribe-icon-midnight.svg /home/matrix/VoiceScribe/mobile-app/assets/images/logo-icon.svg
 ```
 
 **Step 2: Verify file copied**
 
 ```bash
-ls -la /home/matrix/VoiceDraft/mobile-app/assets/images/logo-icon.svg
+ls -la /home/matrix/VoiceScribe/mobile-app/assets/images/logo-icon.svg
 ```
 
 Expected: Should see `logo-icon.svg`
@@ -63,7 +63,7 @@ Expected: Should see `logo-icon.svg`
 
 ```bash
 git add mobile-app/assets/images/logo-icon.svg
-git commit -m "feat: add VoiceDraft logo icon to mobile assets"
+git commit -m "feat: add VoiceScribe logo icon to mobile assets"
 ```
 
 ---
@@ -76,7 +76,7 @@ git commit -m "feat: add VoiceDraft logo icon to mobile assets"
 **Step 1: Create LogoIcon component directory**
 
 ```bash
-mkdir -p /home/matrix/VoiceDraft/web/src/components/logo
+mkdir -p /home/matrix/VoiceScribe/web/src/components/logo
 ```
 
 **Step 2: Create the LogoIcon component**
@@ -322,7 +322,7 @@ git commit -m "feat: add logo animation utilities (pulse-glow, float, fade-in-up
 **Step 1: Read current Navigation component**
 
 ```bash
-head -100 /home/matrix/VoiceDraft/web/src/components/layout/Navigation.tsx
+head -100 /home/matrix/VoiceScribe/web/src/components/layout/Navigation.tsx
 ```
 
 **Step 2: Import logo components and add to navigation**
@@ -358,7 +358,7 @@ git commit -m "feat: add logo to web navigation with hover scale effect"
 **Step 1: Read current home page**
 
 ```bash
-head -50 /home/matrix/VoiceDraft/web/src/app/page.tsx
+head -50 /home/matrix/VoiceScribe/web/src/app/page.tsx
 ```
 
 **Step 2: Add logo to hero section**
@@ -411,7 +411,7 @@ git commit -m "feat: add animated logo to home page hero section"
 **Step 1: Create logo component directory**
 
 ```bash
-mkdir -p /home/matrix/VoiceDraft/mobile-app/components/logo
+mkdir -p /home/matrix/VoiceScribe/mobile-app/components/logo
 ```
 
 **Step 2: Create the LogoIcon component**
@@ -764,7 +764,7 @@ git commit -m "feat: replace loading text with animated splash screen"
 **Step 1: Start web dev server**
 
 ```bash
-cd /home/matrix/VoiceDraft/web
+cd /home/matrix/VoiceScribe/web
 npm run dev
 ```
 
@@ -807,7 +807,7 @@ Open browser DevTools Console:
 **Step 1: Start mobile app**
 
 ```bash
-cd /home/matrix/VoiceDraft/mobile-app
+cd /home/matrix/VoiceScribe/mobile-app
 npx expo start
 ```
 
@@ -852,7 +852,7 @@ Look at terminal/console:
 
 ## Overview
 
-VoiceDraft logo components for web and mobile apps.
+VoiceScribe logo components for web and mobile apps.
 
 ## Components
 

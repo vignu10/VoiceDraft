@@ -1,22 +1,22 @@
 # VoiceScribe Rebrand Design Document
 
 **Date:** 2026-03-19
-**Project:** VoiceDraft → VoiceScribe Rebrand
+**Project:** VoiceScribe → VoiceScribe Rebrand
 
 ---
 
 ## Overview
 
-Complete rebrand of the VoiceDraft application to **VoiceScribe**. The rebrand maintains the existing visual theme, color scheme, and page layouts — only updating the app name and associated assets.
+Complete rebrand of the VoiceScribe application to **VoiceScribe**. The rebrand maintains the existing visual theme, color scheme, and page layouts — only updating the app name and associated assets.
 
 ## Changes Summary
 
 | Element | From | To |
 |---------|------|-----|
-| App name | VoiceDraft | VoiceScribe |
-| Package name | voicedraft-* | voicescribe-* |
-| Bundle ID | com.anonymous.voicedraft | com.voicescribe.app |
-| Logos | VoiceDraft logos | VoiceScribe logos (same style) |
+| App name | VoiceScribe | VoiceScribe |
+| Package name | voicescribe-* | voicescribe-* |
+| Bundle ID | com.anonymous.voicescribe | com.voicescribe.app |
+| Logos | VoiceScribe logos | VoiceScribe logos (same style) |
 | Colors/Theme | No change | Same |
 
 ## Scope
@@ -46,9 +46,9 @@ A coordinated, single-pass replacement across all files to ensure consistency an
 ### Step 1: Global Text Replacement
 
 Replace all occurrences of:
-- `voicedraft` → `voicescribe` (case-insensitive)
-- `VoiceDraft` → `VoiceScribe`
-- `com.anonymous.voicedraft` → `com.voicescribe.app`
+- `voicescribe` → `voicescribe` (case-insensitive)
+- `VoiceScribe` → `VoiceScribe`
+- `com.anonymous.voicescribe` → `com.voicescribe.app`
 
 ### Step 2: Update Package Names
 
@@ -141,7 +141,7 @@ Run both web and mobile locally to verify:
 - [ ] Web app starts correctly with new name
 - [ ] Mobile app builds with new bundle ID
 - [ ] All pages display "VoiceScribe" correctly
-- [ ] No remaining "VoiceDraft" references in UI
+- [ ] No remaining "VoiceScribe" references in UI
 - [ ] PWA manifest shows correct app name
 - [ ] Mobile app title bar shows "VoiceScribe"
 - [ ] Favicon/PWA icons load correctly

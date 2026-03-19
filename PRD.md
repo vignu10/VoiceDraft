@@ -1,7 +1,7 @@
 
 # Product Requirements Document
 
-# VoiceDraft
+# VoiceScribe
 ### Voice → Blog in One Tap
 
 **Mobile-First Voice-to-SEO Blog Application**
@@ -18,7 +18,7 @@
 
 | Field | Details |
 |-------|---------|
-| Product Name | VoiceDraft |
+| Product Name | VoiceScribe |
 | Version | 1.0 (MVP) |
 | Target Platforms | iOS, Android (React Native or Flutter) |
 | Backend | Serverless (Vercel/AWS Lambda) |
@@ -29,7 +29,7 @@
 
 ## 1. Executive Summary
 
-VoiceDraft is a mobile-first application that transforms quick voice recordings into publish-ready, SEO-optimized blog posts. Users record 2-5 minutes of audio, and VoiceDraft handles transcription, expansion, structuring, and SEO optimization—delivering a 1000-1500 word blog post ready for publishing.
+VoiceScribe is a mobile-first application that transforms quick voice recordings into publish-ready, SEO-optimized blog posts. Users record 2-5 minutes of audio, and VoiceScribe handles transcription, expansion, structuring, and SEO optimization—delivering a 1000-1500 word blog post ready for publishing.
 
 **The Core Promise**: Ramble for 5 minutes → Get a publish-ready SEO blog post.
 
@@ -48,7 +48,7 @@ VoiceDraft is a mobile-first application that transforms quick voice recordings 
 
 ### 2.2 Why Existing Solutions Fail
 
-| Solution Type | Why It Fails | VoiceDraft Difference |
+| Solution Type | Why It Fails | VoiceScribe Difference |
 |---------------|--------------|----------------------|
 | AudioPen/Voicenotes | Transcribe only, no SEO structure | Full blog output with SEO |
 | Outrank/Surfer | Text input required, desktop-focused | Voice input, mobile-first |
@@ -449,7 +449,7 @@ interface UsageLog {
 
 ```
 ┌─────────────────────────────────────┐
-│  VoiceDraft              [Profile]  │
+│  VoiceScribe              [Profile]  │
 ├─────────────────────────────────────┤
 │                                     │
 │                                     │
@@ -736,7 +736,7 @@ USER TRANSCRIPT:
               │                     │
     ┌─────────┴─────────┐    ┌─────┴─────┐
     │                   │    │           │
- AudioPen          Voicenotes    VoiceDraft
+ AudioPen          Voicenotes    VoiceScribe
  Letterly          (partial)    ← ONLY ONE
  TalkNotes                        WITH SEO
                                   + MOBILE

@@ -95,7 +95,7 @@ The root page fetches:
 - Retry button on error state
 
 **SEO metadata:**
-- Page title: "VoiceDraft - Discover Blogs & Stories"
+- Page title: "VoiceScribe - Discover Blogs & Stories"
 - Meta description: Platform description
 - Open Graph tags for sharing
 

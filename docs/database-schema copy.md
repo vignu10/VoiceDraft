@@ -1,8 +1,8 @@
-# VoiceDraft Database Schema (Supabase)
+# VoiceScribe Database Schema (Supabase)
 
 ## Overview
 
-Production-optimized PostgreSQL schema for VoiceDraft - a voice-to-blog application with Supabase OAuth authentication and Node.js/Express backend.
+Production-optimized PostgreSQL schema for VoiceScribe - a voice-to-blog application with Supabase OAuth authentication and Node.js/Express backend.
 
 **Core Tables: 3** - User profiles, Journals, Posts (all-in-one)
 
@@ -33,7 +33,7 @@ npm run db:migrate:run
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────┐
-│   VoiceDraft Mobile   │         │   Publishing Platform    │
+│   VoiceScribe Mobile   │         │   Publishing Platform    │
 │   (React Native)        │         │   (Web App)               │
 ├─────────────────────────┤         ├──────────────────────────┤
 │ • Supabase Auth OAuth   │         │ • Display published blogs │
@@ -414,7 +414,7 @@ CREATE POLICY "Published posts are public"
 
 ## Backend API Endpoints
 
-### VoiceDraft Mobile App (Read/Write - Authenticated)
+### VoiceScribe Mobile App (Read/Write - Authenticated)
 
 | Method | Endpoint | Description | Scope |
 |--------|----------|-------------|-------|
@@ -540,7 +540,7 @@ const { data, error } = await supabase
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────┐
-│   VoiceDraft Mobile   │         │   Publishing Platform    │
+│   VoiceScribe Mobile   │         │   Publishing Platform    │
 │   (React Native)        │         │   (Web App)               │
 ├─────────────────────────┤         ├──────────────────────────┤
 │ • Supabase Auth OAuth   │         │ • Display published blogs │

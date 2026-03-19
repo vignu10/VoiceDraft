@@ -1,9 +1,9 @@
-# VoiceDraft PWA - Icon Library & Design Tokens
+# VoiceScribe PWA - Icon Library & Design Tokens
 
 **Date:** 2025-03-11
 **Status:** Design Reference
 
-This document contains all SVG icons and design tokens for implementing the VoiceDraft PWA.
+This document contains all SVG icons and design tokens for implementing the VoiceScribe PWA.
 
 ---
 
@@ -468,8 +468,8 @@ module.exports = {
 
 ```json
 {
-  "name": "VoiceDraft",
-  "short_name": "VoiceDraft",
+  "name": "VoiceScribe",
+  "short_name": "VoiceScribe",
   "description": "Turn your voice into blog posts with AI",
   "start_url": "/record",
   "display": "standalone",

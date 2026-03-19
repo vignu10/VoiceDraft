@@ -6,7 +6,7 @@
 
 ## Overview
 
-Make the VoiceDraft Progressive Web App (PWA) installable on both mobile and desktop platforms by generating PNG icons from existing SVG assets and updating the manifest configuration.
+Make the VoiceScribe Progressive Web App (PWA) installable on both mobile and desktop platforms by generating PNG icons from existing SVG assets and updating the manifest configuration.
 
 ## Problem Statement
 

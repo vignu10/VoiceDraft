@@ -844,10 +844,10 @@ export default async function HomePage() {
 
 // SEO metadata
 export const metadata = {
-  title: 'VoiceDraft - Discover Blogs & Stories',
+  title: 'VoiceScribe - Discover Blogs & Stories',
   description: 'Explore a community of writers, thinkers, and creators sharing their perspectives through voice and text.',
   openGraph: {
-    title: 'VoiceDraft - Discover Blogs & Stories',
+    title: 'VoiceScribe - Discover Blogs & Stories',
     description: 'Explore a community of writers, thinkers, and creators.',
     type: 'website',
   },

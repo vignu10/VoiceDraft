@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Make VoiceDraft PWA installable on mobile and desktop by generating PNG icons from existing SVG assets.
+**Goal:** Make VoiceScribe PWA installable on mobile and desktop by generating PNG icons from existing SVG assets.
 
 **Architecture:** Use Node.js with sharp library to convert SVG icons to PNG format in multiple sizes required for PWA installability. Update manifest.json to reference the new PNG icons.
 
@@ -236,8 +236,8 @@ Replace the contents of `web/public/manifest.json` with:
 
 ```json
 {
-  "name": "VoiceDraft",
-  "short_name": "VoiceDraft",
+  "name": "VoiceScribe",
+  "short_name": "VoiceScribe",
   "description": "Transform your voice into organized drafts instantly",
   "start_url": "/",
   "display": "standalone",
@@ -365,12 +365,12 @@ Update the `metadata` export in `web/src/app/layout.tsx` to include apple-touch-
 
 ```typescript
 export const metadata: Metadata = {
-  title: 'VoiceDraft - Voice & Text Collaboration',
+  title: 'VoiceScribe - Voice & Text Collaboration',
   description: 'Transform voice into polished blog posts. A modern platform for creators who speak their mind.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'VoiceDraft',
+    title: 'VoiceScribe',
   },
   icons: {
     icon: [

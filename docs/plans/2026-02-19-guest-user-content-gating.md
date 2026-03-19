@@ -39,7 +39,7 @@ The goal is to provide a frictionless first experience while encouraging user re
 #### Auth Store ([`auth-store.ts`](mobile-app/stores/auth-store.ts))
 
 - Uses **Zustand** with **persist** middleware
-- Stores state in **AsyncStorage** under key `voicedraft-auth`
+- Stores state in **AsyncStorage** under key `voicescribe-auth`
 - Key state fields:
   - `isAuthenticated: boolean`
   - `accessToken: string | null`
@@ -124,7 +124,7 @@ The goal is to provide a frictionless first experience while encouraging user re
 │         ▼                    ▼                     ▼            │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │                    AsyncStorage                           │  │
-│  │  - voicedraft-guest-trial: { hasUsedFreeTrial: bool }    │  │
+│  │  - voicescribe-guest-trial: { hasUsedFreeTrial: bool }    │  │
 │  │  - guest-draft: { id, previewContent, isLocked }         │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                  │
@@ -162,7 +162,7 @@ interface GuestState {
 }
 ```
 
-**Storage Key:** `voicedraft-guest-trial`
+**Storage Key:** `voicescribe-guest-trial`
 
 ### 2. Modified Recording Screen
 
@@ -313,16 +313,16 @@ export function useGuestTrial() {
 
 | Key                      | Type                                                        | Purpose                    |
 | ------------------------ | ----------------------------------------------------------- | -------------------------- |
-| `voicedraft-guest-trial` | `{ hasUsedFreeTrial: boolean, usedAt?: string }`            | Track trial usage          |
+| `voicescribe-guest-trial` | `{ hasUsedFreeTrial: boolean, usedAt?: string }`            | Track trial usage          |
 | `guest-draft`            | `{ id: string, previewContent: string, createdAt: string }` | Store guest draft metadata |
-| `voicedraft-auth`        | Existing                                                    | Auth state (unchanged)     |
+| `voicescribe-auth`        | Existing                                                    | Auth state (unchanged)     |
 
 ### State Persistence
 
 ```typescript
 // Guest store persistence config
 {
-  name: 'voicedraft-guest-trial',
+  name: 'voicescribe-guest-trial',
   storage: createJSONStorage(() => AsyncStorage),
   partialize: (state) => ({
     hasUsedFreeTrial: state.hasUsedFreeTrial,
@@ -583,7 +583,7 @@ import { getDeviceId } from "expo-device";
 
 const getStorageKey = async () => {
   const deviceId = await getDeviceId();
-  return `voicedraft-guest-trial-${deviceId}`;
+  return `voicescribe-guest-trial-${deviceId}`;
 };
 ```
 
