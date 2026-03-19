@@ -7,7 +7,7 @@ const EASTER_EGGS = [
   {
     condition: () => Math.random() < 0.3,
     messages: [
-      '%c🎤 VoiceDraft',
+      '%c🎤 VoiceScribe',
       'color: #0891b2; font-size: 24px; font-weight: bold;',
       '',
       'Like what you see? We\'re building the future of voice-powered content.',
@@ -30,14 +30,14 @@ const EASTER_EGGS = [
       '%c✨ A curious explorer!',
       'color: #0891b2; font-size: 18px; font-weight: bold;',
       '',
-      'VoiceDraft is built with Next.js, React, and lots of ☕',
+      'VoiceScribe is built with Next.js, React, and lots of ☕',
       'Thanks for stopping by.',
     ],
   },
   {
     condition: () => true, // Always show at least one message
     messages: [
-      '%cVoiceDraft',
+      '%cVoiceScribe',
       'color: #0891b2; font-size: 16px; font-weight: bold;',
       'Built with ❤️ for creators who speak their mind',
     ],

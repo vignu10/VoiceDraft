@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial theme from localStorage (inline script has already applied it)
-    const storedTheme = localStorage.getItem('voiceDraft-theme') as Theme | null;
+    const storedTheme = localStorage.getItem('voicescribe-theme') as Theme | null;
     setThemeState(storedTheme || 'system');
     setMounted(true);
   }, []);
@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const applyTheme = (resolvedTheme: 'light' | 'dark') => {
       root.classList.remove('light', 'dark');
       root.classList.add(resolvedTheme);
-      localStorage.setItem('voiceDraft-theme', theme);
+      localStorage.setItem('voicescribe-theme', theme);
     };
 
     const resolveTheme = () => {

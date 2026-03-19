@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - VoiceDraft',
-  description: 'Privacy Policy for VoiceDraft app',
+  title: 'Privacy Policy - VoiceScribe',
+  description: 'Privacy Policy for VoiceScribe app',
 };
 
 export default function PrivacyPolicyPage() {
@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
 
           <section className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              VoiceDraft (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
+              VoiceScribe (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.
             </p>
 
@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
               1.1 Audio Recordings
             </h3>
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              VoiceDraft allows you to record audio content to create blog posts. Your audio recordings are:
+              VoiceScribe allows you to record audio content to create blog posts. Your audio recordings are:
             </p>
             <ul className="list-disc pl-6 text-neutral-700 dark:text-neutral-300 space-y-2">
               <li>Processed using AI services (OpenAI) to generate text content</li>
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
               1.2 Camera Access
             </h3>
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              VoiceDraft may request access to your device&apos;s camera solely for the purpose of capturing profile photos or images to accompany your blog posts. We do not access your camera for any other purpose, and images are not stored or shared beyond what is necessary for the app&apos;s functionality.
+              VoiceScribe may request access to your device&apos;s camera solely for the purpose of capturing profile photos or images to accompany your blog posts. We do not access your camera for any other purpose, and images are not stored or shared beyond what is necessary for the app&apos;s functionality.
             </p>
 
             <h3 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mt-6 mb-3">
@@ -135,7 +135,7 @@ export default function PrivacyPolicyPage() {
             </ul>
 
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed mt-4">
-              To exercise these rights, please contact us at support@voicedraft.app
+              To exercise these rights, please contact us at support@voicescribe.app
             </p>
 
             <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mt-8 mb-4">
@@ -143,7 +143,7 @@ export default function PrivacyPolicyPage() {
             </h2>
 
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              VoiceDraft is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us, and we will delete such information.
+              VoiceScribe is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us, and we will delete such information.
             </p>
 
             <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mt-8 mb-4">
@@ -170,7 +170,7 @@ export default function PrivacyPolicyPage() {
               If you have any questions, concerns, or requests regarding this Privacy Policy or our privacy practices, please contact us at:
             </p>
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed mt-2">
-              <strong>Email:</strong> support@voicedraft.app<br />
+              <strong>Email:</strong> support@voicescribe.app<br />
               <strong>Website:</strong> https://voice-draft.vercel.app
             </p>
           </section>

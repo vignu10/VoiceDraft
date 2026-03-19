@@ -17,7 +17,7 @@ const s3Client = new S3Client({
   }),
 });
 
-const bucket = process.env.AWS_S3_BUCKET || 'voicedraft-uploads';
+const bucket = process.env.AWS_S3_BUCKET || 'voicescribe-uploads';
 const region = process.env.AWS_REGION || 'eu-north-1';
 
 export async function POST(req: NextRequest) {

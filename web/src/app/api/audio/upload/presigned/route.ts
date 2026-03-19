@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Generate S3 key with user ID prefix for organization
     const key = `${user.id}/${Date.now()}-${filename}`;
-    const bucket = process.env.AWS_S3_BUCKET || 'voicedraft-uploads';
+    const bucket = process.env.AWS_S3_BUCKET || 'voicescribe-uploads';
 
     // Create S3 command for presigned URL
     const command = new PutObjectCommand({

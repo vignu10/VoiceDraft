@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'VoiceDraft - Blog',
+  title: 'VoiceScribe - Blog',
   description: 'Voice-to-blog platform',
 };
 

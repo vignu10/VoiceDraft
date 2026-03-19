@@ -55,7 +55,7 @@ export function Navigation() {
     <nav className="sticky top-0 z-50 border-b-2 border-neutral-200/80 bg-white/95 backdrop-blur-md dark:border-neutral-800/80 dark:bg-neutral-950/95" aria-label="Main navigation">
       <div className="container-wide">
         <div className="flex h-20 items-center justify-between">
-          {/* VoiceDraft brand/logo - Bold and confident */}
+          {/* VoiceScribe brand/logo - Bold and confident */}
           <Link
             href="/"
             className="group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"

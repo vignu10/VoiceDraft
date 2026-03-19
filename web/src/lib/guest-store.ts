@@ -11,8 +11,8 @@ import React from 'react';
  */
 const MAX_FREE_DRAFTS = 3;
 
-const GUEST_STORAGE_KEY = 'voicedraft-guest';
-const GUEST_DRAFT_STORAGE_KEY = 'voicedraft-guest-draft';
+const GUEST_STORAGE_KEY = 'voicescribe-guest';
+const GUEST_DRAFT_STORAGE_KEY = 'voicescribe-guest-draft';
 
 interface GuestState {
   hasUsedFreeTrial: boolean;

@@ -190,7 +190,7 @@ export function PWAInstallPrompt() {
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
-              <span className="font-semibold">Install VoiceDraft</span>
+              <span className="font-semibold">Install VoiceScribe</span>
             </div>
             <button
               onClick={handleDismiss}
@@ -204,7 +204,7 @@ export function PWAInstallPrompt() {
           {/* Content */}
           <div className="p-4">
             <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-4 leading-relaxed">
-              Add VoiceDraft to your home screen for instant access. No downloads needed!
+              Add VoiceScribe to your home screen for instant access. No downloads needed!
             </p>
 
             <div className="flex gap-3">
@@ -237,7 +237,7 @@ export function PWAInstallPrompt() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                Install VoiceDraft?
+                Install VoiceScribe?
               </p>
               <p className="text-xs text-neutral-600 dark:text-neutral-400">
                 Quick access from your home screen
@@ -266,7 +266,7 @@ export function PWAInstallPrompt() {
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5" />
-              <span className="font-semibold">Install VoiceDraft</span>
+              <span className="font-semibold">Install VoiceScribe</span>
             </div>
             <button
               onClick={handleDismiss}
@@ -280,7 +280,7 @@ export function PWAInstallPrompt() {
           {/* Content */}
           <div className="p-4">
             <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-4 leading-relaxed">
-              Add VoiceDraft to your home screen for the best experience:
+              Add VoiceScribe to your home screen for the best experience:
             </p>
 
             <ol className="text-sm text-neutral-600 dark:text-neutral-400 space-y-3 mb-4">

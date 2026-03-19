@@ -31,14 +31,14 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "VoiceDraft - Voice & Text Collaboration",
+  title: "VoiceScribe - Voice & Text Collaboration",
   description:
     "Transform voice into polished blog posts. A modern platform for creators who speak their mind.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "VoiceDraft",
+    title: "VoiceScribe",
   },
   icons: {
     icon: [
@@ -133,7 +133,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('voiceDraft-theme');
+                  const theme = localStorage.getItem('voicescribe-theme');
                   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                   const resolvedTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : (theme || (systemDark ? 'dark' : 'light'));
                   if (resolvedTheme === 'dark') {

@@ -91,7 +91,7 @@ export function AppUpdateNotification() {
         {/* Content */}
         <div className="p-4">
           <p className="text-sm text-neutral-700 dark:text-neutral-300 mb-4">
-            A new version of VoiceDraft is available. Update now to get the latest
+            A new version of VoiceScribe is available. Update now to get the latest
             features and improvements.
           </p>
 

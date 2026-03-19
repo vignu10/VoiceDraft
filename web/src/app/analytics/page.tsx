@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
                   Anonymous Analytics
                 </h2>
                 <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                  VoiceDraft uses anonymous usage data to improve your experience. No
+                  VoiceScribe uses anonymous usage data to improve your experience. No
                   personal content is analyzed.
                 </p>
                 <div className="flex justify-center gap-3">

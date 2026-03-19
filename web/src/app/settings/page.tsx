@@ -61,7 +61,7 @@ export default function SettingsPage() {
         setNotificationsEnabled(true);
         localStorage.setItem('notifications_enabled', 'true');
         // Show a test notification
-        new Notification('VoiceDraft', {
+        new Notification('VoiceScribe', {
           body: 'Notifications enabled! You\'ll receive updates here.',
           icon: '/icons/icon-192x192.png',
         });
@@ -112,7 +112,7 @@ export default function SettingsPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `voicedraft-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `voicescribe-backup-${new Date().toISOString().split('T')[0]}.json`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

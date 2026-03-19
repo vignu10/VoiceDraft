@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate presigned URL for downloading the file
-    const bucket = process.env.AWS_S3_BUCKET || 'voicedraft-uploads';
+    const bucket = process.env.AWS_S3_BUCKET || 'voicescribe-uploads';
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: audioKey,

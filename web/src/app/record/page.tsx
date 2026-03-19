@@ -986,7 +986,7 @@ export default function RecordPage() {
                   <p className="text-neutral-600 dark:text-neutral-400 mb-8">
                     {state.permissionState === 'not-allowed'
                       ? 'We couldn\'t find a microphone on your device. Please connect a microphone and try again.'
-                      : 'To record audio, you need to grant microphone permission to VoiceDraft.'}
+                      : 'To record audio, you need to grant microphone permission to VoiceScribe.'}
                   </p>
 
                   {state.permissionState === 'denied' && (

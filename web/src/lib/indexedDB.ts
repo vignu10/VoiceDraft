@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const DB_NAME = 'voicedraft-offline';
+const DB_NAME = 'voicescribe-offline';
 const DB_VERSION = 1;
 
 // Store names
