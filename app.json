@@ -47,6 +47,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6e4438e3-58b0-4528-b2b6-29520f988122"
+      }
+    },
+    "owner": "vignu"
   }
 }
