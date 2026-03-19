@@ -35,7 +35,7 @@ export const LogoWordmark: React.FC<LogoWordmarkProps> = ({
           Voice
         </Text>
         <Text style={[styles.draftText, { fontSize: fontSizeMap[size], color: '#7F77DD' }]}>
-          Draft
+          Scribe
         </Text>
       </View>
       {showTagline && (

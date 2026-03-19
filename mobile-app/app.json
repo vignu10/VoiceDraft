@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "voicedraft",
-    "slug": "voicedraft",
+    "name": "VoiceScribe",
+    "slug": "voicescribe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "voicedraft",
+    "scheme": "voicescribe",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.voicedraft"
+      "bundleIdentifier": "com.voicescribe.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.anonymous.voicedraft",
+      "package": "com.voicescribe.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

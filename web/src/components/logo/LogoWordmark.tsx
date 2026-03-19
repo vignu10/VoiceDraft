@@ -31,7 +31,7 @@ export const LogoWordmark: React.FC<LogoWordmarkProps> = ({
     <div className={`flex flex-col ${className}`}>
       <div className={`font-bold tracking-tight ${sizeStyles[size]}`}>
         <span className="text-neutral-900 dark:text-neutral-100">Voice</span>
-        <span className="text-primary-600 dark:text-primary-400 ml-1">Draft</span>
+        <span className="text-primary-600 dark:text-primary-400 ml-1">Scribe</span>
       </div>
       {showTagline && (
         <p className={`text-neutral-500 dark:text-neutral-400 mt-1 ${taglineSizes[size]}`}>

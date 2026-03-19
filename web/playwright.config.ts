@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright Configuration for VoiceDraft
+ * Playwright Configuration for VoiceScribe
  * Tests all major user flows in the application
  */
 export default defineConfig({
