@@ -39,6 +39,7 @@
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-picker": "^55.0.13",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
     "expo-router": "~6.0.23",
@@ -68,6 +69,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@napi-rs/canvas": "^0.1.97",
     "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/json5": "^0.0.30",
@@ -81,6 +83,7 @@
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.32.0",
     "postcss": "^8.5.8",
+    "svg2img": "^1.0.0-beta.2",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.56.0"
