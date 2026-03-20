@@ -58,7 +58,7 @@ test.describe('Sign In Flow', () => {
   });
 
   test('should navigate back to home via logo', async ({ page }) => {
-    await page.getByRole('link', { name: 'VoiceDraft' }).click();
+    await page.getByRole('link', { name: 'VoiceScribe' }).click();
 
     // Logo may navigate to home or stay on signin if already there
     await expect(page).toHaveURL(/\/(auth\/signin)?/);

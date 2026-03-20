@@ -230,7 +230,7 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log('');
-  console.log('🚀 VoiceDraft API Server');
+  console.log('🚀 VoiceScribe API Server');
   console.log('========================');
   console.log(`📡 Running on http://0.0.0.0:${PORT}`);
   console.log(`🌐 Local network: http://192.168.29.236:${PORT}`);

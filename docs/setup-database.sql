@@ -1,5 +1,5 @@
 -- ============================================================================
--- VoiceDraft Database Setup Script
+-- VoiceScribe Database Setup Script
 -- Paste this entire file into Supabase SQL Editor
 -- ============================================================================
 

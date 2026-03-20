@@ -14,7 +14,7 @@ test.describe('Discovery / Home Page Flow', () => {
     await expect(page.getByRole('heading', { name: /voice/i }).first()).toBeVisible();
 
     // Check for navigation - use .first() to avoid strict mode violations
-    await expect(page.getByRole('link', { name: 'VoiceDraft' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'VoiceScribe' }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /explore/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /get started/i })).toBeVisible();
   });
@@ -112,7 +112,7 @@ test.describe('Discovery / Home Page Flow', () => {
     await page.reload();
 
     // Check that mobile navigation works
-    await expect(page.getByRole('link', { name: 'VoiceDraft' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'VoiceScribe' })).toBeVisible();
   });
 
   test('should have proper accessibility attributes', async ({ page }) => {

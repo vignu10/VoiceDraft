@@ -182,7 +182,7 @@ test.describe('Sign Up Flow', () => {
   });
 
   test('should navigate back to home via logo', async ({ page }) => {
-    await page.getByRole('link', { name: 'VoiceDraft' }).click();
+    await page.getByRole('link', { name: 'VoiceScribe' }).click();
 
     await expect(page).toHaveURL('/');
   });
