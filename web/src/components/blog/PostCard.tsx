@@ -24,13 +24,13 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
   const postUrl = `/${urlPrefix}/${slug}`;
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-neutral-800/50">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-4 focus-within:ring-primary-500/50 dark:border-neutral-800/50">
       {/* Gradient accent on hover - hidden by default, shows on group hover */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
 
       {/* Featured Media - Bold and distinctive */}
       {audio_file_url && (
-        <Link href={postUrl} className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+        <Link href={postUrl} className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/50 focus-visible:ring-inset">
           <div className="relative flex h-full w-full items-center justify-center">
             {/* Audio player visual - Bold, centered design */}
             <div className="relative flex flex-col items-center gap-4 transition-transform duration-300 group-hover:scale-105">
@@ -93,7 +93,7 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
         </div>
 
         {/* Title - Bold and prominent with visible colors */}
-        <Link href={postUrl}>
+        <Link href={postUrl} className="focus:outline-none focus-visible:rounded-lg focus-visible:ring-4 focus-visible:ring-primary-500/50">
           <h3 className="mb-3 text-xl font-bold leading-snug text-neutral-900 dark:text-white sm:text-2xl">
             {title}
           </h3>
