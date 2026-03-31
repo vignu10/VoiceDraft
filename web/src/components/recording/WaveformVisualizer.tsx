@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface WaveformVisualizerProps {
   isRecording: boolean;
+  isPaused?: boolean;
   audioLevel: number;
   duration: number;
   className?: string;
@@ -12,6 +13,7 @@ interface WaveformVisualizerProps {
 
 export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   isRecording,
+  isPaused = false,
   audioLevel,
   duration,
   className,
@@ -28,7 +30,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
 
   // Animate waveform
   useEffect(() => {
-    if (!isRecording) {
+    if (!isRecording || isPaused) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -86,7 +88,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRecording, audioLevel]);
+  }, [isRecording, isPaused, audioLevel]);
 
   // Format duration
   const formatDuration = (seconds: number) => {

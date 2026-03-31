@@ -108,6 +108,52 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
+// PATCH partial update post
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const ownership = await verifyOwnership(req, params.id);
+
+    if (!ownership) {
+      return NextResponse.json({ error: 'Post not found or forbidden' }, { status: 404 });
+    }
+
+    const body: UpdatePostRequest = await req.json();
+
+    // If changing slug, verify it's unique within journal
+    if (body.slug) {
+      const { data: existing } = await supabaseAdmin
+        .from('posts')
+        .select('slug')
+        .eq('slug', body.slug)
+        .neq('id', params.id)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json({ error: 'Slug already exists in this journal' }, { status: 409 });
+      }
+    }
+
+    // Only update fields that are provided
+    const updates: any = { ...body };
+    updates.updated_at = new Date().toISOString();
+
+    const { data: post, error } = await supabaseAdmin
+      .from('posts')
+      .update(updates)
+      .eq('id', params.id)
+      .select()
+      .single();
+
+    if (error) {
+      return handleError(error, 'Failed to update post');
+    }
+
+    return NextResponse.json(post);
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 // DELETE post
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {

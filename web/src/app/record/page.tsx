@@ -37,6 +37,8 @@ import {
   MicOff,
   Settings,
   Send,
+  Pause,
+  Play,
 } from 'lucide-react';
 
 type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied' | 'session-expired';
@@ -107,7 +109,7 @@ export default function RecordPage() {
   });
 
   const { success, warning } = useToast();
-  const { state, startRecording, stopRecording, cancelRecording, requestPermission } = useAudioRecorder(
+  const { state, startRecording, stopRecording, pauseRecording, resumeRecording, cancelRecording, requestPermission } = useAudioRecorder(
     (duration) => setDuration(duration),
     (audioLevel) => setAudioLevel(audioLevel)
   );
@@ -588,7 +590,9 @@ export default function RecordPage() {
                   {/* Giant timer */}
                   <div className="mb-8">
                     <div className={`inline-flex items-center justify-center gap-4 px-8 py-6 rounded-2xl transition-all duration-300 ${
-                      duration >= MIN_RECORDING_DURATION
+                      state.isPaused
+                        ? 'bg-gradient-to-br from-amber-600 via-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30'
+                        : duration >= MIN_RECORDING_DURATION
                         ? 'bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 text-white shadow-lg shadow-neutral-500/20'
                         : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-2 border-neutral-200 dark:border-neutral-800'
                     }`}>
@@ -596,12 +600,18 @@ export default function RecordPage() {
                         {formatDuration(duration)}
                       </span>
                     </div>
-                    {duration < MIN_RECORDING_DURATION && (
+                    {state.isPaused && (
+                      <p className="mt-4 text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center justify-center gap-2">
+                        <Pause className="w-4 h-4" />
+                        Recording paused
+                      </p>
+                    )}
+                    {duration < MIN_RECORDING_DURATION && !state.isPaused && (
                       <p className="mt-4 text-sm font-medium text-neutral-500 dark:text-neutral-400">
                         Min {MIN_RECORDING_DURATION}s required
                       </p>
                     )}
-                    {duration >= MIN_RECORDING_DURATION && (
+                    {duration >= MIN_RECORDING_DURATION && !state.isPaused && (
                       <p className="mt-4 text-sm font-medium text-primary-600 dark:text-primary-400 flex items-center justify-center gap-2">
                         <Check className="w-4 h-4" />
                         Ready to stop
@@ -613,23 +623,45 @@ export default function RecordPage() {
                   <div className="mb-10">
                     <WaveformVisualizer
                       isRecording={true}
+                      isPaused={state.isPaused}
                       audioLevel={audioLevel}
                       duration={duration}
                     />
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-3">
                     <button
                       onClick={handleCancelRecording}
-                      className="min-h-[52px] px-6 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                      className="min-h-[52px] px-5 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
+                      onClick={state.isPaused ? resumeRecording : pauseRecording}
+                      className={`min-h-[52px] px-5 flex items-center gap-2 text-sm font-medium rounded-xl transition-all ${
+                        state.isPaused
+                          ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+                          : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-700'
+                      }`}
+                      aria-label={state.isPaused ? 'Resume recording' : 'Pause recording'}
+                    >
+                      {state.isPaused ? (
+                        <>
+                          <Play className="w-4 h-4" fill="currentColor" />
+                          Resume
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-4 h-4" />
+                          Pause
+                        </>
+                      )}
+                    </button>
+                    <button
                       onClick={handleStopRecording}
                       disabled={duration < MIN_RECORDING_DURATION}
-                      className={`min-h-[52px] px-8 flex items-center gap-2 text-sm font-semibold rounded-xl transition-all ${
+                      className={`min-h-[52px] px-6 flex items-center gap-2 text-sm font-semibold rounded-xl transition-all ${
                         duration < MIN_RECORDING_DURATION
                           ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                           : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/30'

@@ -4,6 +4,7 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 
 export interface AudioRecorderState {
   isRecording: boolean;
+  isPaused: boolean;
   duration: number;
   audioLevel: number;
   permissionState: 'idle' | 'granted' | 'denied' | 'not-allowed';
@@ -15,6 +16,8 @@ export interface UseAudioRecorderReturn {
   state: AudioRecorderState;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<Blob>;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   requestPermission: () => Promise<boolean>;
   cancelRecording: () => void;
 }
@@ -30,10 +33,13 @@ export function useAudioRecorder(
   const startTimeRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false); // Separate ref for tracking recording state
+  const pausedTimeRef = useRef(0); // Track accumulated paused time
+  const pauseStartTimeRef = useRef<number | null>(null); // Track when pause started
 
   // Use useState to trigger re-renders - only update when values actually change
   const [state, setState] = useState<AudioRecorderState>({
     isRecording: false,
+    isPaused: false,
     duration: 0,
     audioLevel: 0,
     permissionState: 'idle',
@@ -66,7 +72,8 @@ export function useAudioRecorder(
   }, []);
 
   const measureAudioLevel = useCallback(() => {
-    if (!analyserRef.current || !isRecordingRef.current) return;
+    // Don't measure audio level when paused
+    if (!analyserRef.current || !isRecordingRef.current || stateRef.current.isPaused) return;
 
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
@@ -85,9 +92,17 @@ export function useAudioRecorder(
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now();
+    pausedTimeRef.current = 0;
+    pauseStartTimeRef.current = null;
     timerIntervalRef.current = setInterval(() => {
       if (startTimeRef.current) {
-        const elapsed = Date.now() - startTimeRef.current;
+        // Calculate current paused time if we're currently paused
+        let currentPausedTime = pausedTimeRef.current;
+        if (stateRef.current.isPaused && pauseStartTimeRef.current) {
+          currentPausedTime += Date.now() - pauseStartTimeRef.current;
+        }
+
+        const elapsed = Date.now() - startTimeRef.current - currentPausedTime;
         const seconds = Math.floor(elapsed / 1000);
         const currentDuration = stateRef.current.duration;
         if (seconds !== currentDuration) {
@@ -143,7 +158,7 @@ export function useAudioRecorder(
       isRecordingRef.current = true;
 
       // Then update state
-      updateState({ isRecording: true, duration: 0, audioLevel: 0, permissionState: 'granted' });
+      updateState({ isRecording: true, isPaused: false, duration: 0, audioLevel: 0, permissionState: 'granted' });
       startTimer();
 
       // Start measuring audio level
@@ -154,14 +169,17 @@ export function useAudioRecorder(
       // Determine the type of error
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'denied' });
+          updateState({ isRecording: false, isPaused: false, duration: 0, audioLevel: 0, permissionState: 'denied' });
           throw new Error('permission-denied');
         } else if (error.name === 'NotFoundError') {
-          updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'not-allowed' });
+          updateState({ isRecording: false, isPaused: false, duration: 0, audioLevel: 0, permissionState: 'not-allowed' });
           throw new Error('not-allowed');
         }
       }
-      updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: 'idle' });
+      updateState({ isRecording: false, isPaused: false, duration: 0, audioLevel: 0, permissionState: 'idle' });
+      // Reset pause tracking on error
+      pausedTimeRef.current = 0;
+      pauseStartTimeRef.current = null;
       throw new Error('Failed to access microphone');
     }
   }, [updateState, startTimer, measureAudioLevel]);
@@ -189,11 +207,15 @@ export function useAudioRecorder(
         }
         stopTimer();
 
+        // Reset pause tracking
+        pausedTimeRef.current = 0;
+        pauseStartTimeRef.current = null;
+
         // Update refs
         isRecordingRef.current = false;
 
         // Update state
-        updateState({ isRecording: false, audioLevel: 0, permissionState: stateRef.current.permissionState });
+        updateState({ isRecording: false, isPaused: false, audioLevel: 0, permissionState: stateRef.current.permissionState });
 
         // Close audio context
         if (analyserRef.current) {
@@ -212,6 +234,42 @@ export function useAudioRecorder(
     });
   }, [updateState, stopTimer]);
 
+  const pauseRecording = useCallback(() => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'recording') {
+      return;
+    }
+
+    // Pause the media recorder
+    mediaRecorderRef.current.pause();
+
+    // Track when pause started to calculate paused time
+    pauseStartTimeRef.current = Date.now();
+
+    // Update state
+    updateState({ isPaused: true });
+  }, [updateState]);
+
+  const resumeRecording = useCallback(() => {
+    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'paused') {
+      return;
+    }
+
+    // Resume the media recorder
+    mediaRecorderRef.current.resume();
+
+    // Add the paused time to the total paused time
+    if (pauseStartTimeRef.current) {
+      pausedTimeRef.current += Date.now() - pauseStartTimeRef.current;
+      pauseStartTimeRef.current = null;
+    }
+
+    // Update state
+    updateState({ isPaused: false });
+
+    // Resume measuring audio level
+    animationFrameRef.current = requestAnimationFrame(measureAudioLevel);
+  }, [updateState, measureAudioLevel]);
+
   const cancelRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
@@ -224,11 +282,15 @@ export function useAudioRecorder(
     }
     stopTimer();
 
+    // Reset pause tracking
+    pausedTimeRef.current = 0;
+    pauseStartTimeRef.current = null;
+
     // Update refs
     isRecordingRef.current = false;
 
     // Update state
-    updateState({ isRecording: false, duration: 0, audioLevel: 0, permissionState: stateRef.current.permissionState });
+    updateState({ isRecording: false, isPaused: false, duration: 0, audioLevel: 0, permissionState: stateRef.current.permissionState });
   }, [updateState, stopTimer]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
@@ -263,6 +325,8 @@ export function useAudioRecorder(
     state,
     startRecording,
     stopRecording,
+    pauseRecording,
+    resumeRecording,
     requestPermission,
     cancelRecording,
   };
