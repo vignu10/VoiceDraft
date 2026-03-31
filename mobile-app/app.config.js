@@ -30,7 +30,7 @@ export default {
       predictiveBackGestureEnabled: false,
       permissions: ["MICROPHONE", "RECORD_AUDIO"],
     },
-    privacy: "https://voice-draft.vercel.app/privacy",
+    privacy: "https://voicescribe.app/privacy",
     web: {
       output: "static",
       favicon: "./assets/images/favicon.png",
@@ -57,7 +57,7 @@ export default {
     },
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000",
-      productionUrl: "https://voice-draft.vercel.app",
+      productionUrl: "https://voicescribe.app",
       eas: {
         projectId: "6e4438e3-58b0-4528-b2b6-29520f988122",
       },
