@@ -39,6 +39,7 @@ import {
   Send,
   Pause,
   Play,
+  Volume2,
 } from 'lucide-react';
 
 type ViewState = 'idle' | 'recording' | 'options' | 'processing' | 'complete' | 'error' | 'permission-denied' | 'session-expired';
@@ -123,6 +124,9 @@ export default function RecordPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [publishLoading, setPublishLoading] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Blog options
   const [targetKeyword, setTargetKeyword] = useState('');
@@ -220,6 +224,7 @@ export default function RecordPage() {
     setViewState('processing');
     setProcessingStep('transcribing');
     setProcessingMessage(0);
+    setUploadProgress(0);
     setErrorMessage(null);
 
     try {
@@ -281,6 +286,9 @@ export default function RecordPage() {
       });
 
       if (accessToken) {
+        // Upload with progress tracking
+        setUploadProgress(0);
+
         const draftFormData = new FormData();
         draftFormData.append('audio', audioBlob, `recording-${Date.now()}.webm`);
         draftFormData.append('audio_duration_seconds', Math.floor(duration).toString());
@@ -292,7 +300,37 @@ export default function RecordPage() {
         draftFormData.append('tone', tone);
         draftFormData.append('target_length', length);
 
-        const draftResponse = await api.post('/api/drafts', draftFormData);
+        // Use XMLHttpRequest for upload progress
+        const draftResponse = await new Promise<Response>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(progress);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            resolve(new Response(xhr.responseText, {
+              status: xhr.status,
+              statusText: xhr.statusText,
+            }));
+          });
+
+          xhr.addEventListener('error', () => {
+            reject(new Error('Upload failed'));
+          });
+
+          xhr.open('POST', '/api/drafts');
+
+          // Add auth token if available
+          if (accessToken) {
+            xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+          }
+
+          xhr.send(draftFormData);
+        });
 
         if (draftResponse.ok) {
           const draft = await draftResponse.json();
@@ -330,6 +368,11 @@ export default function RecordPage() {
     try {
       const blob = await stopRecording();
       setAudioBlob(blob);
+
+      // Create audio preview URL
+      const url = URL.createObjectURL(blob);
+      setAudioPreviewUrl(url);
+
       // Go to options screen after recording
       setViewState('options');
     } catch (err) {
@@ -342,6 +385,13 @@ export default function RecordPage() {
     setErrorMessage(null);
     try {
       cancelRecording();
+
+      // Clean up audio preview URL
+      if (audioPreviewUrl) {
+        URL.revokeObjectURL(audioPreviewUrl);
+        setAudioPreviewUrl(null);
+      }
+
       setViewState('idle');
       setDuration(0);
       setAudioLevel(0);
@@ -366,6 +416,13 @@ export default function RecordPage() {
     setTone('professional');
     setLength('medium');
     setAudioBlob(null);
+
+    // Clean up audio preview URL
+    if (audioPreviewUrl) {
+      URL.revokeObjectURL(audioPreviewUrl);
+      setAudioPreviewUrl(null);
+    }
+
     setPublishLoading('idle');
     setShowPublishSuccessModal(false);
     hasStartedProcessing.current = false;
@@ -457,7 +514,14 @@ export default function RecordPage() {
 
   useEffect(() => {
     requestPermission().then(() => {});
-  }, [requestPermission]);
+
+    // Cleanup audio preview URL on unmount
+    return () => {
+      if (audioPreviewUrl) {
+        URL.revokeObjectURL(audioPreviewUrl);
+      }
+    };
+  }, [requestPermission, audioPreviewUrl]);
 
   // Track audio levels for activity detection and show milestone toasts
   useEffect(() => {
@@ -696,6 +760,54 @@ export default function RecordPage() {
               </div>
               <div className="lg:col-span-1 order-1 lg:order-2 animate-in fade-in slide-in-from-right-8 duration-500 delay-100">
                 <div className="space-y-4">
+                  {/* Audio Preview */}
+                  {audioPreviewUrl && (
+                    <div className="bg-gradient-to-br from-neutral-50 to-white dark:from-neutral-900 dark:to-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                          Recording Preview ({formatDuration(duration)})
+                        </p>
+                        <button
+                          onClick={() => {
+                            if (isPlayingPreview) {
+                              setIsPlayingPreview(false);
+                            } else {
+                              setIsPlayingPreview(true);
+                            }
+                          }}
+                          className="min-h-[36px] min-w-[36px] flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                          aria-label={isPlayingPreview ? 'Pause preview' : 'Play preview'}
+                        >
+                          {isPlayingPreview ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      <audio
+                        ref={(el) => {
+                          if (el) {
+                            if (isPlayingPreview) {
+                              el.play().catch(() => setIsPlayingPreview(false));
+                            } else {
+                              el.pause();
+                            }
+                          }
+                        }}
+                        src={audioPreviewUrl}
+                        onEnded={() => setIsPlayingPreview(false)}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-neutral-400" />
+                        <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-neutral-900 dark:bg-neutral-100 w-full animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Keyword */}
                   <div className="group">
                     <label htmlFor="target-keyword" className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
@@ -824,7 +936,7 @@ export default function RecordPage() {
                   </p>
 
                   {/* Step indicators */}
-                  <div className="mt-8 flex items-center justify-center gap-4">
+                  <div className="mt-8 flex items-center justify-center gap-2 sm:gap-4">
                     <div className={`flex items-center gap-2 text-sm font-medium ${
                       processingStep === 'transcribing' ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-600'
                     }`}>
@@ -833,10 +945,10 @@ export default function RecordPage() {
                       ) : (
                         <Check className="w-4 h-4" />
                       )}
-                      Transcribe
+                      <span className="hidden sm:inline">Transcribe</span>
                     </div>
-                    <div className={`w-8 h-px ${
-                      processingStep === 'generating' ? 'bg-neutral-900 dark:bg-neutral-100' : 'bg-neutral-300 dark:bg-neutral-700'
+                    <div className={`w-6 sm:w-8 h-px ${
+                      processingStep === 'generating' || processingStep === 'ready' ? 'bg-neutral-900 dark:bg-neutral-100' : 'bg-neutral-300 dark:bg-neutral-700'
                     }`} />
                     <div className={`flex items-center gap-2 text-sm font-medium ${
                       processingStep === 'generating' ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-600'
@@ -846,9 +958,48 @@ export default function RecordPage() {
                       ) : (
                         <FileText className="w-4 h-4" />
                       )}
-                      Generate
+                      <span className="hidden sm:inline">Generate</span>
                     </div>
+                    {accessToken && (
+                      <>
+                        <div className={`w-6 sm:w-8 h-px ${
+                          processingStep === 'ready' ? 'bg-neutral-900 dark:bg-neutral-100' : 'bg-neutral-300 dark:bg-neutral-700'
+                        }`} />
+                        <div className={`flex items-center gap-2 text-sm font-medium ${
+                          processingStep === 'ready' && uploadProgress < 100 ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-600'
+                        }`}>
+                          {processingStep === 'ready' && uploadProgress < 100 ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          ) : uploadProgress >= 100 ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
+                          <span className="hidden sm:inline">Save</span>
+                        </div>
+                      </>
+                    )}
                   </div>
+
+                  {/* Upload progress indicator (when authenticated) */}
+                  {accessToken && uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                          Saving to drafts
+                        </p>
+                        <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+                          {uploadProgress}%
+                        </p>
+                      </div>
+                      <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-300 ease-out"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {transcript && (
                     <div className="mt-8 group relative bg-gradient-to-br from-white/80 dark:from-neutral-900/90 to-neutral-50/80 dark:to-neutral-950/90 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/5">
