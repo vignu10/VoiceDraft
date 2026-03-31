@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import { RichTextEditor, TagsInput } from '@/components/editor';
 import { Modal } from '@/components/ui/Modal';
 import { MarkdownRenderer } from '@/components/blog-post/MarkdownRenderer';
 import { ContentGate } from '@/components/ui/ContentGate';
@@ -79,6 +80,8 @@ export default function DraftEditorPage() {
   const [content, setContent] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [targetKeyword, setTargetKeyword] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [useRichText, setUseRichText] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
@@ -98,6 +101,7 @@ export default function DraftEditorPage() {
   const latestContentRef = useRef(content);
   const latestMetaDescriptionRef = useRef(metaDescription);
   const latestTargetKeywordRef = useRef(targetKeyword);
+  const latestTagsRef = useRef(tags);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -145,7 +149,8 @@ export default function DraftEditorPage() {
     latestContentRef.current = content;
     latestMetaDescriptionRef.current = metaDescription;
     latestTargetKeywordRef.current = targetKeyword;
-  }, [title, content, metaDescription, targetKeyword]);
+    latestTagsRef.current = tags;
+  }, [title, content, metaDescription, targetKeyword, tags]);
 
   // Cleanup function for aborting pending requests
   useEffect(() => {
@@ -181,6 +186,7 @@ export default function DraftEditorPage() {
           setContent(data.content || '');
           setMetaDescription(data.meta_description || '');
           setTargetKeyword(data.target_keyword || '');
+          setTags(data.tags || []);
           setSaveStatus('saved');
 
           // Check if this is a guest trial draft
@@ -235,6 +241,7 @@ export default function DraftEditorPage() {
       const currentContent = latestContentRef.current;
       const currentMetaDescription = latestMetaDescriptionRef.current;
       const currentTargetKeyword = latestTargetKeywordRef.current;
+      const currentTags = latestTagsRef.current;
 
       setSaveStatus('saving');
 
@@ -244,6 +251,7 @@ export default function DraftEditorPage() {
           content: currentContent,
           meta_description: currentMetaDescription,
           target_keyword: currentTargetKeyword,
+          tags: currentTags,
         });
 
         if (response.ok) {
@@ -293,6 +301,13 @@ export default function DraftEditorPage() {
       debouncedSave();
     }
   }, [targetKeyword, draft, debouncedSave]);
+
+  // Auto-save on tags change
+  useEffect(() => {
+    if (draft && JSON.stringify(tags) !== JSON.stringify(draft.tags || [])) {
+      debouncedSave();
+    }
+  }, [tags, draft, debouncedSave]);
 
   const handleDelete = async () => {
     setDeleteLoading('loading');
@@ -529,6 +544,7 @@ export default function DraftEditorPage() {
             content,
             meta_description: metaDescription,
             target_keyword: targetKeyword,
+            tags: tags,
           });
 
           if (response.ok) {
@@ -894,8 +910,31 @@ export default function DraftEditorPage() {
                 />
               </div>
 
+              {/* Tags */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Tags
+                </label>
+                <TagsInput
+                  tags={tags}
+                  onChange={setTags}
+                  placeholder="Add tag..."
+                  maxTags={10}
+                />
+                <p className="text-xs text-neutral-400 mt-1">
+                  Press Enter or comma to add tags. Max 10 tags.
+                </p>
+              </div>
+
               {/* Actions */}
               <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={() => setUseRichText(!useRichText)}
+                  className="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 underline"
+                >
+                  Switch to {useRichText ? 'Markdown' : 'Rich Text'}
+                </button>
+                <div className="flex-1" />
                 <Button
                   variant="secondary"
                   size="sm"
@@ -917,23 +956,33 @@ export default function DraftEditorPage() {
                 </Button>
               </div>
 
-              <div className="space-y-2">
-                <Textarea
+              {/* Content Editor */}
+              {useRichText ? (
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
                   placeholder="Start writing your post..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
-                  showCharacterCount={false}
-                  aria-label="Draft content"
-                  ref={textareaRef}
-                  autoResize
-                  style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
+                  className="min-h-[500px]"
                 />
-                <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-                  <span>Markdown</span>
-                  <span>{content.length.toLocaleString()}</span>
+              ) : (
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="Start writing your post..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
+                    showCharacterCount={false}
+                    aria-label="Draft content"
+                    ref={textareaRef}
+                    autoResize
+                    style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
+                  />
+                  <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
+                    <span>Markdown</span>
+                    <span>{content.length.toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -1065,14 +1114,38 @@ export default function DraftEditorPage() {
                 />
               </div>
 
-              {/* Regenerate Button - Mobile */}
+              {/* Tags - Mobile */}
               <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Tags
+                </label>
+                <TagsInput
+                  tags={tags}
+                  onChange={setTags}
+                  placeholder="Add tag..."
+                  maxTags={10}
+                />
+                <p className="text-xs text-neutral-400 mt-1">
+                  Press Enter or comma to add tags. Max 10 tags.
+                </p>
+              </div>
+
+              {/* Editor Mode Toggle - Mobile */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setUseRichText(!useRichText)}
+                  className="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 underline"
+                >
+                  Switch to {useRichText ? 'Markdown' : 'Rich Text'}
+                </button>
+
+                {/* Regenerate Button - Mobile */}
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => setShowRegenerateModal(true)}
                   disabled={regenerateLoading === 'loading'}
-                  className="w-full text-xs"
+                  className="text-xs"
                 >
                   {regenerateLoading === 'loading' ? (
                     <>
@@ -1088,23 +1161,33 @@ export default function DraftEditorPage() {
                 </Button>
               </div>
 
-              <div className="space-y-2">
-                <Textarea
+              {/* Content Editor - Mobile */}
+              {useRichText ? (
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
                   placeholder="Start writing your post..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
-                  showCharacterCount={false}
-                  aria-label="Draft content"
-                  ref={textareaRef}
-                  autoResize
-                  style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
+                  className="min-h-[400px]"
                 />
-                <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-                  <span>Markdown</span>
-                  <span>{content.length.toLocaleString()}</span>
+              ) : (
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="Start writing your post..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="font-mono text-sm leading-relaxed !overflow-y-hidden !resize-none !min-h-full"
+                    showCharacterCount={false}
+                    aria-label="Draft content"
+                    ref={textareaRef}
+                    autoResize
+                    style={{ height: 'calc(100vh - 80px)', maxHeight: 'none' }}
+                  />
+                  <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
+                    <span>Markdown</span>
+                    <span>{content.length.toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
