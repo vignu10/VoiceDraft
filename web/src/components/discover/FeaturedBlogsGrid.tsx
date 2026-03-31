@@ -12,6 +12,20 @@ interface FeaturedBlogsGridProps {
   initialHasMore: boolean;
 }
 
+type CardVariant = 'featured' | 'standard';
+
+// Determine card variant based on index for asymmetric layout
+function getCardVariant(index: number, total: number): CardVariant {
+  // First card is always featured if we have at least 3 blogs
+  if (index === 0 && total >= 3) return 'featured';
+
+  // Every 5th card is featured for visual rhythm
+  if (index > 0 && index % 5 === 0) return 'featured';
+
+  // Default to standard
+  return 'standard';
+}
+
 export function FeaturedBlogsGrid({
   initialBlogs,
   initialTotal,
@@ -114,10 +128,13 @@ export function FeaturedBlogsGrid({
           <div className="hidden sm:block h-12 w-px bg-accent-500/30 dark:opacity-40" />
         </div>
 
-        <div className="grid grid-cols-1 card-grid-gap sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-          {blogs.map((blog) => (
-            <BlogDiscoveryCard key={blog.id} blog={blog} />
-          ))}
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 auto-rows-max">
+          {blogs.map((blog, index) => {
+            const variant = getCardVariant(index, blogs.length);
+            return (
+              <BlogDiscoveryCard key={blog.id} blog={blog} variant={variant} />
+            );
+          })}
           {/* Show skeleton cards when loading */}
           {isLoading &&
             Array.from({ length: 3 }).map((_, i) => <BlogCardSkeleton key={`skeleton-${i}`} />)

@@ -6,28 +6,32 @@ import { truncate, formatPostCount, getInitials } from '@/lib/discover-utils';
 import { formatDate } from '@/lib/blog-utils';
 import type { BlogDiscoveryCard } from '@/types/discover';
 
+type CardVariant = 'featured' | 'standard';
+
 interface BlogDiscoveryCardProps {
   blog: BlogDiscoveryCard;
+  variant?: CardVariant;
 }
 
-export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
+export function BlogDiscoveryCard({ blog, variant = 'standard' }: BlogDiscoveryCardProps) {
   const { url_prefix, display_name, description, post_count, latest_post, user_profiles } = blog;
   const authorName = user_profiles?.full_name || display_name;
+  const isFeatured = variant === 'featured';
 
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-transform duration-300 hover:-translate-y-1 hover:border-neutral-400/50 hover:shadow-2xl hover:shadow-neutral-500/10 focus:outline-none focus:ring-4 focus:ring-primary-500/50 dark:border-neutral-800/50 dark:hover:border-neutral-600/50"
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted will-change-transform transition-transform duration-300 hover:-translate-y-1 hover:border-neutral-400/50 hover:shadow-2xl hover:shadow-neutral-500/10 focus:outline-none focus:ring-4 focus:ring-primary-500/50 dark:border-neutral-800/50 dark:hover:border-neutral-600/50 ${isFeatured ? 'sm:col-span-2 lg:col-span-2' : ''}`}
     >
       {/* Gradient accent on hover */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
 
-      <div className="p-6">
+      <div className={`${isFeatured ? 'p-8' : 'p-6'}`}>
         {/* Header */}
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
+        <div className={`flex items-center ${isFeatured ? 'gap-6' : 'gap-4'}`}>
+          {/* Avatar - larger for featured */}
           <div className="flex-shrink-0">
-            <div className="relative h-14 w-14 overflow-hidden rounded-xl bg-gradient-to-br from-neutral-100 to-neutral-200 ring-2 ring-white shadow-lg transition-transform duration-300 group-hover:scale-110 dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-900">
+            <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-neutral-100 to-neutral-200 ring-2 ring-white shadow-lg transition-transform duration-300 group-hover:scale-110 dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-900 ${isFeatured ? 'h-20 w-20' : 'h-14 w-14'}`}>
               {user_profiles?.avatar_url ? (
                 <Image
                   src={user_profiles.avatar_url}

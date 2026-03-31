@@ -31,7 +31,7 @@ export function PostCard({ post, urlPrefix, variant = 'standard', className = ''
   const isCompact = variant === 'compact';
 
   return (
-    <article className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-4 focus-within:ring-primary-500/50 dark:border-neutral-800/50 ${className}`}>
+    <article className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted will-change-transform transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-4 focus-within:ring-primary-500/50 dark:border-neutral-800/50 ${className}`}>
       {/* Primary accent on hover - hidden by default, shows on group hover */}
       <div className="absolute inset-x-0 top-0 h-1 bg-primary-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
