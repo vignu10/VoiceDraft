@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { formatDate, formatReadingTime } from '@/lib/blog-utils';
 import type { PostCardData } from '@/types/blog';
 
+type CardVariant = 'featured' | 'standard' | 'compact';
+
 interface PostCardProps {
   post: PostCardData;
   urlPrefix: string;
+  variant?: CardVariant;
+  className?: string;
 }
 
-export function PostCard({ post, urlPrefix }: PostCardProps) {
+export function PostCard({ post, urlPrefix, variant = 'standard', className = '' }: PostCardProps) {
   const {
     title,
     slug,
@@ -23,19 +27,22 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
 
   const postUrl = `/${urlPrefix}/${slug}`;
 
+  const isFeatured = variant === 'featured';
+  const isCompact = variant === 'compact';
+
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-4 focus-within:ring-primary-500/50 dark:border-neutral-800/50">
-      {/* Gradient accent on hover - hidden by default, shows on group hover */}
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
+    <article className={`group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-4 focus-within:ring-primary-500/50 dark:border-neutral-800/50 ${className}`}>
+      {/* Primary accent on hover - hidden by default, shows on group hover */}
+      <div className="absolute inset-x-0 top-0 h-1 bg-primary-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       {/* Featured Media - Bold and distinctive */}
       {audio_file_url && (
-        <Link href={postUrl} className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/50 focus-visible:ring-inset">
+        <Link href={postUrl} className={`relative w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/50 focus-visible:ring-inset ${isFeatured ? 'aspect-[2/1]' : 'aspect-[16/9]'}`}>
           <div className="relative flex h-full w-full items-center justify-center">
             {/* Audio player visual - Bold, centered design */}
             <div className="relative flex flex-col items-center gap-4 transition-transform duration-300 group-hover:scale-105">
               {/* Play button */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500 text-white shadow-lg">
                 <svg className="h-7 w-7" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
@@ -70,7 +77,7 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
       )}
 
       {/* Content - Generous spacing and bold typography */}
-      <div className="flex flex-1 flex-col p-6">
+      <div className={`flex flex-1 flex-col ${isCompact ? 'p-4' : 'p-6'} ${isFeatured ? 'sm:p-8' : ''}`}>
         {/* Meta - Distinctive pill styling with proper touch targets */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {/* Reading time pill - increased padding for 44px minimum */}
@@ -94,15 +101,17 @@ export function PostCard({ post, urlPrefix }: PostCardProps) {
 
         {/* Title - Bold and prominent with visible colors */}
         <Link href={postUrl} className="focus:outline-none focus-visible:rounded-lg focus-visible:ring-4 focus-visible:ring-primary-500/50">
-          <h3 className="mb-3 text-xl font-bold leading-snug text-neutral-900 dark:text-white sm:text-2xl">
+          <h3 className={`mb-3 font-bold leading-snug text-neutral-900 dark:text-white ${isFeatured ? 'text-2xl sm:text-3xl lg:text-4xl' : isCompact ? 'text-lg' : 'text-xl sm:text-2xl'}`}>
             {title}
           </h3>
         </Link>
 
         {/* Excerpt - Clear and readable */}
-        <p className="mb-5 flex-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-3 sm:text-base">
-          {excerpt}
-        </p>
+        {!isCompact && (
+          <p className="mb-5 flex-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-3 sm:text-base">
+            {excerpt}
+          </p>
+        )}
 
         {/* Footer - Bold, distinct styling */}
         <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm dark:border-neutral-800">
