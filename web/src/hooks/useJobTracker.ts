@@ -6,11 +6,19 @@ import type { JobStatus, JobState } from '@/components/jobs';
 interface UseJobTrackerOptions {
   onComplete?: (result: any) => void;
   onError?: (error: string) => void;
+  onRetry?: () => void;
   pollInterval?: number;
+  enableRealtime?: boolean;
 }
 
 export function useJobTracker(options: UseJobTrackerOptions = {}) {
-  const { onComplete, onError, pollInterval = 1000 } = options;
+  const {
+    onComplete,
+    onError,
+    onRetry,
+    pollInterval = 1000,
+    enableRealtime = true,
+  } = options;
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobState, setJobState] = useState<JobState | null>(null);
@@ -52,5 +60,7 @@ export function useJobTracker(options: UseJobTrackerOptions = {}) {
     stopTracking,
     updateJobState,
     pollInterval,
+    enableRealtime,
+    onRetry,
   };
 }

@@ -8,6 +8,22 @@
     },
     "api/regenerate-section.ts": {
       "maxDuration": 60
+    },
+    "api/jobs/process/transcriptions/route.ts": {
+      "maxDuration": 300
+    },
+    "api/jobs/process/generations/route.ts": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/jobs/process/transcriptions",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/jobs/process/generations",
+      "schedule": "*/10 * * * *"
+    }
+  ]
 }

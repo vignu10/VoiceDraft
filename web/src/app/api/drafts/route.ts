@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { handleError } from '@/lib/auth-helpers';
+import { getQueue, TranscriptionJobData } from '@/lib/queue';
+import { canCreatePost, incrementPostCounter } from '@/lib/subscription-limits';
+import { checkRateLimit, formatRateLimitHeaders, createRateLimitErrorResponse } from '@/lib/rate-limit-upstash';
 
 // GET list drafts (alias for posts)
 export async function GET(req: NextRequest) {
@@ -97,6 +100,27 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Check hourly rate limit
+    const hourlyLimitCheck = await checkRateLimit(user.id, 'free', 'hourly');
+    if (!hourlyLimitCheck.allowed) {
+      const errorResponse = createRateLimitErrorResponse(hourlyLimitCheck, 'hourly');
+      return NextResponse.json(errorResponse, {
+        status: 429,
+        headers: formatRateLimitHeaders(hourlyLimitCheck),
+      });
+    }
+
+    // Check monthly post limit
+    const monthlyLimitCheck = await canCreatePost(user.id);
+    if (!monthlyLimitCheck.allowed) {
+      const errorResponse = {
+        error: `Monthly post limit reached. You've used all ${monthlyLimitCheck.remaining} posts for this month. ${monthlyLimitCheck.tier === 'free' ? 'Upgrade to Pro for 30 posts/month.' : ''}`,
+        tier: monthlyLimitCheck.tier,
+        resetDate: monthlyLimitCheck.resetDate?.toISOString(),
+      };
+      return NextResponse.json(errorResponse, { status: 429 });
     }
 
     // Check if multipart/form-data (audio upload)
@@ -227,7 +251,47 @@ export async function POST(req: NextRequest) {
       return handleError(error, 'Failed to create draft');
     }
 
-    return NextResponse.json(post);
+    // Increment monthly post counter
+    await incrementPostCounter(user.id);
+
+    // Create async transcription job if audio was provided but no transcript
+    if (hasAudio && !transcript && post.audio_s3_key) {
+      try {
+        const queue = getQueue();
+        const jobId = await queue.addJob<TranscriptionJobData>(
+          'transcribe',
+          {
+            audioUrl: post.audio_file_url || '',
+            userId: user.id,
+            postId: post.id,
+            language: 'en',
+          },
+          { jobId: `transcribe_${post.id}` }
+        );
+
+        // Return job info to client so they can track status
+        return NextResponse.json({
+          ...post,
+          transcriptionJob: {
+            id: jobId,
+            type: 'transcribe',
+            status: 'pending',
+          },
+        }, {
+          headers: formatRateLimitHeaders(hourlyLimitCheck),
+        });
+      } catch (jobError) {
+        // Log but don't fail - the draft was created successfully
+        console.error('Failed to create transcription job:', jobError);
+        return NextResponse.json(post, {
+          headers: formatRateLimitHeaders(hourlyLimitCheck),
+        });
+      }
+    }
+
+    return NextResponse.json(post, {
+      headers: formatRateLimitHeaders(hourlyLimitCheck),
+    });
   } catch (error) {
     return handleError(error);
   }

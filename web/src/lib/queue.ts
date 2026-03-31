@@ -53,6 +53,24 @@ export interface GenerationJobData {
 export type JobData = TranscriptionJobData | GenerationJobData;
 
 /**
+ * Custom job status type for our queue implementation
+ * This represents the job state stored in Redis/fallback storage
+ */
+export type JobStatusType = 'pending' | 'processing' | 'completed' | 'failed';
+
+export interface VoiceScribeJob<T extends JobData = JobData> {
+  id: string;
+  name: JobType;
+  data: T;
+  status: JobStatusType;
+  returnvalue?: any;
+  failedReason?: string | undefined;
+  createdAt: number;
+  processedOn?: number;
+  finishedOn?: number;
+}
+
+/**
  * Queue configuration constants
  */
 export const QUEUE_CONFIG = {
@@ -148,7 +166,7 @@ export class VoiceScribeQueue {
   /**
    * Get job status
    */
-  async getJob(jobId: string, type: JobType): Promise<Job | null> {
+  async getJob(jobId: string, type: JobType): Promise<VoiceScribeJob | null> {
     if (this.useFallback) {
       const jobData = this.fallbackStore.get(jobId);
       if (!jobData) {
@@ -165,7 +183,7 @@ export class VoiceScribeQueue {
         finishedOn: jobData.finishedOn,
         failedReason: jobData.error,
         returnvalue: jobData.result,
-      } as Job;
+      } as VoiceScribeJob;
     }
 
     const jobKey = `${this.queuePrefix}:${type}:${jobId}`;
@@ -179,13 +197,13 @@ export class VoiceScribeQueue {
       id: jobId,
       name: type,
       data: JSON.parse(jobData.data as string),
-      status: jobData.status as Job['status'],
+      status: jobData.status as JobStatusType,
       createdAt: Number(jobData.createdAt),
       processedOn: jobData.processedOn ? Number(jobData.processedOn) : undefined,
       finishedOn: jobData.finishedOn ? Number(jobData.finishedOn) : undefined,
       failedReason: jobData.failedReason as string | undefined,
       returnvalue: jobData.result ? JSON.parse(jobData.result as string) : undefined,
-    } as Job;
+    } as VoiceScribeJob;
   }
 
   /**
@@ -324,4 +342,34 @@ export function getQueue(): VoiceScribeQueue {
     queueInstance = new VoiceScribeQueue();
   }
   return queueInstance;
+}
+
+/**
+ * Helper function to create a job
+ * Convenience wrapper for queue.addJob
+ */
+export async function createJob(
+  type: JobType,
+  data: unknown,
+  id?: string
+): Promise<string> {
+  const queue = getQueue();
+  return await queue.addJob(type, data as Parameters<typeof queue.addJob>[1], { jobId: id });
+}
+
+/**
+ * Helper function to update job status
+ * Convenience wrapper for queue.updateJob
+ */
+export async function updateJobStatus(
+  jobId: string,
+  type: JobType,
+  updates: {
+    status: 'processing' | 'completed' | 'failed';
+    result?: unknown;
+    error?: string;
+  }
+): Promise<void> {
+  const queue = getQueue();
+  await queue.updateJob(jobId, type, updates);
 }
