@@ -7,43 +7,33 @@ export function HeroSection() {
   const { isAuthenticated, user } = useAuthStore();
 
   return (
-    <section className="relative bg-gradient-to-br from-neutral-50 via-white to-primary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-primary-950/50 overflow-hidden border-b-2 border-neutral-200 dark:border-neutral-800">
-      {/* Decorative background elements */}
+    <section className="relative bg-white dark:bg-neutral-950 overflow-hidden border-b-2 border-neutral-200 dark:border-neutral-800">
+      {/* Minimal geometric accent - top right */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large gradient orb - top right */}
-        <div className="absolute -right-20 -top-20 h-[600px] w-[600px] rounded-full bg-gradient-to-br from-neutral-300/10 to-neutral-200/10 blur-3xl dark:from-neutral-700/10 dark:to-neutral-800/10" />
-        {/* Medium gradient orb - bottom left */}
-        <div className="absolute -bottom-20 -left-20 h-[400px] w-[400px] rounded-full bg-gradient-to-tr from-neutral-200/10 to-neutral-300/10 blur-3xl dark:from-neutral-800/10 dark:to-neutral-700/10" />
-        {/* Geometric accent lines */}
-        <div className="absolute right-0 top-1/4 h-px w-32 bg-gradient-to-l from-neutral-400/30 to-transparent dark:from-neutral-600/30" />
-        <div className="absolute right-16 top-1/4 h-px w-16 bg-gradient-to-l from-neutral-300/20 to-transparent dark:from-neutral-700/20" />
-        <div className="absolute left-0 bottom-1/3 h-px w-24 bg-gradient-to-r from-neutral-400/20 to-transparent dark:from-neutral-600/20" />
+        <div className="absolute right-0 top-0 h-1 w-32 bg-primary-500/20" />
+        <div className="absolute right-12 top-0 h-1 w-16 bg-primary-500/10" />
       </div>
 
       <div className="container-wide">
         <div className="relative flex min-h-[calc(100vh-60px)] flex-col justify-center py-12 sm:py-16 lg:py-20">
-          {/* Content - Centered text without logo */}
-          <div className="mx-auto max-w-4xl text-center">
-                {/* Main headline */}
-                <h1 className="animate-fade-in-up animate-delay-200 text-balance font-bold tracking-tight text-neutral-900 dark:text-white text-2xl sm:text-3xl lg:text-4xl">
+          {/* Content - Left aligned, asymmetric layout */}
+          <div className="max-w-3xl">
+                {/* Main headline - dramatic scale, distinctive */}
+                <h1 className="animate-fade-in-up animate-delay-200 font-display font-bold tracking-tight text-neutral-900 dark:text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.1]">
                   Your voice,
                   <br />
-                  <span className="text-neutral-600 dark:text-neutral-400">amplified.</span>
+                  <span className="text-primary-600 dark:text-primary-400">amplified.</span>
                 </h1>
 
-                {/* Subheadline */}
-                <p className="animate-fade-in-up animate-delay-300 mt-6 text-base font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 sm:text-lg">
+                {/* Subheadline - editorial style */}
+                <p className="animate-fade-in-up animate-delay-300 mt-8 text-lg font-medium leading-relaxed text-neutral-700 dark:text-neutral-300 max-w-2xl">
                   {isAuthenticated ? (
                     <>
-                      Welcome back, {user?.full_name || user?.email?.split('@')[0] || 'Creator'}!
-                      <br />
-                      Ready to transform your voice into your next post?
+                      Welcome back, {user?.full_name || user?.email?.split('@')[0] || 'Creator'}. Ready to transform your voice into your next post?
                     </>
                   ) : (
                     <>
-                      Transform spoken ideas into polished blog posts.
-                      <br />
-                      Join a community of creators who speak their mind.
+                      Transform spoken ideas into polished blog posts. Join a community of creators who speak their mind.
                     </>
                   )}
                 </p>
