@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleError, requireAuth } from '@/lib/auth-helpers';
-import { getQueue, JobType } from '@/lib/queue';
+import { getQueue, JobType, TranscriptionJobData, GenerationJobData } from '@/lib/queue';
 
 /**
  * GET /api/jobs/:jobId - Check job status
@@ -48,6 +48,57 @@ export async function GET(req: NextRequest, { params }: { params: { jobId: strin
 }
 
 /**
+ * POST /api/jobs/:jobId - Retry a failed job
+ *
+ * Retries a failed transcription or generation job
+ */
+export async function POST(req: NextRequest, { params }: { params: { jobId: string } }) {
+  try {
+    await requireAuth(req);
+
+    // Extract job type from jobId
+    const jobType = params.jobId.split('_')[0] as JobType;
+
+    if (jobType !== 'transcribe' && jobType !== 'generate') {
+      return NextResponse.json(
+        { error: 'Invalid job ID format' },
+        { status: 400 }
+      );
+    }
+
+    const queue = getQueue();
+    const job = await queue.getJob(params.jobId, jobType);
+
+    if (!job) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only failed jobs can be retried
+    if (job.status !== 'failed') {
+      return NextResponse.json(
+        { error: 'Only failed jobs can be retried' },
+        { status: 400 }
+      );
+    }
+
+    // Re-queue the job with the same data
+    const jobData = job.data as TranscriptionJobData | GenerationJobData;
+    const newJobId = await queue.addJob(jobType, jobData);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Job requeued successfully',
+      newJobId,
+    });
+  } catch (error) {
+    return handleError(error, 'Failed to retry job');
+  }
+}
+
+/**
  * DELETE /api/jobs/:jobId - Cancel/delete a job
  *
  * Allows cancellation of pending or processing jobs
@@ -91,27 +142,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { jobId: st
 }
 
 /**
- * Helper functions for job management (exported for use in other routes)
+ * Note: Helper functions for job management (createJob, updateJobStatus) are available in the queue module
+ * Import them from @/lib/queue instead
  */
-
-export async function createJob(
-  type: JobType,
-  data: unknown,
-  id?: string
-): Promise<string> {
-  const queue = getQueue();
-  return await queue.addJob(type, data as Parameters<typeof queue.addJob>[1], { jobId: id });
-}
-
-export async function updateJobStatus(
-  jobId: string,
-  type: JobType,
-  updates: {
-    status: 'processing' | 'completed' | 'failed';
-    result?: unknown;
-    error?: string;
-  }
-): Promise<void> {
-  const queue = getQueue();
-  await queue.updateJob(jobId, type, updates);
-}
