@@ -171,7 +171,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed mt-2">
               <strong>Email:</strong> support@voicescribe.app<br />
-              <strong>Website:</strong> https://voice-draft.vercel.app
+              <strong>Website:</strong> https://voicescribe.app
             </p>
           </section>
         </div>
