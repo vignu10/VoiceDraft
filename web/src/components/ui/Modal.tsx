@@ -167,7 +167,7 @@ export const Modal: React.FC<ModalProps> = ({
           className={cn(
             'relative transform overflow-hidden rounded-t-3xl sm:rounded-2xl',
             'bg-white dark:bg-neutral-900',
-            'text-left shadow-2xl sm:shadow-xl transition-all',
+            'text-left shadow-2xl sm:shadow-xl',
             'w-full sm:max-w-md',
             'max-h-[90vh] sm:max-h-none',
             'my-0 sm:my-8'

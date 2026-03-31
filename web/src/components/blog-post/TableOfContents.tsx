@@ -19,7 +19,7 @@ export function TableOfContents({ headings, activeId, urlPrefix }: TableOfConten
       {/* Mobile TOC Toggle with delight styling */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden mb-4 w-full rounded-full border border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10 p-3 text-left shadow-sm transition-all hover:shadow-md dark:border-accent/10"
+        className="lg:hidden mb-4 w-full rounded-full border border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10 p-3 text-left shadow-sm transition-shadow hover:shadow-md dark:border-accent/10"
       >
         <span className="flex items-center gap-2 font-medium text-neutral-900 dark:text-white">
           <svg className="h-4 w-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,7 @@ export function TableOfContents({ headings, activeId, urlPrefix }: TableOfConten
                 <a
                   href={`#${heading.id}`}
                   className={cn(
-                    'group relative block rounded-lg px-3 py-2 text-sm transition-all',
+                    'group relative block rounded-lg px-3 py-2 text-sm transition-colors',
                     heading.level === 3 && 'pl-6',
                     activeId === heading.id
                       ? 'bg-gradient-to-r from-accent/10 to-accent/5 font-semibold text-accent shadow-sm'

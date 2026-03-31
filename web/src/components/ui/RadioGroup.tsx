@@ -73,7 +73,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               className={cn(
                 'relative flex items-start gap-3',
                 'p-3 rounded-xl border cursor-pointer',
-                'transition-all duration-200',
+                'transition-colors duration-200',
                 'bg-white dark:bg-neutral-900',
                 'border-neutral-200 dark:border-neutral-800',
                 'hover:border-primary-300 dark:hover:border-primary-700',

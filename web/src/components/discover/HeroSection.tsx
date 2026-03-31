@@ -44,7 +44,7 @@ export function HeroSection() {
                     <>
                       <Link
                         href="/record"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:bg-primary-600 hover:shadow-xl hover:shadow-primary-500/40 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-colors transition-shadow hover:bg-primary-600 hover:shadow-xl hover:shadow-primary-500/40 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                       >
                         Start Recording
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -53,7 +53,7 @@ export function HeroSection() {
                       </Link>
                       <Link
                         href="/drafts"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[52px] px-6 py-4 text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:bg-neutral-50 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[52px] px-6 py-4 text-base font-medium text-neutral-700 shadow-sm transition-colors hover:border-neutral-400 hover:bg-neutral-50 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                       >
                         My Drafts
                       </Link>
@@ -62,7 +62,7 @@ export function HeroSection() {
                     <>
                       <Link
                         href="/auth/signin"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:bg-primary-600 hover:shadow-xl hover:shadow-primary-500/40 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-8 py-4 min-h-[52px] text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-colors transition-shadow hover:bg-primary-600 hover:shadow-xl hover:shadow-primary-500/40 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                       >
                         Start Creating
                         <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -71,7 +71,7 @@ export function HeroSection() {
                       </Link>
                       <Link
                         href="/discover"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[52px] px-6 py-4 text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:bg-neutral-50 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[52px] px-6 py-4 text-base font-medium text-neutral-700 shadow-sm transition-colors hover:border-neutral-400 hover:bg-neutral-50 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                       >
                         Explore Content
                       </Link>

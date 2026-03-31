@@ -31,7 +31,7 @@ export function OfflineIndicator() {
   return (
     <div
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 px-4 py-2 text-sm font-medium text-center transition-all',
+        'fixed top-0 left-0 right-0 z-50 px-4 py-2 text-sm font-medium text-center transition-opacity',
         !isOnline
           ? 'bg-accent-500 text-white'
           : pendingCount > 0

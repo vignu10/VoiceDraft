@@ -55,7 +55,7 @@ export function ContentGate({
 
       {/* Gate content card */}
       <div
-        className={`relative w-full max-w-lg mx-4 mb-8 sm:mb-16 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-8 transition-all duration-300 pointer-events-auto ${
+        className={`relative w-full max-w-lg mx-4 mb-8 sm:mb-16 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl p-6 sm:p-8 transition-opacity duration-300 pointer-events-auto ${
           isAnimatingIn
             ? 'translate-y-0 opacity-100 scale-100'
             : 'translate-y-8 opacity-0 scale-95'

@@ -165,7 +165,7 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
           <button
             onClick={loadMore}
             disabled={loading}
-            className="group inline-flex items-center justify-center gap-2 min-w-[160px] rounded-xl bg-primary-500 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-all hover:bg-primary-600 hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+            className="group inline-flex items-center justify-center gap-2 min-w-[160px] rounded-xl bg-primary-500 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-colors transition-shadow transition-transform hover:bg-primary-600 hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
           >
             {loading ? (
               <>

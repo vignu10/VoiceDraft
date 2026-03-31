@@ -28,7 +28,7 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
               href={`/${journal.url_prefix}`}
               className="flex-shrink-0 group"
             >
-              <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-xl ring-4 ring-white transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-900 sm:h-24 sm:w-24">
+              <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-xl ring-4 ring-white transition-transform duration-300 group-hover:scale-105 group-hover:shadow-2xl dark:from-neutral-800 dark:to-neutral-900 dark:ring-neutral-900 sm:h-24 sm:w-24">
                 {user_profiles.avatar_url ? (
                   <Image
                     src={user_profiles.avatar_url}

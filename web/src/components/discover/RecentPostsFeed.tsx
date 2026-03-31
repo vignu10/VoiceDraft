@@ -66,7 +66,7 @@ export function RecentPostsFeed({
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
             href="/record"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-shadow transition-transform hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -75,7 +75,7 @@ export function RecentPostsFeed({
           </Link>
           <Link
             href="/drafts"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[48px] px-6 py-3.5 text-base font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-400 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white min-h-[48px] px-6 py-3.5 text-base font-medium text-neutral-700 shadow-sm transition-colors hover:border-neutral-400 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200"
           >
             View My Drafts
           </Link>
@@ -126,7 +126,7 @@ export function RecentPostsFeed({
             <button
               onClick={handleLoadMore}
               disabled={isLoading}
-              className="group inline-flex items-center justify-center gap-2 min-w-[200px] rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-all hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+              className="group inline-flex items-center justify-center gap-2 min-w-[200px] rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-shadow transition-transform hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
             >
               {isLoading ? (
                 <>

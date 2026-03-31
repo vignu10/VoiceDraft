@@ -99,7 +99,7 @@ export function FeaturedBlogsGrid({
         <div className="mt-8">
           <Link
             href="/settings"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 min-h-[48px] px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-primary-500/25 transition-shadow transition-transform hover:shadow-xl hover:shadow-primary-500/40 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -152,7 +152,7 @@ export function FeaturedBlogsGrid({
             <button
               onClick={handleLoadMore}
               disabled={isLoading}
-              className="group inline-flex items-center justify-center gap-2 min-w-[220px] rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-accent-500/25 transition-all hover:shadow-2xl hover:shadow-accent-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-accent-500/50 focus:ring-offset-2"
+              className="group inline-flex items-center justify-center gap-2 min-w-[220px] rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-accent-500/25 transition-shadow transition-transform hover:shadow-2xl hover:shadow-accent-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-accent-500/50 focus:ring-offset-2"
             >
               {isLoading ? (
                 <>

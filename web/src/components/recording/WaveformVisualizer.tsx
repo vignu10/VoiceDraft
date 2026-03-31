@@ -109,7 +109,7 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
       {/* Audio level indicator - clean, minimalist */}
       <div className="w-full max-w-xs h-1 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden mt-3">
         <div
-          className="h-full bg-neutral-900 dark:bg-neutral-100 transition-all duration-75 ease-out"
+          className="h-full bg-neutral-900 dark:bg-neutral-100 transition-colors duration-75 ease-out"
           style={{ width: `${audioLevel}%` }}
         />
       </div>

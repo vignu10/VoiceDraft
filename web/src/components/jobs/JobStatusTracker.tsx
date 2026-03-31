@@ -282,7 +282,7 @@ export function JobStatusTracker({
   const Icon = config.icon;
 
   return (
-    <div className={cn('rounded-xl p-4 border transition-all duration-300', config.bgColor, {
+    <div className={cn('rounded-xl p-4 border transition-opacity duration-300', config.bgColor, {
       'border-neutral-200 dark:border-neutral-800': job.status === 'pending',
       'border-primary-200 dark:border-primary-800': job.status === 'processing',
       'border-success-200 dark:border-success-800': job.status === 'completed',
@@ -325,7 +325,7 @@ export function JobStatusTracker({
           {job.status === 'processing' && job.progress !== undefined && (
             <div className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden mb-2">
               <div
-                className="h-full bg-primary-500 transition-all duration-300 ease-out"
+                className="h-full bg-primary-500 transition-opacity duration-300 ease-out"
                 style={{ width: `${job.progress}%` }}
               />
             </div>
@@ -347,7 +347,7 @@ export function JobStatusTracker({
               onClick={handleRetry}
               disabled={isRetrying}
               className={cn(
-                'mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                'mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200',
                 'bg-error-100 hover:bg-error-200 dark:bg-error-900/30 dark:hover:bg-error-900/50',
                 'text-error-700 dark:text-error-300',
                 'disabled:opacity-50 disabled:cursor-not-allowed active:scale-95'

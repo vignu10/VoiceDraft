@@ -25,7 +25,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         role={interactive ? 'button' : undefined}
         className={cn(
           'rounded-2xl border shadow-sm',
-          'transition-all duration-200 ease-out',
+          'transition-transform transition-shadow duration-200 ease-out',
           variantStyles[variant],
           interactive && 'cursor-pointer hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
           className

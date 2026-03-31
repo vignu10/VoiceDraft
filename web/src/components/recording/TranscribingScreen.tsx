@@ -135,7 +135,7 @@ export function TranscribingScreen({
       <div className="relative z-10 w-full max-w-lg mx-auto px-6">
         {/* Icon container with pulse animation for active states */}
         <div className="mb-8">
-          <div className={`relative mx-auto w-28 h-28 rounded-xl flex items-center justify-center shadow-2xl transition-all duration-500 ${
+          <div className={`relative mx-auto w-28 h-28 rounded-xl flex items-center justify-center shadow-2xl transition-opacity duration-500 ${
             step === 'error'
               ? 'bg-error-500/20'
               : step === 'complete'

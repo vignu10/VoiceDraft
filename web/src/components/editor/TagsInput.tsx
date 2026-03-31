@@ -58,7 +58,7 @@ export function TagsInput({
         'border border-neutral-200 dark:border-neutral-800 rounded-lg',
         'bg-white dark:bg-neutral-900',
         'focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent',
-        'transition-all duration-200',
+        'transition-colors duration-200',
         className
       )}
       onClick={() => inputRef.current?.focus()}

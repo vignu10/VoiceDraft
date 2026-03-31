@@ -114,7 +114,7 @@ export function Navigation() {
 
                   {/* Dropdown menu */}
                   <div
-                    className={`absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 transition-all ${
+                    className={`absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 transition-opacity ${
                       isUserMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                     }`}
                     role="menu"
@@ -162,7 +162,7 @@ export function Navigation() {
                 </Link>
                 <Link
                   href="/auth/signin"
-                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 min-h-[48px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/35 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 min-h-[48px] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-shadow transition-transform hover:shadow-xl hover:shadow-primary-500/35 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
                 >
                   Get Started
                 </Link>

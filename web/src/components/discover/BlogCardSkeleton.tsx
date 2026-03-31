@@ -1,6 +1,6 @@
 export function BlogCardSkeleton() {
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white transition-all dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white transition-shadow dark:border-neutral-800 dark:bg-neutral-900">
       {/* Gradient accent on hover */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent-500 via-primary-500 to-accent-500 opacity-60" />
 

@@ -633,7 +633,7 @@ export default function RecordPage() {
                 <button
                   onClick={handleStartRecording}
                   disabled={isCheckingSession}
-                  className="group w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 disabled:from-neutral-600 disabled:via-neutral-500 disabled:to-neutral-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-neutral-500/20 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
+                  className="group w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 disabled:from-neutral-600 disabled:via-neutral-500 disabled:to-neutral-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-neutral-500/20 transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
                   aria-label={isCheckingSession ? "Verifying session" : "Start recording"}
                 >
                   {isCheckingSession ? (
@@ -653,7 +653,7 @@ export default function RecordPage() {
                 <div className="max-w-2xl mx-auto text-center">
                   {/* Giant timer */}
                   <div className="mb-8">
-                    <div className={`inline-flex items-center justify-center gap-4 px-8 py-6 rounded-2xl transition-all duration-300 ${
+                    <div className={`inline-flex items-center justify-center gap-4 px-8 py-6 rounded-2xl transition-colors duration-300 ${
                       state.isPaused
                         ? 'bg-gradient-to-br from-amber-600 via-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30'
                         : duration >= MIN_RECORDING_DURATION
@@ -703,7 +703,7 @@ export default function RecordPage() {
                     </button>
                     <button
                       onClick={state.isPaused ? resumeRecording : pauseRecording}
-                      className={`min-h-[52px] px-5 flex items-center gap-2 text-sm font-medium rounded-xl transition-all ${
+                      className={`min-h-[52px] px-5 flex items-center gap-2 text-sm font-medium rounded-xl transition-colors ${
                         state.isPaused
                           ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30'
                           : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-700'
@@ -725,7 +725,7 @@ export default function RecordPage() {
                     <button
                       onClick={handleStopRecording}
                       disabled={duration < MIN_RECORDING_DURATION}
-                      className={`min-h-[52px] px-6 flex items-center gap-2 text-sm font-semibold rounded-xl transition-all ${
+                      className={`min-h-[52px] px-6 flex items-center gap-2 text-sm font-semibold rounded-xl transition-colors ${
                         duration < MIN_RECORDING_DURATION
                           ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                           : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/30'
@@ -821,7 +821,7 @@ export default function RecordPage() {
                         onChange={(e) => setTargetKeyword(e.target.value)}
                         placeholder="e.g., productivity tips"
                         maxLength={100}
-                        className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-900 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 transition-all border-2 border-transparent focus:border-neutral-300 dark:focus:border-neutral-700"
+                        className="w-full px-4 py-3 bg-neutral-100 dark:bg-neutral-900 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-600 transition-colors border-2 border-transparent focus:border-neutral-300 dark:focus:border-neutral-700"
                       />
                       {targetKeyword && (
                         <button
@@ -847,7 +847,7 @@ export default function RecordPage() {
                           key={t.value}
                           onClick={() => setTone(t.value)}
                           aria-pressed={tone === t.value}
-                          className={`flex-1 px-3 py-2.5 text-sm font-medium rounded-xl transition-all border-2 ${
+                          className={`flex-1 px-3 py-2.5 text-sm font-medium rounded-xl transition-colors border-2 ${
                             tone === t.value
                               ? 'bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 border-transparent text-white shadow-lg shadow-neutral-500/20'
                               : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-primary-300 dark:hover:border-primary-700'
@@ -870,7 +870,7 @@ export default function RecordPage() {
                           key={l.value}
                           onClick={() => setLength(l.value)}
                           aria-pressed={length === l.value}
-                          className={`flex-1 px-3 py-2.5 text-sm font-medium rounded-xl transition-all border-2 ${
+                          className={`flex-1 px-3 py-2.5 text-sm font-medium rounded-xl transition-colors border-2 ${
                             length === l.value
                               ? 'bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 border-transparent text-white shadow-lg shadow-neutral-500/20'
                               : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-primary-300 dark:hover:border-primary-700'
@@ -888,7 +888,7 @@ export default function RecordPage() {
                   {/* Generate button */}
                   <button
                     onClick={handleStartProcessing}
-                    className="w-full mt-6 min-h-[52px] px-6 bg-gradient-to-r from-accent-600 via-accent-500 to-accent-600 hover:from-accent-500 hover:via-accent-400 hover:to-accent-500 dark:from-accent-500 dark:via-accent-400 dark:to-accent-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-accent-500/30 ring-2 ring-accent-500/50"
+                    className="w-full mt-6 min-h-[52px] px-6 bg-gradient-to-r from-accent-600 via-accent-500 to-accent-600 hover:from-accent-500 hover:via-accent-400 hover:to-accent-500 dark:from-accent-500 dark:via-accent-400 dark:to-accent-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-accent-500/30 ring-2 ring-accent-500/50"
                   >
                     <Sparkles className="w-5 h-5" />
                     Generate Blog Post
@@ -994,7 +994,7 @@ export default function RecordPage() {
                       </div>
                       <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-300 ease-out"
+                          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-colors duration-300 ease-out"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       </div>
@@ -1002,7 +1002,7 @@ export default function RecordPage() {
                   )}
 
                   {transcript && (
-                    <div className="mt-8 group relative bg-gradient-to-br from-white/80 dark:from-neutral-900/90 to-neutral-50/80 dark:to-neutral-950/90 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/5">
+                    <div className="mt-8 group relative bg-gradient-to-br from-white/80 dark:from-neutral-900/90 to-neutral-50/80 dark:to-neutral-950/90 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl overflow-hidden transition-colors duration-300 hover:shadow-lg hover:shadow-primary-500/5">
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
@@ -1021,7 +1021,7 @@ export default function RecordPage() {
 
                         <div className="relative">
                           {/* Scrollable transcript container */}
-                          <div className={`overflow-y-auto transition-all duration-500 ease-out transcript-scroll ${
+                          <div className={`overflow-y-auto transition-opacity duration-500 ease-out transcript-scroll ${
                             transcriptExpanded ? 'max-h-64' : 'max-h-24'
                           }`}>
                             <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
@@ -1104,7 +1104,7 @@ export default function RecordPage() {
                     <button
                       onClick={handleViewBlog}
                       disabled={isNavigating}
-                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isNavigating ? (
                         <>
@@ -1121,7 +1121,7 @@ export default function RecordPage() {
                     <button
                       onClick={handlePublish}
                       disabled={publishLoading === 'loading' || publishLoading === 'success'}
-                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="w-full sm:flex-1 min-h-[48px] px-6 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {publishLoading === 'loading' ? (
                         <>
@@ -1142,7 +1142,7 @@ export default function RecordPage() {
                     </button>
                     <button
                       onClick={handleReset}
-                      className="w-full sm:flex-1 min-h-[48px] px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-all text-sm"
+                      className="w-full sm:flex-1 min-h-[48px] px-6 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg transition-colors text-sm"
                     >
                       Record Another
                     </button>
@@ -1204,7 +1204,7 @@ export default function RecordPage() {
                       onClick={() => {
                         setViewState('idle');
                       }}
-                      className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                      className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                     >
                       <RefreshCw className="w-5 h-5" />
                       Try Again
@@ -1242,7 +1242,7 @@ export default function RecordPage() {
                     {transcript ? (
                       <button
                         onClick={handleRetryGeneration}
-                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                       >
                         <RefreshCw className="w-5 h-5" />
                         Retry Generation
@@ -1250,7 +1250,7 @@ export default function RecordPage() {
                     ) : (
                       <button
                         onClick={handleReset}
-                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
+                        className="w-full min-h-[52px] px-6 bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-800 hover:from-neutral-700 hover:via-neutral-600 hover:to-neutral-700 dark:from-neutral-200 dark:via-neutral-300 dark:to-neutral-200 text-white dark:text-neutral-900 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-neutral-500/20"
                       >
                         <RefreshCw className="w-5 h-5" />
                         Try Again
@@ -1291,13 +1291,13 @@ export default function RecordPage() {
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
                       onClick={() => router.push('/auth/signin')}
-                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25"
+                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25"
                     >
                       Sign In
                     </button>
                     <button
                       onClick={() => router.push('/auth/signup')}
-                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 dark:hover:from-neutral-700 dark:hover:via-neutral-600 dark:hover:to-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto min-h-[52px] px-8 bg-gradient-to-r from-neutral-100 via-neutral-50 to-neutral-100 dark:from-neutral-800 dark:via-neutral-700 dark:to-neutral-800 hover:from-neutral-200 hover:via-neutral-100 hover:to-neutral-200 dark:hover:from-neutral-700 dark:hover:via-neutral-600 dark:hover:to-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                     >
                       Create Account
                     </button>

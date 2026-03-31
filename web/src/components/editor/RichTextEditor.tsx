@@ -101,7 +101,7 @@ export function RichTextEditor({
       onClick={onClick}
       title={title}
       className={cn(
-        'min-h-[32px] min-w-[32px] px-2 rounded-md transition-all duration-200',
+        'min-h-[32px] min-w-[32px] px-2 rounded-md transition-colors duration-200',
         'flex items-center justify-center text-neutral-600 dark:text-neutral-400',
         'hover:bg-neutral-200 dark:hover:bg-neutral-800',
         'hover:text-neutral-900 dark:hover:text-neutral-100',

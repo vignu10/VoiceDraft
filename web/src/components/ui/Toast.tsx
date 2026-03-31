@@ -80,7 +80,7 @@ export const Toast: React.FC<ToastProps> = ({
       aria-live="polite"
       className={cn(
         'flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg',
-        'transition-all duration-200 ease-out',
+        'transition-opacity transition-transform duration-200 ease-out',
         toastStyles[type],
         isAnimating ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full'
       )}

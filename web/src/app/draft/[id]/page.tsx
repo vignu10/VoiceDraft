@@ -740,7 +740,7 @@ export default function DraftEditorPage() {
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <button
                 onClick={() => router.push('/drafts')}
-                className="min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] flex items-center justify-center -ml-1 sm:-ml-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 active:scale-95"
+                className="min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] flex items-center justify-center -ml-1 sm:-ml-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 active:scale-95"
                 aria-label="Back to drafts"
               >
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
@@ -782,7 +782,7 @@ export default function DraftEditorPage() {
                 <button
                   onClick={handlePublish}
                   disabled={publishLoading === 'loading'}
-                  className="min-h-[44px] sm:min-h-[52px] px-6 sm:px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all duration-200 ease-out flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98]"
+                  className="min-h-[44px] sm:min-h-[52px] px-6 sm:px-8 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-500 hover:via-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-colors duration-200 ease-out flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25 text-sm disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98]"
                   title="Publish draft (Ctrl+P)"
                 >
                   {publishLoading === 'loading' ? (
@@ -808,7 +808,7 @@ export default function DraftEditorPage() {
                   <button
                     onClick={handleUnpublish}
                     disabled={unpublishLoading === 'loading'}
-                    className="lg:hidden min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-lg transition-all duration-200 ease-out disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
+                    className="lg:hidden min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-lg transition-colors duration-200 ease-out disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
                     title="Unpublish draft (Ctrl+P)"
                     aria-label="Unpublish draft"
                   >
@@ -824,7 +824,7 @@ export default function DraftEditorPage() {
                   <button
                     onClick={handleUnpublish}
                     disabled={unpublishLoading === 'loading'}
-                    className="hidden lg:flex min-h-[44px] px-6 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-all duration-200 ease-out items-center justify-center gap-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98]"
+                    className="hidden lg:flex min-h-[44px] px-6 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100 font-semibold rounded-xl transition-colors duration-200 ease-out items-center justify-center gap-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98]"
                     title="Unpublish draft (Ctrl+P)"
                   >
                     {unpublishLoading === 'loading' ? (
@@ -851,7 +851,7 @@ export default function DraftEditorPage() {
               <Button
                 variant="ghost"
                 onClick={() => setShowDeleteModal(true)}
-                className="text-neutral-600 hover:text-accent-600 dark:text-neutral-400 dark:hover:text-accent-400 min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] px-2 transition-all duration-200 ease-out active:scale-95"
+                className="text-neutral-600 hover:text-accent-600 dark:text-neutral-400 dark:hover:text-accent-400 min-h-[40px] sm:min-h-[44px] min-w-[40px] sm:min-w-[44px] px-2 transition-colors duration-200 ease-out active:scale-95"
                 aria-label="Delete draft"
               >
                 <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
@@ -1044,7 +1044,7 @@ export default function DraftEditorPage() {
             <div className="inline-flex items-center rounded-lg bg-neutral-200/80 p-1 dark:bg-neutral-800/80">
               <button
                 onClick={() => setMobileViewMode('edit')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ease-out ${
                   mobileViewMode === 'edit'
                     ? 'bg-white text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 shadow-sm'
                     : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
@@ -1056,7 +1056,7 @@ export default function DraftEditorPage() {
               </button>
               <button
                 onClick={() => setMobileViewMode('preview')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ease-out ${
                   mobileViewMode === 'preview'
                     ? 'bg-white text-neutral-900 dark:bg-neutral-700 dark:text-neutral-100 shadow-sm'
                     : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
@@ -1261,7 +1261,7 @@ export default function DraftEditorPage() {
               isLoading={deleteLoading === 'loading'}
               disabled={deleteLoading === 'loading'}
               fullWidth
-              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+              className="min-h-[48px] sm:min-h-[44px] transition-colors duration-200 ease-out"
             >
               {deleteLoading === 'loading' ? 'Deleting...' : 'Delete'}
             </Button>
@@ -1270,7 +1270,7 @@ export default function DraftEditorPage() {
               onClick={() => setShowDeleteModal(false)}
               disabled={deleteLoading === 'loading'}
               fullWidth
-              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+              className="min-h-[48px] sm:min-h-[44px] transition-colors duration-200 ease-out"
             >
               Cancel
             </Button>
@@ -1307,7 +1307,7 @@ export default function DraftEditorPage() {
               isLoading={regenerateLoading === 'loading'}
               disabled={regenerateLoading === 'loading'}
               fullWidth
-              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+              className="min-h-[48px] sm:min-h-[44px] transition-colors duration-200 ease-out"
             >
               {regenerateLoading === 'loading' ? 'Regenerating...' : 'Regenerate'}
             </Button>
@@ -1316,7 +1316,7 @@ export default function DraftEditorPage() {
               onClick={() => setShowRegenerateModal(false)}
               disabled={regenerateLoading === 'loading'}
               fullWidth
-              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+              className="min-h-[48px] sm:min-h-[44px] transition-colors duration-200 ease-out"
             >
               Cancel
             </Button>

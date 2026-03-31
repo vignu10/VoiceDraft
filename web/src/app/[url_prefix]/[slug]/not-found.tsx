@@ -35,7 +35,7 @@ export default function NotFound() {
 
         <Link
           href="/"
-          className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3.5 font-medium text-white transition-all hover:shadow-lg hover:shadow-accent/25 hover:scale-105 active:scale-95"
+          className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent to-accent-hover px-8 py-3.5 font-medium text-white transition-shadow transition-transform hover:shadow-lg hover:shadow-accent/25 hover:scale-105 active:scale-95"
         >
           <span className="relative z-10">Go back home</span>
           <svg className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
