@@ -6,9 +6,21 @@ This document describes the development workflow for all VoiceScribe engineers.
 
 **All code changes must go through pull requests.** No direct commits to `main` are allowed.
 
+### Branch Strategy
+
+VoiceScribe uses a **three-tier branch strategy**:
+
+| Branch | Purpose | Protection |
+|--------|---------|------------|
+| `main` | Production releases only. Only merged from `development` for releases. | No direct pushes, PR approval required |
+| `development` | Integration branch for all features. Default base for all feature PRs. | No direct pushes, PR approval required |
+| `feature/*` | Feature branches. Created from `development`, merged back to `development`. | No protection rules |
+
+**Rule:** All feature branches must merge into `development`. Only `development` merges into `main` for releases.
+
 ### 1. Branch Naming
 
-Create a feature branch from the latest `main`:
+Create a feature branch from the latest `development`:
 
 ```
 feature/<TICKET-ID>-short-description
@@ -38,7 +50,8 @@ Examples:
 
 Before creating a PR, ensure:
 
-- [ ] Branch created from latest `main`
+- [ ] Branch created from latest `development`
+- [ ] PR targets `development` (not `main`)
 - [ ] All commits reference the ticket ID
 - [ ] PR description includes ticket link
 - [ ] PR body includes `Resolves #TICKET-NUMBER` or `Closes #TICKET-NUMBER`
@@ -70,10 +83,12 @@ How this was tested.
 
 ### 6. Protected Branch Rules
 
-The `main` branch is protected:
+Both `main` and `development` branches are protected:
 - **No direct pushes** allowed
 - **PR approval required** before merge
 - **Status checks must pass** before merge
+
+**Release Flow:** When `development` is ready for a release, create a PR from `development` → `main`. This requires explicit approval and represents a version release.
 
 ## Getting Started
 
