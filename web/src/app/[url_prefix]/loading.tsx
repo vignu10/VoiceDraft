@@ -8,7 +8,7 @@ export default function Loading() {
         <div className="container-wide px-6 py-12">
           <div className="flex items-center gap-6">
             {/* Avatar Skeleton */}
-            <div className="h-20 w-20 animate-pulse rounded-2xl bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-600" />
+            <div className="h-20 w-20 animate-pulse rounded-2xl bg-neutral-200 dark:bg-neutral-700" />
             <div className="flex-1 space-y-3">
               {/* Title Skeleton */}
               <div className="h-10 w-64 animate-pulse rounded-xl bg-neutral-200 dark:bg-neutral-700" />
