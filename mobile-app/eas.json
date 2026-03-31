@@ -17,7 +17,7 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://voice-draft.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://voicescribe.app"
       }
     },
     "production": {
@@ -28,7 +28,7 @@
         "autoIncrement": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://voice-draft.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://voicescribe.app"
       }
     }
   },
