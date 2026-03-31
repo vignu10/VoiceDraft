@@ -17,7 +17,7 @@ export function BlogDiscoveryCard({ blog }: BlogDiscoveryCardProps) {
   return (
     <Link
       href={`/${url_prefix}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-all duration-300 hover:-translate-y-1 hover:border-neutral-400/50 hover:shadow-2xl hover:shadow-neutral-500/10 focus:outline-none focus:ring-4 focus:ring-primary-500/50 dark:border-neutral-800/50 dark:hover:border-neutral-600/50"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-neutral-200/50 bg-frosted transition-transform duration-300 hover:-translate-y-1 hover:border-neutral-400/50 hover:shadow-2xl hover:shadow-neutral-500/10 focus:outline-none focus:ring-4 focus:ring-primary-500/50 dark:border-neutral-800/50 dark:hover:border-neutral-600/50"
     >
       {/* Gradient accent on hover */}
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-800 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-neutral-200 dark:via-neutral-400 dark:to-neutral-200" />
