@@ -12,6 +12,20 @@ interface PostCardGridProps {
   total: number;
 }
 
+type CardVariant = 'featured' | 'standard' | 'compact';
+
+// Determine card variant based on index for asymmetric layout
+function getCardVariant(index: number, total: number): CardVariant {
+  // First card is always featured if we have at least 3 posts
+  if (index === 0 && total >= 3) return 'featured';
+
+  // Every 4th card is compact for visual rhythm
+  if (index > 0 && index % 4 === 0) return 'compact';
+
+  // Default to standard
+  return 'standard';
+}
+
 export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridProps) {
   const [posts, setPosts] = useState<PostCardData[]>(initialPosts);
   const [loading, setLoading] = useState(false);
@@ -101,7 +115,7 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
   if (posts.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+        <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-900">
           <svg
             className="h-10 w-10 text-neutral-400"
             fill="none"
@@ -126,10 +140,20 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
 
   return (
     <div className="@container card-grid">
-      <div className="grid grid-cols-1 card-grid-gap card-grid-cards-1 sm:grid-cols-2 lg:grid-cols-3">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} urlPrefix={urlPrefix} />
-        ))}
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 auto-rows-max">
+        {posts.map((post, index) => {
+          const variant = getCardVariant(index, posts.length);
+
+          return (
+            <PostCard
+              key={post.id}
+              post={post}
+              urlPrefix={urlPrefix}
+              variant={variant}
+              className={getCardVariantClass(variant, index)}
+            />
+          );
+        })}
         {/* Show skeleton cards when loading more */}
         {loading &&
           Array.from({ length: 3 }).map((_, i) => <PostCardSkeleton key={`skeleton-${i}`} />)
@@ -141,7 +165,7 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
           <button
             onClick={loadMore}
             disabled={loading}
-            className="group inline-flex items-center justify-center gap-2 min-w-[160px] rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-all hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
+            className="group inline-flex items-center justify-center gap-2 min-w-[160px] rounded-xl bg-primary-500 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-primary-500/25 transition-all hover:bg-primary-600 hover:shadow-2xl hover:shadow-primary-500/40 hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:ring-offset-2"
           >
             {loading ? (
               <>
@@ -164,4 +188,18 @@ export function PostCardGrid({ initialPosts, urlPrefix, total }: PostCardGridPro
       )}
     </div>
   );
+}
+
+// Helper function to get grid classes based on variant
+function getCardVariantClass(variant: CardVariant, index: number): string {
+  switch (variant) {
+    case 'featured':
+      // Featured card spans 2 columns on larger screens
+      return 'sm:col-span-2 lg:col-span-2';
+    case 'compact':
+      // Compact card takes 1 column
+      return '';
+    default:
+      return '';
+  }
 }
