@@ -62,7 +62,7 @@ export function PostMeta({ post, urlPrefix }: PostMetaProps) {
               <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-neutral-300 to-neutral-100 blur-sm dark:from-neutral-700 dark:to-neutral-500" />
               <img
                 src={journals.user_profiles.avatar_url}
-                alt={journals.user_profiles.full_name || 'Author'}
+                alt=""
                 className="relative h-12 w-12 rounded-full ring-2 ring-white dark:ring-neutral-800"
               />
             </div>

@@ -32,7 +32,7 @@ export function BlogHeader({ journal }: BlogHeaderProps) {
                 {user_profiles.avatar_url ? (
                   <Image
                     src={user_profiles.avatar_url}
-                    alt={user_profiles.full_name || display_name}
+                    alt=""
                     fill
                     className="object-cover"
                   />
