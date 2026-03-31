@@ -41,6 +41,7 @@ export interface Post {
   content: string;
   meta_description?: string;
   target_keyword?: string;
+  tags?: string[];
   status: PostStatus;
   published_at?: string;
   word_count: number;
@@ -58,6 +59,7 @@ export interface Post {
   processing_meta?: Record<string, any>;
   created_at: string;
   updated_at: string;
+  journal?: Journal;
 }
 
 // API Response types
@@ -93,6 +95,7 @@ export interface UpdatePostRequest {
   content?: string;
   meta_description?: string;
   target_keyword?: string;
+  tags?: string[];
   transcript?: string;
   audio_file_url?: string;
   status?: PostStatus;
