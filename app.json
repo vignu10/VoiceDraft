@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.voicescribe.app"
+      "bundleIdentifier": "com.voicescribe.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "VoiceScribe needs access to your microphone to record voice memos that will be transcribed into blog posts."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +24,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.voicescribe.app"
+      "package": "com.voicescribe.app",
+      "permissions": ["MICROPHONE", "RECORD_AUDIO"]
     },
     "web": {
       "output": "static",

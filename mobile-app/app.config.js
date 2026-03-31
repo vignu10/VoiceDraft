@@ -13,6 +13,9 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.voicescribe.app",
+      infoPlist: {
+        NSMicrophoneUsageDescription: "VoiceScribe needs access to your microphone to record voice memos that will be transcribed into blog posts.",
+      },
     },
     android: {
       adaptiveIcon: {
@@ -25,6 +28,7 @@ export default {
       versionCode: 5,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
+      permissions: ["MICROPHONE", "RECORD_AUDIO"],
     },
     privacy: "https://voice-draft.vercel.app/privacy",
     web: {
