@@ -34,7 +34,7 @@ test.describe('Sign In Flow', () => {
   });
 
   test('should have link to forgot password', async ({ page }) => {
-    const forgotLink = page.getByRole('link', { name: /forgot password/i });
+    const forgotLink = page.getByRole('link', { name: /forgot password\?/i });
     await expect(forgotLink).toBeVisible();
 
     // Check link destination
@@ -42,7 +42,8 @@ test.describe('Sign In Flow', () => {
   });
 
   test('should have link to sign up', async ({ page }) => {
-    const signUpLink = page.getByRole('link', { name: /sign up/i });
+    // Sign up link is in the text "New here? Sign up"
+    const signUpLink = page.getByRole('link', { name: 'Sign up' });
     await expect(signUpLink).toBeVisible();
 
     // Check link destination
@@ -64,13 +65,13 @@ test.describe('Sign In Flow', () => {
     await expect(page).toHaveURL(/\/(auth\/signin)?/);
   });
 
-  test('should display Google OAuth button (non-functional)', async ({ page }) => {
-    // Check for Google sign in option
-    const googleButton = page.getByRole('button', { name: /sign in with google/i });
-    await expect(googleButton).toBeVisible();
+  test('should not display Google OAuth button (feature disabled)', async ({ page }) => {
+    // Google OAuth is commented out in the current implementation
+    const googleButton = page.getByRole('button', { name: /google/i });
+    const count = await googleButton.count();
 
-    // Check for Google icon
-    await expect(googleButton.locator('svg')).toBeVisible();
+    // Google button should not be visible (0 count)
+    expect(count).toBe(0);
   });
 
   test('should handle email input correctly', async ({ page }) => {
@@ -129,11 +130,11 @@ test.describe('Sign In Flow', () => {
   test('should have proper autocomplete attributes', async ({ page }) => {
     // Check email autocomplete - use .first()
     const emailInput = page.getByLabel(/email address/i).first();
-    await expect(emailInput).toHaveAttribute('autoComplete', 'email');
+    await expect(emailInput).toHaveAttribute('autocomplete', 'email');
 
     // Check password autocomplete
     const passwordInput = page.getByLabel(/password/i).first();
-    await expect(passwordInput).toHaveAttribute('autoComplete', 'current-password');
+    await expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
   });
 
   test('should be responsive on mobile', async ({ page }) => {

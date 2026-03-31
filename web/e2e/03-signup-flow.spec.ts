@@ -106,13 +106,13 @@ test.describe('Sign Up Flow', () => {
     await expect(privacyLink).toHaveAttribute('href', '/privacy');
   });
 
-  test('should display Google OAuth button', async ({ page }) => {
-    // Check for Google sign up option
+  test('should not display Google OAuth button (feature disabled)', async ({ page }) => {
+    // Google OAuth is commented out in the current implementation
     const googleButton = page.getByRole('button', { name: /sign up with google/i });
-    await expect(googleButton).toBeVisible();
+    const count = await googleButton.count();
 
-    // Check for Google icon
-    await expect(googleButton.locator('svg')).toBeVisible();
+    // Google button should not be visible (0 count)
+    expect(count).toBe(0);
   });
 
   test('should show password helper text', async ({ page }) => {
@@ -158,14 +158,14 @@ test.describe('Sign Up Flow', () => {
 
   test('should have proper autocomplete attributes', async ({ page }) => {
     // Check name autocomplete
-    await expect(page.getByLabel(/full name/i)).toHaveAttribute('autoComplete', 'name');
+    await expect(page.getByLabel(/full name/i)).toHaveAttribute('autocomplete', 'name');
 
     // Check email autocomplete
-    await expect(page.getByLabel(/email address/i)).toHaveAttribute('autoComplete', 'email');
+    await expect(page.getByLabel(/email address/i)).toHaveAttribute('autocomplete', 'email');
 
     // Check password autocomplete
-    await expect(page.getByLabel(/^password$/i)).toHaveAttribute('autoComplete', 'new-password');
-    await expect(page.getByLabel(/confirm password/i)).toHaveAttribute('autoComplete', 'new-password');
+    await expect(page.getByLabel(/^password$/i)).toHaveAttribute('autocomplete', 'new-password');
+    await expect(page.getByLabel(/confirm password/i)).toHaveAttribute('autocomplete', 'new-password');
   });
 
   test('should be responsive on mobile', async ({ page }) => {

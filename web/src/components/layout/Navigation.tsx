@@ -58,6 +58,7 @@ export function Navigation() {
           {/* VoiceScribe brand/logo - Bold and confident */}
           <Link
             href="/"
+            aria-label="VoiceScribe"
             className="group flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
           >
             <LogoIcon size={32} className="transition-transform duration-300 group-hover:scale-110" />
