@@ -77,9 +77,12 @@ export default function DraftEditorPage() {
   const [draft, setDraft] = useState<Post | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
+  const [targetKeyword, setTargetKeyword] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [mobileViewMode, setMobileViewMode] = useState<'edit' | 'preview'>('edit');
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
   // Error and loading states for hardening
   const [isLoading, setIsLoading] = useState(true);
@@ -87,11 +90,14 @@ export default function DraftEditorPage() {
   const [publishLoading, setPublishLoading] = useState<LoadingState>('idle');
   const [unpublishLoading, setUnpublishLoading] = useState<LoadingState>('idle');
   const [deleteLoading, setDeleteLoading] = useState<LoadingState>('idle');
+  const [regenerateLoading, setRegenerateLoading] = useState<LoadingState>('idle');
 
   // Refs for hardening stale closures and cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
   const latestTitleRef = useRef(title);
   const latestContentRef = useRef(content);
+  const latestMetaDescriptionRef = useRef(metaDescription);
+  const latestTargetKeywordRef = useRef(targetKeyword);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -137,7 +143,9 @@ export default function DraftEditorPage() {
   useEffect(() => {
     latestTitleRef.current = title;
     latestContentRef.current = content;
-  }, [title, content]);
+    latestMetaDescriptionRef.current = metaDescription;
+    latestTargetKeywordRef.current = targetKeyword;
+  }, [title, content, metaDescription, targetKeyword]);
 
   // Cleanup function for aborting pending requests
   useEffect(() => {
@@ -171,6 +179,8 @@ export default function DraftEditorPage() {
           setDraft(data);
           setTitle(data.title || '');
           setContent(data.content || '');
+          setMetaDescription(data.meta_description || '');
+          setTargetKeyword(data.target_keyword || '');
           setSaveStatus('saved');
 
           // Check if this is a guest trial draft
@@ -223,6 +233,8 @@ export default function DraftEditorPage() {
       // Use refs to get latest values (prevents stale closures)
       const currentTitle = latestTitleRef.current;
       const currentContent = latestContentRef.current;
+      const currentMetaDescription = latestMetaDescriptionRef.current;
+      const currentTargetKeyword = latestTargetKeywordRef.current;
 
       setSaveStatus('saving');
 
@@ -230,6 +242,8 @@ export default function DraftEditorPage() {
         const response = await api.patch(`/api/drafts/${id}`, {
           title: currentTitle,
           content: currentContent,
+          meta_description: currentMetaDescription,
+          target_keyword: currentTargetKeyword,
         });
 
         if (response.ok) {
@@ -265,6 +279,20 @@ export default function DraftEditorPage() {
       debouncedSave();
     }
   }, [content, draft, debouncedSave]);
+
+  // Auto-save on meta description change
+  useEffect(() => {
+    if (draft && metaDescription !== draft.meta_description) {
+      debouncedSave();
+    }
+  }, [metaDescription, draft, debouncedSave]);
+
+  // Auto-save on target keyword change
+  useEffect(() => {
+    if (draft && targetKeyword !== draft.target_keyword) {
+      debouncedSave();
+    }
+  }, [targetKeyword, draft, debouncedSave]);
 
   const handleDelete = async () => {
     setDeleteLoading('loading');
@@ -435,6 +463,58 @@ export default function DraftEditorPage() {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (regenerateLoading === 'loading') return;
+
+    setRegenerateLoading('loading');
+    setShowRegenerateModal(false);
+
+    try {
+      // For now, we'll use the transcript to regenerate
+      // In a full implementation, this would create a new job and track its status
+      const response = await api.post('/api/generate', {
+        transcript: content, // Use current content as transcript for regeneration
+        target_keyword: targetKeyword,
+        tone: draft?.tone || 'professional',
+        target_length: 'medium',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update the content with regenerated version
+        setContent(result.content || content);
+        if (result.title && !title) {
+          setTitle(result.title);
+        }
+        if (result.meta_description) {
+          setMetaDescription(result.meta_description);
+        }
+
+        setRegenerateLoading('success');
+
+        // Show success message
+        await showDialog({
+          title: 'Regenerated Successfully!',
+          message: 'Your blog content has been regenerated with new AI-generated content.',
+          variant: 'success',
+          confirmText: 'OK',
+        });
+
+        setTimeout(() => setRegenerateLoading('idle'), 2000);
+      } else {
+        setRegenerateLoading('error');
+        setError({
+          message: 'Failed to regenerate content. Please try again.',
+        });
+      }
+    } catch (error) {
+      setRegenerateLoading('error');
+      setError({
+        message: 'Network error. Please check your connection and try again.',
+      });
+    }
+  };
+
   const handleManualSave = async () => {
     const confirmed = await showDialog({
       title: 'Save Changes',
@@ -447,6 +527,8 @@ export default function DraftEditorPage() {
           const response = await api.patch(`/api/drafts/${id}`, {
             title,
             content,
+            meta_description: metaDescription,
+            target_keyword: targetKeyword,
           });
 
           if (response.ok) {
@@ -781,6 +863,60 @@ export default function DraftEditorPage() {
                 />
               </div>
 
+              {/* Meta Description */}
+              <div>
+                <label htmlFor="meta-description" className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Meta Description
+                </label>
+                <Input
+                  id="meta-description"
+                  placeholder="Brief description for SEO..."
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  className="text-sm"
+                  maxLength={500}
+                />
+                <p className="text-xs text-neutral-400 mt-1">{metaDescription.length}/500</p>
+              </div>
+
+              {/* Target Keyword */}
+              <div>
+                <label htmlFor="target-keyword" className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Target Keyword
+                </label>
+                <Input
+                  id="target-keyword"
+                  placeholder="e.g., productivity tips"
+                  value={targetKeyword}
+                  onChange={(e) => setTargetKeyword(e.target.value)}
+                  className="text-sm"
+                  maxLength={100}
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowRegenerateModal(true)}
+                  disabled={regenerateLoading === 'loading'}
+                  className="text-xs"
+                >
+                  {regenerateLoading === 'loading' ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Regenerate with AI
+                    </>
+                  )}
+                </Button>
+              </div>
+
               <div className="space-y-2">
                 <Textarea
                   placeholder="Start writing your post..."
@@ -896,6 +1032,60 @@ export default function DraftEditorPage() {
                   maxLength={200}
                   autoFocus
                 />
+              </div>
+
+              {/* Meta Description - Mobile */}
+              <div>
+                <label htmlFor="mobile-meta-description" className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Meta Description
+                </label>
+                <Input
+                  id="mobile-meta-description"
+                  placeholder="Brief description for SEO..."
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  className="text-sm"
+                  maxLength={500}
+                />
+                <p className="text-xs text-neutral-400 mt-1">{metaDescription.length}/500</p>
+              </div>
+
+              {/* Target Keyword - Mobile */}
+              <div>
+                <label htmlFor="mobile-target-keyword" className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
+                  Target Keyword
+                </label>
+                <Input
+                  id="mobile-target-keyword"
+                  placeholder="e.g., productivity tips"
+                  value={targetKeyword}
+                  onChange={(e) => setTargetKeyword(e.target.value)}
+                  className="text-sm"
+                  maxLength={100}
+                />
+              </div>
+
+              {/* Regenerate Button - Mobile */}
+              <div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowRegenerateModal(true)}
+                  disabled={regenerateLoading === 'loading'}
+                  className="w-full text-xs"
+                >
+                  {regenerateLoading === 'loading' ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Regenerate with AI
+                    </>
+                  )}
+                </Button>
               </div>
 
               <div className="space-y-2">
@@ -1014,6 +1204,60 @@ export default function DraftEditorPage() {
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             This action cannot be undone.
           </p>
+        </div>
+      </Modal>
+
+      {/* Regenerate confirmation modal */}
+      <Modal
+        isOpen={showRegenerateModal}
+        onClose={() => {
+          if (regenerateLoading !== 'loading') {
+            setShowRegenerateModal(false);
+          }
+        }}
+        title="Regenerate with AI"
+        footer={
+          <div className="flex flex-col sm:flex-row-reverse gap-3">
+            <Button
+              variant="primary"
+              onClick={handleRegenerate}
+              isLoading={regenerateLoading === 'loading'}
+              disabled={regenerateLoading === 'loading'}
+              fullWidth
+              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+            >
+              {regenerateLoading === 'loading' ? 'Regenerating...' : 'Regenerate'}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowRegenerateModal(false)}
+              disabled={regenerateLoading === 'loading'}
+              fullWidth
+              className="min-h-[48px] sm:min-h-[44px] transition-all duration-200 ease-out"
+            >
+              Cancel
+            </Button>
+          </div>
+        }
+      >
+        <div className="text-center sm:text-left">
+          <p className="text-base text-neutral-700 dark:text-neutral-300 mb-4">
+            Regenerate this blog post with AI? This will create new content based on your current text and settings.
+          </p>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mt-1.5 flex-shrink-0" />
+              <p className="text-neutral-600 dark:text-neutral-400">Content will be regenerated using GPT-4</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mt-1.5 flex-shrink-0" />
+              <p className="text-neutral-600 dark:text-neutral-400">Your current content will be replaced</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mt-1.5 flex-shrink-0" />
+              <p className="text-neutral-600 dark:text-neutral-400">Target keyword and tone will be preserved</p>
+            </div>
+          </div>
         </div>
       </Modal>
 
